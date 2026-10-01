@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# AI agent 与爬虫的机器可读入口
+# llms.txt:        https://blume.ndjp.net/llms.txt
+# llms-full.txt:   https://blume.ndjp.net/llms-full.txt
+# JSON API:        https://blume.ndjp.net/api/docs/pages.json
+# 原始 Markdown:   https://blume.ndjp.net/docs/<route>.md
+
+Sitemap: https://blume.ndjp.net/sitemap-index.xml
