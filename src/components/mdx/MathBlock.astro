@@ -1,5 +1,7 @@
 ---
 import katex from "katex";
+// KaTeX 样式随组件按需打包：只有渲染了公式的页面才会加载这份 CSS
+import "katex/dist/katex.min.css";
 
 interface Props {
   value: string;

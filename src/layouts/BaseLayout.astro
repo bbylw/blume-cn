@@ -1,5 +1,4 @@
 ---
-import "katex/dist/katex.min.css";
 import "../styles/global.css";
 
 interface Props {
@@ -9,9 +8,12 @@ interface Props {
   /** 是否允许搜索引擎收录 */
   noindex?: boolean;
   ogImage?: string;
+  ogImageAlt?: string;
   type?: "website" | "article";
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
   class?: string;
+  /** 设为 false 时不输出 Markdown alternate（例如错误页没有 .md 镜像） */
+  markdownAlternate?: boolean;
 }
 
 const {
@@ -19,15 +21,26 @@ const {
   description,
   canonical,
   noindex = false,
-  ogImage = "/og-default.svg",
+  // PNG 而非 SVG：X / Facebook / LinkedIn 只接受位图分享图（1200×630）
+  ogImage = "/og.png",
+  ogImageAlt = "Blume 中文文档 —— 面向人类与智能体的开源文档框架",
   type = "website",
   jsonLd,
   class: className = "",
+  markdownAlternate = true,
 } = Astro.props;
 
 const site = Astro.site ?? new URL("https://blume.ndjp.net");
 const canonicalUrl = canonical ? new URL(canonical, site).href : new URL(Astro.url.pathname, site).href;
 const fullTitle = title.includes("Blume") ? title : `${title} · Blume 中文文档`;
+// Markdown 镜像只存在于内容页：首页用 llms.txt，/docs/ 落地页用 /docs/index.md，
+// 直接拼 `.md` 会在首页产出 https://blume.ndjp.net.md 这类坏链
+const markdownUrl =
+  Astro.url.pathname === "/"
+    ? new URL("llms.txt", site).href
+    : Astro.url.pathname === "/docs/"
+      ? new URL("docs/index.md", site).href
+      : `${canonicalUrl.replace(/\/$/, "")}.md`;
 ---
 
 <!doctype html>
@@ -53,12 +66,16 @@ const fullTitle = title.includes("Blume") ? title : `${title} · Blume 中文文
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={new URL(ogImage, site).href} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={ogImageAlt} />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={fullTitle} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={new URL(ogImage, site).href} />
+    <meta name="twitter:image:alt" content={ogImageAlt} />
 
-    <link rel="alternate" type="text/markdown" href={`${canonicalUrl.replace(/\/$/, "")}.md`} />
+    {markdownAlternate && <link rel="alternate" type="text/markdown" href={markdownUrl} />}
 
     <script is:inline>
       (() => {
@@ -74,6 +91,29 @@ const fullTitle = title.includes("Blume") ? title : `${title} · Blume 中文文
     <slot name="head" />
   </head>
   <body class:list={["min-h-screen bg-bg text-fg antialiased", className]}>
+    <a href="#main" class="skip-link">跳到正文</a>
     <slot />
   </body>
 </html>
+
+<style>
+  /* 平时藏在视口外，键盘 Tab 到才出现 */
+  .skip-link {
+    position: absolute;
+    left: 1rem;
+    top: -4rem;
+    z-index: 200;
+    padding: 0.625rem 1rem;
+    border-radius: 0.625rem;
+    background-color: var(--bg-subtle);
+    border: 1px solid var(--border-strong);
+    color: var(--fg);
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: top 0.15s ease;
+  }
+  .skip-link:focus-visible {
+    top: 0.75rem;
+  }
+</style>

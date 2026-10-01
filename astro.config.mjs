@@ -39,7 +39,8 @@ export default defineConfig({
     defaultStrategy: "hover",
   },
   redirects: {
-    "/compare": "/docs/faq",
-    "/changelog": "/docs/advanced/changelog",
+    // 目标带尾斜杠：与 trailingSlash: "always" 一致，避免 /compare → /compare/ → /docs/faq → /docs/faq/ 多跳
+    "/compare": "/docs/faq/",
+    "/changelog": "/docs/advanced/changelog/",
   },
 });

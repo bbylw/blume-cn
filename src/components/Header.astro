@@ -8,6 +8,13 @@ interface Props {
 }
 
 const { pathname } = Astro.props;
+
+// “文档”在其它四项命中时不高亮，避免同时出现两个 active
+const isQuickstart = pathname === "/docs/quickstart/";
+const isComponents = pathname === "/docs/content/components/";
+const isCli = pathname === "/docs/cli/";
+const isFaq = pathname === "/docs/faq/";
+const isDocs = pathname.startsWith("/docs") && !isQuickstart && !isComponents && !isCli && !isFaq;
 ---
 
 <header class="header" data-header>
@@ -26,11 +33,11 @@ const { pathname } = Astro.props;
     </a>
 
     <nav class="header__nav" aria-label="主导航">
-      <a href="/docs/" class="header__nav-link" data-active={pathname.startsWith("/docs")}>文档</a>
-      <a href="/docs/quickstart/" class="header__nav-link">快速开始</a>
-      <a href="/docs/content/components/" class="header__nav-link">组件</a>
-      <a href="/docs/cli/" class="header__nav-link">命令行</a>
-      <a href="/docs/faq/" class="header__nav-link">FAQ</a>
+      <a href="/docs/" class="header__nav-link" data-active={isDocs}>文档</a>
+      <a href="/docs/quickstart/" class="header__nav-link" data-active={isQuickstart}>快速开始</a>
+      <a href="/docs/content/components/" class="header__nav-link" data-active={isComponents}>组件</a>
+      <a href="/docs/cli/" class="header__nav-link" data-active={isCli}>命令行</a>
+      <a href="/docs/faq/" class="header__nav-link" data-active={isFaq}>FAQ</a>
     </nav>
 
     <div class="header__tools">
@@ -80,12 +87,17 @@ const { pathname } = Astro.props;
 <script>
   const drawer = document.querySelector<HTMLElement>("[data-drawer]");
   const toggle = document.querySelector<HTMLButtonElement>("[data-nav-toggle]");
+  // 面板里的关闭按钮：打开时把焦点送进去，关闭时焦点回到开关
+  const panelClose = document.querySelector<HTMLButtonElement>("[data-drawer] button[data-drawer-close]");
 
   function setDrawer(open: boolean) {
     if (!drawer) return;
     drawer.hidden = !open;
     toggle?.setAttribute("aria-expanded", String(open));
+    toggle?.setAttribute("aria-label", open ? "关闭导航" : "打开导航");
     document.body.style.overflow = open ? "hidden" : "";
+    if (open) panelClose?.focus();
+    else toggle?.focus();
   }
 
   toggle?.addEventListener("click", () => setDrawer(drawer?.hidden !== false));

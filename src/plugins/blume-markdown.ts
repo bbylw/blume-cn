@@ -128,7 +128,8 @@ export const blumeHeadingAnchors = defineHastPlugin({
       ctx.appendChild(node, {
         type: "element",
         tagName: "a",
-        properties: { className: ["anchor-hash"], href: `#${id}`, ariaHidden: "true" },
+        // 可聚焦的链接不能 aria-hidden，否则键盘与读屏体验割裂；给它可读名称
+        properties: { className: ["anchor-hash"], href: `#${id}`, ariaLabel: "本节链接" },
         children: [{ type: "text", value: "#" }],
       } as never);
     },

@@ -483,6 +483,9 @@ export function hrefToSlug(href: string): string {
 /** 站内链接一律带尾斜杠：与 GitHub Pages 的目录式产物一一对应，避免 301 */
 export function slugToHref(slug: string): string {
   const clean = slug.replace(/^\/+|\/+$/g, "");
+  // 内容集合的 index 条目由 docs/index.astro 渲染为 /docs/（见 [...slug].astro 的排除逻辑），
+  // 不能落到不存在的 /docs/index/，否则 RSS / sitemap 外的机器端点会出现死链
+  if (clean === "index") return "/docs/";
   return clean ? `/docs/${clean}/` : "/docs/";
 }
 

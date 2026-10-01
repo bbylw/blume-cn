@@ -79,16 +79,18 @@ export default function Search() {
   const [active, setActive] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
 
+  // 索引 289KB：挂载时不拉，第一次打开搜索框时才取
   useEffect(() => {
-    if (docs !== null) return;
+    if (!open || docs !== null) return;
     const ctrl = new AbortController();
     void fetch("/search-index.json", { signal: ctrl.signal })
       .then((r) => r.json())
       .then((data: Doc[]) => setDocs(data))
       .catch(() => undefined);
     return () => ctrl.abort();
-  }, [docs]);
+  }, [open, docs]);
 
   const hits = useMemo<Hit[]>(() => {
     const raw = query.toLowerCase().trim();
@@ -108,7 +110,11 @@ export default function Search() {
     requestAnimationFrame(() => inputRef.current?.focus());
   }, []);
 
-  const hide = useCallback(() => setOpen(false), []);
+  const hide = useCallback(() => {
+    setOpen(false);
+    // 关闭后焦点回到触发按钮，键盘用户不丢位置
+    requestAnimationFrame(() => triggerRef.current?.focus());
+  }, []);
 
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
@@ -163,7 +169,10 @@ export default function Search() {
     <>
       <button
         type="button"
+        ref={triggerRef}
         onClick={show}
+        aria-expanded={open}
+        aria-label="搜索文档（⌘K）"
         className="group flex h-9 w-full max-w-[19rem] items-center gap-2 rounded-lg border border-line bg-bg-subtle px-2.5 text-left text-sm text-fg-subtle transition-colors hover:border-line-strong hover:text-fg-muted"
       >
         <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" aria-hidden="true">

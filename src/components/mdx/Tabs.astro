@@ -25,6 +25,7 @@ const labels = titles?.length ? titles : detected;
           role="tab"
           data-tab-index={i}
           aria-selected={i === 0 ? "true" : "false"}
+          tabindex={i === 0 ? 0 : -1}
         >
           {label}
         </button>
@@ -37,17 +38,35 @@ const labels = titles?.length ? titles : detected;
 </div>
 
 <script>
+  let tabsGroupSeq = 0;
+
   function initTabs(root: ParentNode = document) {
     root.querySelectorAll<HTMLElement>("[data-tabs]:not([data-ready])").forEach((group) => {
       const tabs = Array.from(group.querySelectorAll<HTMLButtonElement>(".tabs__tab"));
       const panels = Array.from(group.querySelectorAll<HTMLElement>("[data-tab-panel]"));
       if (tabs.length === 0 || tabs.length !== panels.length) return;
 
-      const select = (index: number) => {
+      // 跨多次初始化保持 id 稳定，避免重复
+      if (!group.dataset.tabsId) group.dataset.tabsId = String(tabsGroupSeq++);
+      const gid = group.dataset.tabsId;
+      tabs.forEach((tab, i) => {
+        tab.id = `tabs-${gid}-tab-${i}`;
+        tab.setAttribute("aria-controls", `tabs-${gid}-panel-${i}`);
+      });
+      panels.forEach((panel, i) => {
+        panel.id = `tabs-${gid}-panel-${i}`;
+        panel.setAttribute("role", "tabpanel");
+        panel.setAttribute("aria-labelledby", `tabs-${gid}-tab-${i}`);
+        panel.tabIndex = 0;
+      });
+
+      const select = (index: number, focus = false) => {
         tabs.forEach((tab, i) => {
           const active = i === index;
           tab.setAttribute("aria-selected", String(active));
           tab.dataset.active = String(active);
+          tab.tabIndex = active ? 0 : -1;
+          if (active && focus) tab.focus();
         });
         panels.forEach((panel, i) => {
           panel.dataset.active = String(i === index);
@@ -57,6 +76,17 @@ const labels = titles?.length ? titles : detected;
 
       tabs.forEach((tab, i) => {
         tab.addEventListener("click", () => select(i));
+        tab.addEventListener("keydown", (e) => {
+          let next: number | null = null;
+          if (e.key === "ArrowRight" || e.key === "ArrowDown") next = (i + 1) % tabs.length;
+          else if (e.key === "ArrowLeft" || e.key === "ArrowUp") next = (i - 1 + tabs.length) % tabs.length;
+          else if (e.key === "Home") next = 0;
+          else if (e.key === "End") next = tabs.length - 1;
+          if (next !== null) {
+            e.preventDefault();
+            select(next, true);
+          }
+        });
       });
 
       select(0);

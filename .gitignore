@@ -5,6 +5,8 @@ dist/
 *.log
 .env
 .env.production
+.env.local
+.env.*.local
 
 # Playwright MCP 产物
 .playwright-mcp/
