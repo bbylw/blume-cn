@@ -60,7 +60,7 @@ related:
   - https://astro.build
 ```
 
-根相对路径指向另一个页面，卡片会用该页面的标题和描述展示它；在已翻译的页面上，如果存在译文则链接到译文。`Title: link` 形式的条目会自行设定卡片标题，而绝对 URL 则以主机名链接到站外。路径和页面上的其他链接一样会被校验，所以 [`blume validate`](/docs/cli/validate) 会报告匹配不到任何页面的路径。这个键名与 Mintlify 一致，因此迁移过来的页面可以原样保留。
+根相对路径指向另一个页面，卡片会用该页面的标题和描述展示它；在已翻译的页面上，如果存在译文则链接到译文。`Title: link` 形式的条目会自行设定卡片标题，而绝对 URL 则以主机名链接到站外。路径和页面上的其他链接一样会被校验，所以 [`blume validate`](/docs/cli/validate/) 会报告匹配不到任何页面的路径。这个键名与 Mintlify 一致，因此迁移过来的页面可以原样保留。
 
 ## 侧边栏
 
@@ -76,7 +76,7 @@ sidebar:
 
 `hidden` 会把页面从侧边栏以及上一页/下一页翻页中移除。用在文件夹的 `index` 页面上时，它只移除该页面自己的那一行：分组行仍然链接到该页面，上一页/下一页链接也仍会经过它。
 
-`display` 设定页面所属文件夹分组的渲染模式（[按分组覆盖](/docs/content/navigation#per-group-overrides)），并且只在自动生成的侧边栏中、文件夹的 `index` 页面上才有意义——在其他任何位置（非 index 页面、内容根目录自身的 `index` 页面，或显式 `navigation.sidebar` 下的任何页面）它都没有可配置的分组，Blume 会以 `BLUME_SIDEBAR_DISPLAY_IGNORED` 发出警告。
+`display` 设定页面所属文件夹分组的渲染模式（[按分组覆盖](/docs/content/navigation/)），并且只在自动生成的侧边栏中、文件夹的 `index` 页面上才有意义——在其他任何位置（非 index 页面、内容根目录自身的 `index` 页面，或显式 `navigation.sidebar` 下的任何页面）它都没有可配置的分组，Blume 会以 `BLUME_SIDEBAR_DISPLAY_IGNORED` 发出警告。
 
 ## SEO
 
@@ -91,7 +91,7 @@ seo:
     creator: "@jane"
 ```
 
-`noindex` 会输出 robots `noindex`，把页面从站点地图中移除，并跳过它的结构化数据。`x.creator` 把页面的作者信息指向一个 X 账号（`twitter:creator`）——比如客座文章的作者。全部字段参见[元数据](/docs/discoverability/metadata#per-page-overrides)。
+`noindex` 会输出 robots `noindex`，把页面从站点地图中移除，并跳过它的结构化数据。`x.creator` 把页面的作者信息指向一个 X 账号（`twitter:creator`）——比如客座文章的作者。全部字段参见[元数据](/docs/discoverability/metadata/)。
 
 ## 搜索
 
@@ -103,7 +103,7 @@ search:
   boost: 3
 ```
 
-`exclude` 让页面不出现在搜索结果中，`tags` 把它归入搜索对话框里的某个筛选项。`keywords` 是除页面正文之外、能命中该页面的额外词。`boost` 会乘上页面的相关度：大于 1 排名更高，小于 1 则更低。参见[排序](/docs/configuration/search#ranking)。
+`exclude` 让页面不出现在搜索结果中，`tags` 把它归入搜索对话框里的某个筛选项。`keywords` 是除页面正文之外、能命中该页面的额外词。`boost` 会乘上页面的相关度：大于 1 排名更高，小于 1 则更低。参见[排序](/docs/configuration/search/)。
 
 ## AI
 
@@ -112,7 +112,7 @@ ai:
   exclude: true
 ```
 
-`ai.exclude` 让页面不出现在 [`llms.txt` 与 `llms-full.txt`](/docs/discoverability/llms-txt#excluding-a-page) 中。页面照常渲染、参与搜索，并在站点地图中保留位置。
+`ai.exclude` 让页面不出现在 [`llms.txt` 与 `llms-full.txt`](/docs/discoverability/llms-txt/) 中。页面照常渲染、参与搜索，并在站点地图中保留位置。
 
 ## 更新日志 [#changelog]
 
@@ -126,11 +126,11 @@ changelog:
   category: Features
 ```
 
-`date` 可以写在这里，也可以写在顶层——两者都会用于[更新日志 RSS 订阅](/docs/content#feeds)。自动生成的时间线页面和订阅源参见[更新日志](/docs/advanced/changelog)。
+`date` 可以写在这里，也可以写在顶层——两者都会用于[更新日志 RSS 订阅](/docs/content/)。自动生成的时间线页面和订阅源参见[更新日志](/docs/advanced/changelog/)。
 
 ## 自定义键 [#custom-keys]
 
-本表之外的任何键都会导致构建失败，从而尽早发现拼写错误。带有自有元数据的项目可以在 `blume.config.ts` 中通过 [`frontmatter.extend`](/docs/configuration#frontmatter) 开放额外的键，每个键都由项目提供的 schema 校验：
+本表之外的任何键都会导致构建失败，从而尽早发现拼写错误。带有自有元数据的项目可以在 `blume.config.ts` 中通过 [`frontmatter.extend`](/docs/configuration/) 开放额外的键，每个键都由项目提供的 schema 校验：
 
 ```ts blume.config.ts lineNumbers
 import { defineConfig } from "blume";
@@ -158,7 +158,7 @@ schema 通过 [Standard Schema](https://standardschema.dev) 接口接入，因�
 
 ### 按类型区分的键 [#per-type-keys]
 
-如果只想在某一种内容类型上要求某些键——比如 RFC 的 `status`、事故报告的 `severity`——就改在 [`content.types`](/docs/configuration#content) 下按它们适用的 frontmatter `type` 声明：
+如果只想在某一种内容类型上要求某些键——比如 RFC 的 `status`、事故报告的 `severity`——就改在 [`content.types`](/docs/configuration/) 下按它们适用的 frontmatter `type` 声明：
 
 ```ts blume.config.ts lineNumbers
 import { defineConfig } from "blume";
@@ -187,8 +187,8 @@ status: enforced
 ---
 ```
 
-按类型区分的键遵循与 `extend` 相同的校验规则，但只作用于解析出的 `type` 匹配的页面——当声明针对 [`content.defaultType`](/docs/configuration#content) 时，也包括那些没有设置 `type` 的页面。一个键只属于一处声明，要么全站级别，要么按类型级别，不能两者兼有。而只为另一种类型声明的键在其他地方依然属于未知键，所以普通文档页面上多写一个 `status` 仍会导致构建失败。
+按类型区分的键遵循与 `extend` 相同的校验规则，但只作用于解析出的 `type` 匹配的页面——当声明针对 [`content.defaultType`](/docs/configuration/) 时，也包括那些没有设置 `type` 的页面。一个键只属于一处声明，要么全站级别，要么按类型级别，不能两者兼有。而只为另一种类型声明的键在其他地方依然属于未知键，所以普通文档页面上多写一个 `status` 仍会导致构建失败。
 
-校验失败的页面会让 `blume build` 失败，并给出指明文件和键名的诊断信息。加上 [`--no-strict`](/docs/cli#common-flags) 后构建仍会成功，但失败的页面会从产物中剔除——构建摘要会报告剔除的数量。
+校验失败的页面会让 `blume build` 失败，并给出指明文件和键名的诊断信息。加上 [`--no-strict`](/docs/cli/) 后构建仍会成功，但失败的页面会从产物中剔除——构建摘要会报告剔除的数量。
 
 这些 schema 从 `blume/schema` 导出，供编辑器和迁移工具使用。

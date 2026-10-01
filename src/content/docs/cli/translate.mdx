@@ -4,7 +4,7 @@ description: 用本地 agent CLI 把文档翻译到已配置的语言，并通�
 source: https://useblume.dev/docs/cli/translate
 ---
 
-一旦[国际化](/docs/content/i18n)开启，对源页面的每一次编辑都会悄悄地让它已有的翻译过时。`blume translate` 补上了这个闭环：它精确算出每种语言下哪些页面缺失或过时，用本地 agent CLI 以无头方式翻译它们，并把做过的事记录进一份随代码提交的台账，好让下一次运行——以及 CI——知道哪些是最新的。
+一旦[国际化](/docs/content/i18n/)开启，对源页面的每一次编辑都会悄悄地让它已有的翻译过时。`blume translate` 补上了这个闭环：它精确算出每种语言下哪些页面缺失或过时，用本地 agent CLI 以无头方式翻译它们，并把做过的事记录进一份随代码提交的台账，好让下一次运行——以及 CI——知道哪些是最新的。
 
 ```bash
 blume translate --codex
@@ -30,12 +30,12 @@ blume translate  3 item(s) · 2 locale(s) · Codex
 
 重跑是增量的：自上次翻译以来没有变化的源文件会被跳过，因此改完一个页面再运行 `blume translate`，每种语言只会翻译这一个页面。过时的页面被重新翻译时，agent 会看到已有的译文，并被要求对齐它的语体、方言和术语——源文件改了一段，译文 diff 就只该是一段，而不是从头重写。
 
-首次翻译没有先例可循，所以要提前用[语言上的 `style`](/docs/content/i18n)（`{ code: "pt", label: "Português", style: "Brazilian Portuguese, informal você" }`）把选择钉死。这条指引会随每一段翻译提示一起送过去；已有译文若与之不一致，以 `style` 为准——因此一次重新翻译也会把较早的页面往所配置的语体上带一带。
+首次翻译没有先例可循，所以要提前用[语言上的 `style`](/docs/content/i18n/)（`{ code: "pt", label: "Português", style: "Brazilian Portuguese, informal você" }`）把选择钉死。这条指引会随每一段翻译提示一起送过去；已有译文若与之不一致，以 `style` 为准——因此一次重新翻译也会把较早的页面往所配置的语体上带一带。
 
 ## 会被翻译的内容
 
 - **页面**——默认语言下的 `.md`/`.mdx` 文件。agent 会翻译正文，只翻译人眼可见的 frontmatter 值（`title`、`description`、`sidebar.label`、`sidebar.badge`、`seo.title`、`seo.description`）。目标路径遵循你的解析器：在 `dir` 下是 `fr/guides/install.mdx`，在 `dot` 下是 `guides/install.fr.mdx`。已经存在的译文会在它所在的位置被重写，即便用的是另一个名字（手写的 `fr/guides/install.md`），因此重新翻译绝不会给同一个页面添上第二份副本。
-- **文件夹导航标题**——在 `dir` 解析器下，每种语言所需的 [`meta.ts`](/docs/content/meta)标题会在一次批量调用中翻译完成，而生成的各语言 `meta.ts` 会逐字复制其余每个键（`order`、`pages`、`icon`、`collapsed`），使该语言的侧边栏保持原有排序。它会写进磁盘上该语言已存在的目录里（配置为 `pt-BR` 时就是 `pt-br/`），如果那里已经有一个 `meta.js` 或 `meta.mjs`，它会被重写，而不是在旁边多出一个 `meta.ts`。
+- **文件夹导航标题**——在 `dir` 解析器下，每种语言所需的 [`meta.ts`](/docs/content/meta/)标题会在一次批量调用中翻译完成，而生成的各语言 `meta.ts` 会逐字复制其余每个键（`order`、`pages`、`icon`、`collapsed`），使该语言的侧边栏保持原有排序。它会写进磁盘上该语言已存在的目录里（配置为 `pt-BR` 时就是 `pt-br/`），如果那里已经有一个 `meta.js` 或 `meta.mjs`，它会被重写，而不是在旁边多出一个 `meta.ts`。
 
 你手写的翻译会被**采纳，绝不覆盖**：已存在却没有台账条目的译文会被标记为最新并原样保留，只有 `--force` 才会重新翻译它。
 
@@ -45,7 +45,7 @@ blume translate  3 item(s) · 2 locale(s) · Codex
 
 - frontmatter 由源文件的数据重建，只把六个可翻译的值覆盖上去——agent 凭空发明的键会被丢掉，它删掉的键会被恢复，而 `slug`、`icon`、`order` 和日期从构造上就与源文件逐字一致。
 - 代码围栏的数量必须与源文件一致，正文不能为空，frontmatter 必须能解析。
-- 除非译文里已经固定了自己的锚点，否则每个标题都会用一个结尾的 [`[#id]` 标记](/docs/content/syntax#custom-anchors)钉在源标题的锚点 id 上，这样 `#fragment` 链接在任何语言里都解析到同一处。标题按位置一一配对，因此标题结构与源文件不匹配的译文不会得到任何锚点。
+- 除非译文里已经固定了自己的锚点，否则每个标题都会用一个结尾的 [`[#id]` 标记](/docs/content/syntax/)钉在源标题的锚点 id 上，这样 `#fragment` 链接在任何语言里都解析到同一处。标题按位置一一配对，因此标题结构与源文件不匹配的译文不会得到任何锚点。
 
 校验未通过的回复不会写入任何内容——该项会被报为失败，本次运行继续往下走。所有成功的条目仍留在台账里，因此重跑时只会重试那些失败项。
 
@@ -68,7 +68,7 @@ JSON 报告的结构与 `blume validate --json`、`blume audit --json` 和 `blum
 
 - 元数据标题的翻译只支持 `dir` 解析器——`dot` 解析器没有按语言生成 `meta.ts` 的机制。默认导出函数的 `meta.ts` 会被跳过并给出警告；该语言的那份请手写。
 - 远程源和由 CMS 支撑的源会被跳过：没有本地文件可以把译文写进去。
-- 头部标签页的文字位于 `blume.config.ts` 而非内容里——用[按语言的标签映射](/docs/content/navigation#tabs)在那里做本地化。
+- 头部标签页的文字位于 `blume.config.ts` 而非内容里——用[按语言的标签映射](/docs/content/navigation/)在那里做本地化。
 - 译文质量取决于 agent。要像审阅其它任何贡献那样审阅它的输出——台账只保证新鲜度，不保证地道。
 
 ## 选项

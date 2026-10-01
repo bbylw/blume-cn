@@ -4,7 +4,7 @@ description: 用 i18n 配置多语言路由、语言切换器、按语言导航�
 source: https://useblume.dev/docs/content/i18n
 ---
 
-Blume 让一个项目支持多种语言。把译文放到正确的位置，Blume 就会为你接好路由、语言切换器、按语言的导航和 SEO——你不需要再维护一套单独的路由层。它是可选的：没有 `i18n` 块，你的站点就和以前一样保持单语言。它也可以与[版本管理](/docs/content/versioning)组合——冻结的快照会保留自己的翻译，语言回退在每个版本内部生效。
+Blume 让一个项目支持多种语言。把译文放到正确的位置，Blume 就会为你接好路由、语言切换器、按语言的导航和 SEO——你不需要再维护一套单独的路由层。它是可选的：没有 `i18n` 块，你的站点就和以前一样保持单语言。它也可以与[版本管理](/docs/content/versioning/)组合——冻结的快照会保留自己的翻译，语言回退在每个版本内部生效。
 
 ## 启用
 
@@ -21,7 +21,7 @@ i18n: {
 }
 ```
 
-每种语言都有一个 `code`（用于 URL）、一个 `label`（显示在语言切换器里），以及一个可选的 `dir` 用于从右到左的文字（默认 `"ltr"`）。可选的 `style` 会为 [`blume translate`](/docs/cli/translate) 提供该语言的自由格式指引——语域、方言、术语，例如 `"Brazilian Portuguese, informal você"`——这样这个选择从第一次翻译起就被固定下来，而不是由 agent 临场决定。
+每种语言都有一个 `code`（用于 URL）、一个 `label`（显示在语言切换器里），以及一个可选的 `dir` 用于从右到左的文字（默认 `"ltr"`）。可选的 `style` 会为 [`blume translate`](/docs/cli/translate/) 提供该语言的自由格式指引——语域、方言、术语，例如 `"Brazilian Portuguese, informal você"`——这样这个选择从第一次翻译起就被固定下来，而不是由 agent 临场决定。
 
 ## 组织翻译内容
 
@@ -84,9 +84,9 @@ i18n: {
 
 ## 按语言的导航 [#per-locale-navigation]
 
-每种语言都有自己的侧边栏，由该语言的文件生成——因此译文在结构、顺序或标签上都可以不同。文件夹的 [`meta.ts`](/docs/content/meta) 文件同样按语言解析：在默认的 `dir` 解析器下，把 `meta.ts` 放在 `fr/guides/` 下即可独立排序法语分组。在某种语言拥有自己的 `meta.ts`（或共享的 `meta.$.ts`）之前，它的分组会沿用[回退](#fallbacks)语言的分组——即那个文件夹的 `meta.ts`，以及其索引页所设置的 `sidebar.display`——这样发生回退的页面能保持相同的标题、顺序和可折叠分组。在 `dot` 解析器下译文与原文相邻，因此文件夹的 `meta.ts` 适用于所有语言。[导航](/docs/content/navigation)的其他一切行为都按语言照常工作。
+每种语言都有自己的侧边栏，由该语言的文件生成——因此译文在结构、顺序或标签上都可以不同。文件夹的 [`meta.ts`](/docs/content/meta/) 文件同样按语言解析：在默认的 `dir` 解析器下，把 `meta.ts` 放在 `fr/guides/` 下即可独立排序法语分组。在某种语言拥有自己的 `meta.ts`（或共享的 `meta.$.ts`）之前，它的分组会沿用[回退](#fallbacks)语言的分组——即那个文件夹的 `meta.ts`，以及其索引页所设置的 `sidebar.display`——这样发生回退的页面能保持相同的标题、顺序和可折叠分组。在 `dot` 解析器下译文与原文相邻，因此文件夹的 `meta.ts` 适用于所有语言。[导航](/docs/content/navigation/)的其他一切行为都按语言照常工作。
 
-头部标签页、头部链接和页脚都是配置出来的，而不是从内容推导的，因此它们的文案要在 `blume.config.ts` 中本地化。每一条已配置的文案都接受一个按语言映射的对象（`{ en: "Docs", fr: "Documentation" }`），也可以直接用纯字符串；未填写的语言会回落到默认语言的条目：标签页与下拉菜单文案（[标签页](/docs/content/navigation#tabs)）、[精选链接](/docs/content/navigation#featured-links)、[头部操作项](/docs/content/navigation#header-actions)及行动号召、[页脚](/docs/configuration#footer)链接，以及[横幅](/docs/configuration#banner)的文本与链接文字。
+头部标签页、头部链接和页脚都是配置出来的，而不是从内容推导的，因此它们的文案要在 `blume.config.ts` 中本地化。每一条已配置的文案都接受一个按语言映射的对象（`{ en: "Docs", fr: "Documentation" }`），也可以直接用纯字符串；未填写的语言会回落到默认语言的条目：标签页与下拉菜单文案（[标签页](/docs/content/navigation/)）、[精选链接](/docs/content/navigation/)、[头部操作项](/docs/content/navigation/)及行动号召、[页脚](/docs/configuration/)链接，以及[横幅](/docs/configuration/)的文本与链接文字。
 
 ```ts blume.config.ts lineNumbers
 navigation: {
@@ -102,7 +102,7 @@ footer: {
 },
 ```
 
-标签页路径、头部与页脚链接，以及头部 logo 的链接，也会在该语言确实提供这个路由时切换到读者所在的语言，让整个界面始终停留在一种语言之内。只由默认语言提供的路由——例如[自定义页面](/docs/advanced/custom-pages)或生成的[更新日志](/docs/advanced/changelog)索引——会保留自己的路径，而不是指向一个会 404 的本地化 URL。
+标签页路径、头部与页脚链接，以及头部 logo 的链接，也会在该语言确实提供这个路由时切换到读者所在的语言，让整个界面始终停留在一种语言之内。只由默认语言提供的路由——例如[自定义页面](/docs/advanced/custom-pages/)或生成的[更新日志](/docs/advanced/changelog/)索引——会保留自己的路径，而不是指向一个会 404 的本地化 URL。
 
 ## 回退语言 [#fallbacks]
 
@@ -117,7 +117,7 @@ i18n: {
 
 回退页面把 canonical 链接指向它们所复制的那一页，并且被排除在搜索索引、`llms.txt` 以及 MCP 和 JSON API 的页面列表之外，`hreflang` 里也不会把它们宣称为真正的译文，因此未翻译的内容不会争抢排名。它们仍会出现在该语言的侧边栏里，导航因此保持完整——读者在任何语言下都能到达每个页面。
 
-来自 [`githubReleases()`](/docs/content/sources/github-releases) 内容源的发布说明是个例外：它们只用一种语言发布，因此永远不会被复制到其它语言的 URL 上，也不显示语言切换器。
+来自 [`githubReleases()`](/docs/content/sources/github-releases/) 内容源的发布说明是个例外：它们只用一种语言发布，因此永远不会被复制到其它语言的 URL 上，也不显示语言切换器。
 
 :::tip
 先从最重要的页面开始翻译——首页、快速上手和最核心的指南——其余的交给回退。你可以随时间逐步补齐译文，而不会弄坏任何链接。
@@ -127,11 +127,11 @@ i18n: {
 
 在所有语言里（包括已翻译的页面），都像在默认语言中那样书写内部链接——`[Setup](/guides/setup)`、`<Card href="/guides/setup">`。当某个页面渲染在语言前缀之下时，只要该路由在那里有提供（无论是真译文还是回退页面），Blume 就会把每个根相对的页面链接迁到该语言下（`/fr/guides/setup`）。没有对应语言变体的链接——自定义页面、生成的路由，或在关闭回退的站点上缺失的译文——会保留你写下的目标，而不是指向 404；已经带语言前缀的链接（`/de/guides/setup`）则原样不动，因此跨语言链接始终是显式的。
 
-锚点会跟着链接一起走，因此各语言标题的 id 必须一致。[`blume translate`](/docs/cli/translate) 会处理这件事：每个译后的标题都会用结尾的 `[#id]` 标记固定到源标题的 id。手工编写译文时，请用同样的[`[#custom-id]` 标记](/docs/content/syntax#custom-anchors)自行固定标题——否则 `#ordering` 就匹配不上法语页面自动生成的 `#ordre`，`blume validate` 会针对读者实际落到的那一页报告不一致。
+锚点会跟着链接一起走，因此各语言标题的 id 必须一致。[`blume translate`](/docs/cli/translate/) 会处理这件事：每个译后的标题都会用结尾的 `[#id]` 标记固定到源标题的 id。手工编写译文时，请用同样的[`[#custom-id]` 标记](/docs/content/syntax/)自行固定标题——否则 `#ordering` 就匹配不上法语页面自动生成的 `#ordre`，`blume validate` 会针对读者实际落到的那一页报告不一致。
 
 ## 用 agent 翻译
 
-你不必手工补齐每种语言。[`blume translate`](/docs/cli/translate) 会找出每种语言中缺失或过期的页面，并用本地 agent CLI（[Codex](https://developers.openai.com/codex/cli) 或 [Claude Code](https://claude.com/claude-code)）翻译它们：
+你不必手工补齐每种语言。[`blume translate`](/docs/cli/translate/) 会找出每种语言中缺失或过期的页面，并用本地 agent CLI（[Codex](https://developers.openai.com/codex/cli) 或 [Claude Code](https://claude.com/claude-code)）翻译它们：
 
 ```bash
 blume translate --codex
@@ -141,7 +141,7 @@ Blume 会校验每份结果的结构——frontmatter、代码围栏、链接—
 
 ## 语言切换器 [#the-language-switcher]
 
-启用 i18n 后，头部会自动出现语言切换器，由你的 `locales` 生成。对每个页面，它会链接到每种语言中对应的译文；若缺少译文，则链接到回退页面并标记为未翻译。没有任何需要配置的东西。来自 [GitHub Releases](/docs/content/sources/github-releases) 内容源的页面是个例外：发布说明只有一种语言，因此这些页面渲染时不带切换器。
+启用 i18n 后，头部会自动出现语言切换器，由你的 `locales` 生成。对每个页面，它会链接到每种语言中对应的译文；若缺少译文，则链接到回退页面并标记为未翻译。没有任何需要配置的东西。来自 [GitHub Releases](/docs/content/sources/github-releases/) 内容源的页面是个例外：发布说明只有一种语言，因此这些页面渲染时不带切换器。
 
 ## 按浏览器语言路由
 
@@ -190,7 +190,7 @@ i18n: {
 - `hreflang` 备选链接会链到某个页面的每一个真实译文，外加一个指向默认语言的 `x-default`。
 - Canonical URL 与语言对应，JSON-LD 会带上 `inLanguage`。
 
-设置 [`deployment.site`](/docs/deployment)，这些内容就能以绝对 URL 的形式输出。
+设置 [`deployment.site`](/docs/deployment/)，这些内容就能以绝对 URL 的形式输出。
 
 ## 搜索
 
@@ -202,10 +202,10 @@ i18n: {
 
 ## 接下来看什么
 
-**[导航](/docs/content/navigation)**
+**[导航](/docs/content/navigation/)**
 
 塑造每种语言的侧边栏、排序与标签页。
 
-**[可发现性](/docs/discoverability)**
+**[可发现性](/docs/discoverability/)**
 
 站点地图、Open Graph 与结构化数据。

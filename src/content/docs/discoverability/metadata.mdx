@@ -9,9 +9,9 @@ source: https://useblume.dev/docs/discoverability/metadata
 - `<title>` —— 页面标题加上你的站点 `title`。
 - `<meta name="description">` 和 `og:description` —— 页面的 `description`，回退到站点的 `description`。
 - `og:title` 和 `og:site_name` —— 页面标题和你的站点 `title`。
-- `<link rel="canonical">` 和 `og:url` —— 页面的绝对 URL（当 [`deployment.site`](/docs/deployment) 已设置时）。
+- `<link rel="canonical">` 和 `og:url` —— 页面的绝对 URL（当 [`deployment.site`](/docs/deployment/) 已设置时）。
 - `og:type` —— blog 文章和更新日志条目为 `article`，其他页面为 `website`。文章页面还会根据页面的 `date` 和最后修改时间输出 `article:published_time` 与 `article:modified_time`。
-- `og:image` —— 该页面的 [OG 图片](/docs/discoverability/open-graph)。生成的卡片同时会声明自己的 `og:image:width`、`og:image:height`、`og:image:type` 和 `og:image:alt`，这样爬虫不必先抓取就能完成排版；你自己提供的 `seo.image` 则不声明这些，因为它的尺寸和格式未知。
+- `og:image` —— 该页面的 [OG 图片](/docs/discoverability/open-graph/)。生成的卡片同时会声明自己的 `og:image:width`、`og:image:height`、`og:image:type` 和 `og:image:alt`，这样爬虫不必先抓取就能完成排版；你自己提供的 `seo.image` 则不声明这些，因为它的尺寸和格式未知。
 - `twitter:card`、`twitter:title`、`twitter:description`、`twitter:image` —— X 卡片。有图片的页面会得到宽版的 `summary_large_image`；没有图片的页面仍会得到紧凑的 `summary` 卡片，而不是渲染成一条裸链接。
 
 ## X 归属
@@ -50,7 +50,7 @@ seo: {
 }
 ```
 
-每个键是标签名，每个值是它的内容。Open Graph 系列（`og:`、`fb:`、`article:` 等）按协议规定用 `property` 渲染，其他一切用 `name`。Blume 自己写出的那些标签（列在本页顶部）不能在这里设置，因此一个页面永远不会为同一个标签带上两个值。构建结果会指出控制每个标签的设置：`og:image` 来自 [`seo.og`](/docs/discoverability/open-graph) 或页面的 `seo.image`，而 `robots` 来自页面的 `seo.noindex`。
+每个键是标签名，每个值是它的内容。Open Graph 系列（`og:`、`fb:`、`article:` 等）按协议规定用 `property` 渲染，其他一切用 `name`。Blume 自己写出的那些标签（列在本页顶部）不能在这里设置，因此一个页面永远不会为同一个标签带上两个值。构建结果会指出控制每个标签的设置：`og:image` 来自 [`seo.og`](/docs/discoverability/open-graph/) 或页面的 `seo.image`，而 `robots` 来自页面的 `seo.noindex`。
 
 ## 逐页面覆盖 [#per-page-overrides]
 
@@ -76,4 +76,4 @@ seo:
 | `seo.noindex?` | `boolean` | - | 输出 robots noindex 并跳过结构化数据。 |
 | `seo.x.creator?` | `string` | - | 把这个页面署名给某个 X 账号（`twitter:creator`），覆盖配置里的 `seo.x.creator`。 |
 
-标记为 `noindex` 的页面也会退出 [sitemap](/docs/discoverability/sitemap-and-robots#sitemap)，并跳过[结构化数据](/docs/discoverability/structured-data)。
+标记为 `noindex` 的页面也会退出 [sitemap](/docs/discoverability/sitemap-and-robots/)，并跳过[结构化数据](/docs/discoverability/structured-data/)。

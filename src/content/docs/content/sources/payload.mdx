@@ -28,4 +28,4 @@ export default defineConfig({
 });
 ```
 
-API key 来自 `PAYLOAD_API_KEY` 环境变量，并以 `users API-Key <key>` 的形式发送；当这个 key 属于另一个启用了认证的集合时，设置 `authCollection`。只有已发布的文档会被导入 —— `--preview` 会请求草稿并以 `draft: true` 暂存它们。文档以 `depth: 1` 抓取，因此上传文件会带上自己的 URL，而相对的上传路径（`/media/x.png`）会相对于 `url` 解析。`block` 或 `inlineBlock` 节点通过引擎的 `serializers` 选项（以 `blockType` 为键）映射为 Blume 组件，前提是你直接构造 `payloadSource` 并把它传给 [`custom()`](/docs/content/sources/custom)。设置 `serializers` 会以 MDX 写出该来源的页面，让返回的组件得以渲染；放在 Markdown 文本字段里的正文则仍是 Markdown。
+API key 来自 `PAYLOAD_API_KEY` 环境变量，并以 `users API-Key <key>` 的形式发送；当这个 key 属于另一个启用了认证的集合时，设置 `authCollection`。只有已发布的文档会被导入 —— `--preview` 会请求草稿并以 `draft: true` 暂存它们。文档以 `depth: 1` 抓取，因此上传文件会带上自己的 URL，而相对的上传路径（`/media/x.png`）会相对于 `url` 解析。`block` 或 `inlineBlock` 节点通过引擎的 `serializers` 选项（以 `blockType` 为键）映射为 Blume 组件，前提是你直接构造 `payloadSource` 并把它传给 [`custom()`](/docs/content/sources/custom/)。设置 `serializers` 会以 MDX 写出该来源的页面，让返回的组件得以渲染；放在 Markdown 文本字段里的正文则仍是 Markdown。

@@ -11,13 +11,13 @@ blume validate
 ```
 
 - **站内页面链接**（`/guides/intro`、`./sibling`）必须能解析到一个真实页面——失效的会被报为错误。组件里的字符串 `href`（`<Card href="./install">`）以同样的方式检查；`href={…}` 这类表达式则不会。
-- **锚点链接**（`#section`、`/guides/intro#setup`）必须匹配目标页面上的某个锚点——标题的 id（自动生成或[手动固定](/docs/content/syntax#custom-anchors)），或者原始 HTML 元素的 `id` 属性——对不上的会报为警告。代码块内、行内代码里、HTML 注释里以及 `<Prompt>` 块中的 id 不算数。
+- **锚点链接**（`#section`、`/guides/intro#setup`）必须匹配目标页面上的某个锚点——标题的 id（自动生成或[手动固定](/docs/content/syntax/)），或者原始 HTML 元素的 `id` 属性——对不上的会报为警告。代码块内、行内代码里、HTML 注释里以及 `<Prompt>` 块中的 id 不算数。
 - **资源链接**按文件实际所在的位置来检查：绝对路径（`/logo.png`）对照 `public/` 目录，相对的图片嵌入（`![](./diagram.png)`）对照页面自己的目录。对相对路径的普通链接仍会作为站点路由来解析——只有图片嵌入才会走图片处理流程。
 - **外链**只有加上 [`--external`](#flags) 才会检查（默认关闭，因为它需要联网）；失效的链接（404/410/无法访问）是错误，而被限流或临时性的响应（403/429/5xx/超时）则是警告。
 
 ## 什么算作一个页面
 
-链接是针对构建后站点所能提供的一切来解析的，而不只是 Markdown 页面：自定义的 [`.astro` 页面](/docs/advanced/custom-pages)、生成的[更新日志](/docs/advanced/changelog)索引、每一个配置过的[重定向](/docs/deployment#redirects)，以及在[多语言站点](/docs/content/i18n)上未翻译页面在各语言下的回退 URL。解析失败的页面会与链接问题一并报告，因为一个永远加载不出来的页面是链接校验的盲区，而不是一个干净的结果。
+链接是针对构建后站点所能提供的一切来解析的，而不只是 Markdown 页面：自定义的 [`.astro` 页面](/docs/advanced/custom-pages/)、生成的[更新日志](/docs/advanced/changelog/)索引、每一个配置过的[重定向](/docs/deployment/)，以及在[多语言站点](/docs/content/i18n/)上未翻译页面在各语言下的回退 URL。解析失败的页面会与链接问题一并报告，因为一个永远加载不出来的页面是链接校验的盲区，而不是一个干净的结果。
 
 ## 选项 [#flags]
 
@@ -39,4 +39,4 @@ blume validate
 
 ## JSON 输出 [#json-output]
 
-加上 `--json` 后，`blume validate`（以及 [`blume doctor`](/docs/cli/doctor)）会向 stdout 写出一个对象：一个 `diagnostics` 列表，每一项都带着自己的 `code`、`severity`、`message`、相对于项目根目录的 `file`（当这条发现带有位置时还包括 `line` 和 `column`）、一个 `suggestion`，以及一个指向解释该代码的页面的 `docsUrl`，此外还有一个按级别计数汇总的 `summary`。退出码不变，因此同一条命令既能为 CI 把关，也能给编辑器集成提供数据。
+加上 `--json` 后，`blume validate`（以及 [`blume doctor`](/docs/cli/doctor/)）会向 stdout 写出一个对象：一个 `diagnostics` 列表，每一项都带着自己的 `code`、`severity`、`message`、相对于项目根目录的 `file`（当这条发现带有位置时还包括 `line` 和 `column`）、一个 `suggestion`，以及一个指向解释该代码的页面的 `docsUrl`，此外还有一个按级别计数汇总的 `summary`。退出码不变，因此同一条命令既能为 CI 把关，也能给编辑器集成提供数据。

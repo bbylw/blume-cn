@@ -6,7 +6,7 @@ source: https://useblume.dev/docs/references/openapi
 
 把一个 OpenAPI 规范指给 Blume，它就会生成一份原生 API 参考：**每个接口一个真实页面**，按 tag 分组放进受标签页约束的侧边栏，带 schema 表、请求/响应示例、生成的代码示例，以及一个交互式 [Try it](#try-it-playground) 面板。由于每个接口都是一个真正的 Blume 页面，它有自己的 URL，会出现在**站内搜索**和 `llms.txt` 中，还会得到一张 Open Graph 图片 —— 与手写文档别无二致。
 
-每份参考都是从 `blume/reference` 导入并登记在 `reference` 下的一个**适配器**：`openapi()` 对应 OpenAPI 文档，[`asyncapi()`](/docs/references/asyncapi) 对应 AsyncAPI 文档，[`graphql()`](/docs/references/graphql) 对应 GraphQL schema。每个适配器掌管自己的规范来源、挂载路由和显示选项，因此这个列表里每种类型想放多少都行。下面的配置以公开的 Petstore 规范为例，把 Blume 指向它。
+每份参考都是从 `blume/reference` 导入并登记在 `reference` 下的一个**适配器**：`openapi()` 对应 OpenAPI 文档，[`asyncapi()`](/docs/references/asyncapi/) 对应 AsyncAPI 文档，[`graphql()`](/docs/references/graphql/) 对应 GraphQL schema。每个适配器掌管自己的规范来源、挂载路由和显示选项，因此这个列表里每种类型想放多少都行。下面的配置以公开的 Petstore 规范为例，把 Blume 指向它。
 
 ```ts blume.config.ts lineNumbers
 import { defineConfig } from "blume";
@@ -19,9 +19,9 @@ export default defineConfig({
 });
 ```
 
-它把参考挂在 `/reference`（一个概览页）上，每个接口位于 `/reference/<tag>/<operation>`。`spec` 要么是一个 `http(s)` URL，要么是你项目中某个本地文件的路径。Blume 用 [Scalar 的 OpenAPI 解析器](https://github.com/scalar/scalar)解析它 —— Swagger 2.0 和 OpenAPI 3.0 规范会自动升级到 3.1。适配器只是对参考的一份纯描述 —— 不是解析后的规范 —— 因此 Blume 可以预先校验它，并把它内联进生成的站点；完全不写 `reference`（或留空）则不会渲染出任何参考。要记录的是事件驱动 API 或 GraphQL API 吗？请看 [AsyncAPI](/docs/references/asyncapi) 和 [GraphQL](/docs/references/graphql)。
+它把参考挂在 `/reference`（一个概览页）上，每个接口位于 `/reference/<tag>/<operation>`。`spec` 要么是一个 `http(s)` URL，要么是你项目中某个本地文件的路径。Blume 用 [Scalar 的 OpenAPI 解析器](https://github.com/scalar/scalar)解析它 —— Swagger 2.0 和 OpenAPI 3.0 规范会自动升级到 3.1。适配器只是对参考的一份纯描述 —— 不是解析后的规范 —— 因此 Blume 可以预先校验它，并把它内联进生成的站点；完全不写 `reference`（或留空）则不会渲染出任何参考。要记录的是事件驱动 API 或 GraphQL API 吗？请看 [AsyncAPI](/docs/references/asyncapi/) 和 [GraphQL](/docs/references/graphql/)。
 
-参考不会自己添加页眉标签页。要让它露出来，把一个[导航标签页](/docs/content/navigation#tabs)指向它的路由 —— 这同时也限定了原生渲染器下接口侧边栏的范围：
+参考不会自己添加页眉标签页。要让它露出来，把一个[导航标签页](/docs/content/navigation/)指向它的路由 —— 这同时也限定了原生渲染器下接口侧边栏的范围：
 
 ```ts blume.config.ts
 navigation: {
@@ -134,7 +134,7 @@ reference: [openapi({ spec: "./openapi.yaml", playground: false })],
 
 ### CORS 与代理 [#cors-and-the-proxy]
 
-与 [Scalar 嵌入页](/docs/references/scalar)一样，请求**直接从浏览器**发往目标 API，因此 API 必须允许来自文档站点的跨域请求（`Access-Control-Allow-Origin`）。做不到这一点时，设置 `playground.proxy`：一个 URL 会让请求经由你自己托管的代理转发，`true` 则启用内置的 `/_api-proxy` 路由（若你设置了 [`basePath`](/docs/deployment#mount-the-docs-under-a-path)，则位于 `{basePath}/_api-proxy`）—— 它需要[服务端输出](/docs/deployment#server-rendering)：一个主机适配器，例如来自 `blume/deploy` 的 `deployment: vercel()`：
+与 [Scalar 嵌入页](/docs/references/scalar/)一样，请求**直接从浏览器**发往目标 API，因此 API 必须允许来自文档站点的跨域请求（`Access-Control-Allow-Origin`）。做不到这一点时，设置 `playground.proxy`：一个 URL 会让请求经由你自己托管的代理转发，`true` 则启用内置的 `/_api-proxy` 路由（若你设置了 [`basePath`](/docs/deployment/)，则位于 `{basePath}/_api-proxy`）—— 它需要[服务端输出](/docs/deployment/)：一个主机适配器，例如来自 `blume/deploy` 的 `deployment: vercel()`：
 
 ```ts blume.config.ts lineNumbers
 reference: [
@@ -147,7 +147,7 @@ reference: [
 ],
 ```
 
-内置代理只会把请求转发到你的规范在 `servers` 中声明的 origin（可以出现在文档级、path 级或接口级，变量取默认值）—— 跨重定向也一样 —— 因此一个公开的文档部署无法被指向其网络内的其它主机。输入到面板里的 **Custom base URL** 不算已声明的服务器：启用代理后，发往它的请求会被 403 拒绝。它只转发面板自己设置的请求头 —— 填好的凭据与 header 参数，以及请求体的 `Content-Type` —— 因此 cookie、浏览器替文档站点附带的凭据（比如受密码保护的预览上的 HTTP Basic 认证），以及你的主机添加的请求头（`X-Forwarded-For`、`CF-*`、`X-Vercel-*`）都不会到达 API。它读取请求体的上限只有 4 MB（更大的会得到 `413`），并且它转发的每个响应都带上 `Content-Security-Policy: sandbox`、`X-Content-Type-Options: nosniff` 和 `Cross-Origin-Resource-Policy: same-origin` —— 对 HTML 或 SVG 还会额外带 `Content-Disposition: attachment` —— 这样回显输入的 API 错误页就无法在文档 origin 上执行脚本。这个代理和每个读者可调用的服务端路由一样，按读者[限流](/docs/configuration/rate-limiting)。
+内置代理只会把请求转发到你的规范在 `servers` 中声明的 origin（可以出现在文档级、path 级或接口级，变量取默认值）—— 跨重定向也一样 —— 因此一个公开的文档部署无法被指向其网络内的其它主机。输入到面板里的 **Custom base URL** 不算已声明的服务器：启用代理后，发往它的请求会被 403 拒绝。它只转发面板自己设置的请求头 —— 填好的凭据与 header 参数，以及请求体的 `Content-Type` —— 因此 cookie、浏览器替文档站点附带的凭据（比如受密码保护的预览上的 HTTP Basic 认证），以及你的主机添加的请求头（`X-Forwarded-For`、`CF-*`、`X-Vercel-*`）都不会到达 API。它读取请求体的上限只有 4 MB（更大的会得到 `413`），并且它转发的每个响应都带上 `Content-Security-Policy: sandbox`、`X-Content-Type-Options: nosniff` 和 `Cross-Origin-Resource-Policy: same-origin` —— 对 HTML 或 SVG 还会额外带 `Content-Disposition: attachment` —— 这样回显输入的 API 错误页就无法在文档 origin 上执行脚本。这个代理和每个读者可调用的服务端路由一样，按读者[限流](/docs/configuration/rate-limiting/)。
 
 ## 多份规范 [#multiple-specs]
 
@@ -164,7 +164,7 @@ reference: [
 ],
 ```
 
-`spec` 是单条目 `sources` 的简写，因此只有在不止一份规范时才需要动 `sources`。当两份规范需要不同的显示选项 —— 比如不同的代码示例集合 —— 改为列出两个 `openapi()` 适配器，各自带自己的 `route`。原生页面旁边若要嵌入 [Scalar](/docs/references/scalar) 参考，则在列表里另加一个 `scalar()` 适配器。来源按列表顺序解析，两个来源解析到同一路由时，先出现的那个胜出（构建会对被丢弃的那个发出警告）。
+`spec` 是单条目 `sources` 的简写，因此只有在不止一份规范时才需要动 `sources`。当两份规范需要不同的显示选项 —— 比如不同的代码示例集合 —— 改为列出两个 `openapi()` 适配器，各自带自己的 `route`。原生页面旁边若要嵌入 [Scalar](/docs/references/scalar/) 参考，则在列表里另加一个 `scalar()` 适配器。来源按列表顺序解析，两个来源解析到同一路由时，先出现的那个胜出（构建会对被丢弃的那个发出警告）。
 
 ### 按来源的索引 [#per-source-indexing]
 
@@ -202,7 +202,7 @@ reference: [
 ],
 ```
 
-[`scalar()`](/docs/references/scalar) 嵌入页只接受其中的 `noindex` —— 它本就在 Blume 的搜索和 `llms.txt` 之外，因此那两个 `include*` 设置在那里无事可做。
+[`scalar()`](/docs/references/scalar/) 嵌入页只接受其中的 `noindex` —— 它本就在 Blume 的搜索和 `llms.txt` 之外，因此那两个 `include*` 设置在那里无事可做。
 
 ## Overlays [#overlays]
 
@@ -270,4 +270,4 @@ Webhook 页面是真正的页面：它们在搜索、`llms.txt` 和 MCP 服务�
 
 ## 改为嵌入 Scalar [#embedding-scalar-instead]
 
-`openapi()` 始终渲染 Blume 自己的页面。若想改为在单一路由上嵌入 [Scalar](https://scalar.com) 那套自带的 API 参考界面 —— 它自己的侧边栏、搜索、主题和请求客户端 —— 就用一个来自 `blume/reference` 的 `scalar()` 适配器替代（或并列于）当前这个。[Scalar](/docs/references/scalar)页面介绍了这个嵌入页能做什么、不能做什么，以及如何把 Scalar 自己的选项透传进去。
+`openapi()` 始终渲染 Blume 自己的页面。若想改为在单一路由上嵌入 [Scalar](https://scalar.com) 那套自带的 API 参考界面 —— 它自己的侧边栏、搜索、主题和请求客户端 —— 就用一个来自 `blume/reference` 的 `scalar()` 适配器替代（或并列于）当前这个。[Scalar](/docs/references/scalar/)页面介绍了这个嵌入页能做什么、不能做什么，以及如何把 Scalar 自己的选项透传进去。

@@ -18,7 +18,7 @@ import data from "blume:data";
 <h1>Pricing for {data.config.title}</h1>
 ```
 
-`blume dev` 会立刻认出它，`blume build` 则会把它预渲染成静态 HTML。文件夹名可通过 [`content.pages`](/docs/configuration#content) 配置（默认 `"pages"`）。
+`blume dev` 会立刻认出它，`blume build` 则会把它预渲染成静态 HTML。文件夹名可通过 [`content.pages`](/docs/configuration/) 配置（默认 `"pages"`）。
 
 自定义页面在磁盘上保留原来的位置，因此相对导入、组件导入以及 [`getStaticPaths`](https://docs.astro.build/en/reference/routing-reference/#getstaticpaths) 的行为都与普通 Astro 项目完全一致 —— Blume 把每个文件原地挂载，而不是复制一份。
 
@@ -33,9 +33,9 @@ import data from "blume:data";
 | `pages/blog/[slug].astro` | `/blog/:slug` |
 | `pages/changelog.astro` | `/changelog` |
 
-自定义页面在同一路径上会**胜出**于自动生成的路由。比如加上 `pages/changelog.astro`，就把 Blume 的[更新日志时间线](/docs/advanced/changelog)换成了你自己的。
+自定义页面在同一路径上会**胜出**于自动生成的路由。比如加上 `pages/changelog.astro`，就把 Blume 的[更新日志时间线](/docs/advanced/changelog/)换成了你自己的。
 
-Blume 无法枚举一条动态 `[param]` 路由会服务哪些路径，因此这类页面不会进入[站点地图](/docs/discoverability/sitemap-and-robots)、不会生成 [Open Graph 卡片](/docs/discoverability/open-graph)，[`blume validate`](/docs/cli/validate) 也不认识它们 —— 链到它们的链接会被报成失效。要让它们拥有分享图，可以给 `PageLayout` 传 `ogImage`；或者为每条路径各配一个静态文件（用 `pages/compare/mintlify.astro` 而不是 `pages/compare/[tool].astro`），这样三样都能拿到。
+Blume 无法枚举一条动态 `[param]` 路由会服务哪些路径，因此这类页面不会进入[站点地图](/docs/discoverability/sitemap-and-robots/)、不会生成 [Open Graph 卡片](/docs/discoverability/open-graph/)，[`blume validate`](/docs/cli/validate/) 也不认识它们 —— 链到它们的链接会被报成失效。要让它们拥有分享图，可以给 `PageLayout` 传 `ogImage`；或者为每条路径各配一个静态文件（用 `pages/compare/mintlify.astro` 而不是 `pages/compare/[tool].astro`），这样三样都能拿到。
 
 ## 读取站点数据
 
@@ -190,15 +190,15 @@ const { config } = data;
 </PageLayout>
 ```
 
-自定义页面拿到的头部与文档页面拿到的是同一个，因此住在里面的那些外壳也都跟了过来：搜索、主题切换，以及在配置了[助手](/docs/configuration/assistant)时的助手入口。它们都不需要逐页接线。传 `assistantEnabled={false}` 可以在保留其它页面助手入口的同时，只让某一个页面不显示它。
+自定义页面拿到的头部与文档页面拿到的是同一个，因此住在里面的那些外壳也都跟了过来：搜索、主题切换，以及在配置了[助手](/docs/configuration/assistant/)时的助手入口。它们都不需要逐页接线。传 `assistantEnabled={false}` 可以在保留其它页面助手入口的同时，只让某一个页面不显示它。
 
 语言切换器是例外。自定义页面只在自己的路由上提供服务，因此 Blume 无法知道其它哪些语言也有它的版本，除非你显式传入，否则头部不会显示切换器：`localeSwitch` 为每种语言接收一个条目 —— `{ code, label, dir, href, current, untranslated }` —— 指向你为那种语言构建的页面。
 
-[面向 agent 发现的 head 链接](/docs/discoverability/agent-discovery#discovery-link-header)同样会带上：布局会读取已解析的配置，因此自定义页面无需传 prop 就带有与文档页面相同的 `describedby`、`ai-catalog` 和 `ard` 链接。首页还会把自己的 `/index.md` Markdown 镜像作为 `text/markdown` 备选链接公布出去，因为这个镜像总是存在；其它自定义页面没有镜像，因此也不会公布。传 `discovery={null}` 可以让某一个页面不带这些链接。
+[面向 agent 发现的 head 链接](/docs/discoverability/agent-discovery/)同样会带上：布局会读取已解析的配置，因此自定义页面无需传 prop 就带有与文档页面相同的 `describedby`、`ai-catalog` 和 `ard` 链接。首页还会把自己的 `/index.md` Markdown 镜像作为 `text/markdown` 备选链接公布出去，因为这个镜像总是存在；其它自定义页面没有镜像，因此也不会公布。传 `discovery={null}` 可以让某一个页面不带这些链接。
 
 传 `transparentHeader` 可以让头部起始时是透明的、外壳部分为白色，这样它能压在页面顶部的深色 hero 之上；页面一滚动它就变回常见的毛玻璃条，搜索对话框也始终保持页面自己的配色。要看出这个效果，hero 必须延伸到头部下方 —— 用头部的高度（`-mt-16`）把它提上去，并相应补上顶部内边距。
 
-传入 `siteUrl`（以及 `ogEnabled`）会自动推导出页面的 `canonical` 和一张生成的 `og:image`：Blume 会为每个静态自定义页面渲染一张 Open Graph 卡片（动态 `[param]` 页面除外）—— 包括首页这个最常被分享的 URL —— 它在 `/og/<route>.png` 处提供（`/` 对应 `/og/index.png`）。首页卡片的标题是站点标题，副标题是站点描述；层级更深的页面则用路径的最后一段作为标题。显式设置 `ogImage` 或 `canonical` 即可覆盖其中任意一项。`ogImage` 接受一个相对于根的路径 —— `public/` 里的文件，会依据 [`deployment.site`](/docs/deployment) 解析成爬虫所需的绝对 URL —— 或者一个外部 URL，后者会原样透传：
+传入 `siteUrl`（以及 `ogEnabled`）会自动推导出页面的 `canonical` 和一张生成的 `og:image`：Blume 会为每个静态自定义页面渲染一张 Open Graph 卡片（动态 `[param]` 页面除外）—— 包括首页这个最常被分享的 URL —— 它在 `/og/<route>.png` 处提供（`/` 对应 `/og/index.png`）。首页卡片的标题是站点标题，副标题是站点描述；层级更深的页面则用路径的最后一段作为标题。显式设置 `ogImage` 或 `canonical` 即可覆盖其中任意一项。`ogImage` 接受一个相对于根的路径 —— `public/` 里的文件，会依据 [`deployment.site`](/docs/deployment/) 解析成爬虫所需的绝对 URL —— 或者一个外部 URL，后者会原样透传：
 
 ```astro pages/index.astro lineNumbers
 <PageLayout
@@ -215,7 +215,7 @@ const { config } = data;
 
 只有这一个页面会变 —— 其它每条路由都保留自己生成的卡片 —— 因此这是给首页单独配一张定制分享图的办法。生成的卡片会自行向爬虫声明尺寸和替代文字；换成你自己的 `ogImage` 时，请一并传入 `ogImageAlt` 和 `ogImageSize`，让分享卡得到同样的待遇。
 
-页面还会输出 schema.org JSON-LD —— 与文档页面所带的是同一份 `WebSite` 图谱 —— 这样首页（通常就是一个自定义页面）就不会成为唯一缺少结构化数据的 URL。传 `structuredDataEnabled={config.structuredData}` 可以让它与 [`structuredData`](/docs/discoverability/structured-data) 配置保持一致，或传 `structuredDataEnabled={false}` 为某一个页面关掉它。
+页面还会输出 schema.org JSON-LD —— 与文档页面所带的是同一份 `WebSite` 图谱 —— 这样首页（通常就是一个自定义页面）就不会成为唯一缺少结构化数据的 URL。传 `structuredDataEnabled={config.structuredData}` 可以让它与 [`structuredData`](/docs/discoverability/structured-data/) 配置保持一致，或传 `structuredDataEnabled={false}` 为某一个页面关掉它。
 
 `page.title` 会被逐字用作文档标题（不会追加 `- siteTitle` 后缀），因为营销页通常有自己的标题。若想让自定义页面拥有完整的文档外壳 —— 侧边栏、目录等等 —— 就把它包进生成页面所用的 `RootLayout`。所需 props 可以直接从 `blume:data` 取：
 
@@ -241,14 +241,14 @@ import data from "blume:data";
 ```
 
 :::note
-`RootLayout` 属于生成的运行时，因此它的 props 可能随版本变化。当你想要一个完全属于自己的布局时，[`blume eject`](/docs/configuration/customization#eject) 会把 `.blume/` 变成一个完全归你所有的标准 Astro 项目。
+`RootLayout` 属于生成的运行时，因此它的 props 可能随版本变化。当你想要一个完全属于自己的布局时，[`blume eject`](/docs/configuration/customization/) 会把 `.blume/` 变成一个完全归你所有的标准 Astro 项目。
 :::
 
 ## 404 页面 [#404-page]
 
-Blume 开箱即带一个默认的**未找到**页面：一条居中的 "404" 信息，外面裹着站点外壳（头部、搜索、主题），任何未匹配的 URL 都会得到它。`blume build` 把它写成 `404.html`，静态托管会自动提供这个文件，`blume dev` 则在遇到未知路由时显示它。信息下方有一个 **接下来可以看看** 列表，链到每个顶层板块，以及存在时的 `sitemap.xml` 和 [`llms.txt`](/docs/discoverability/llms-txt) 索引，这样读者 —— 或者跟着过期 URL 而来的 agent —— 总有条回来的路。
+Blume 开箱即带一个默认的**未找到**页面：一条居中的 "404" 信息，外面裹着站点外壳（头部、搜索、主题），任何未匹配的 URL 都会得到它。`blume build` 把它写成 `404.html`，静态托管会自动提供这个文件，`blume dev` 则在遇到未知路由时显示它。信息下方有一个 **接下来可以看看** 列表，链到每个顶层板块，以及存在时的 `sitemap.xml` 和 [`llms.txt`](/docs/discoverability/llms-txt/) 索引，这样读者 —— 或者跟着过期 URL 而来的 agent —— 总有条回来的路。
 
-这个页面还有一对孪生页面：`/404.md` 的 Markdown 版和 `/404.json` 的 JSON 版（[RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) 的 problem details），带着同样的恢复链接（设置了 [`deployment.site`](/docs/deployment) 之后就是绝对 URL），开启 JSON API 时还会带上 [`openapi.json`](/docs/discoverability/json-api) 的描述。在 [Vercel 或 Cloudflare 的服务端构建](/docs/deployment#server-rendering)上，对一个缺失页面的请求如果带上 [`Accept: text/markdown`](/docs/discoverability/markdown#content-negotiation)，会得到 Markdown 正文和 `404` 状态码，而不是 HTML 外壳；带上 `Accept: application/json` 则会得到 problem document —— 于是 agent 永远不必去解析一整页外壳才知道该往哪儿走。在 Vercel 上，没有任何文件支撑的 `.md` 或 `.json` URL 同理。
+这个页面还有一对孪生页面：`/404.md` 的 Markdown 版和 `/404.json` 的 JSON 版（[RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) 的 problem details），带着同样的恢复链接（设置了 [`deployment.site`](/docs/deployment/) 之后就是绝对 URL），开启 JSON API 时还会带上 [`openapi.json`](/docs/discoverability/json-api/) 的描述。在 [Vercel 或 Cloudflare 的服务端构建](/docs/deployment/)上，对一个缺失页面的请求如果带上 [`Accept: text/markdown`](/docs/discoverability/markdown/)，会得到 Markdown 正文和 `404` 状态码，而不是 HTML 外壳；带上 `Accept: application/json` 则会得到 problem document —— 于是 agent 永远不必去解析一整页外壳才知道该往哪儿走。在 Vercel 上，没有任何文件支撑的 `.md` 或 `.json` URL 同理。
 
 要换成自己的页面，添加一个 `pages/404.astro`。它拥有 `/404` 路由的方式与 `pages/changelog.astro` 接管更新日志一样 —— 你的页面胜出，默认页面连同它的 `/404.md` 和 `/404.json` 孪生页面一起被丢弃。像构建任何其它自定义页面那样构建它，用 `PageLayout` 或 `RootLayout`：
 
@@ -274,16 +274,16 @@ import data from "blume:data";
 </PageLayout>
 ```
 
-想保留默认设计、只换文案 —— 包括为其它语言换文案 —— 可以通过 `i18n.ui` 覆盖 `notFound` 的 [UI 文案](/docs/content/i18n)（`title`、`description`、`home`）。
+想保留默认设计、只换文案 —— 包括为其它语言换文案 —— 可以通过 `i18n.ui` 覆盖 `notFound` 的 [UI 文案](/docs/content/i18n/)（`title`、`description`、`home`）。
 
 ## 交互式页面
 
-自定义页面就是普通的 Astro，因此你可以用一条 hydration 指令放进 React（或任何框架）的[交互岛](/docs/configuration/customization#interactive-islands)。项目里一旦出现 `.tsx` 或 `.jsx` 文件，React 就会自动启用。
+自定义页面就是普通的 Astro，因此你可以用一条 hydration 指令放进 React（或任何框架）的[交互岛](/docs/configuration/customization/)。项目里一旦出现 `.tsx` 或 `.jsx` 文件，React 就会自动启用。
 
-**[自定义](/docs/configuration/customization)**
+**[自定义](/docs/configuration/customization/)**
 
 组件覆盖、React 交互岛、registry 和导出。
 
-**[博客](/docs/advanced/blog)**
+**[博客](/docs/advanced/blog/)**
 
 撰写文章并搭建自定义博客索引。

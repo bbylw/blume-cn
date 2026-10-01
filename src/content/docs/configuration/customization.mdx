@@ -52,7 +52,7 @@ Blume 以静态方式读取 `components.ts` —— 它从不执行该文件 —�
 | `"media"` | `media` 查询匹配时激活（附加 `media: "(min-width: 40rem)"`） |
 | `"only"` | 仅客户端，绝不服务端渲染 |
 
-带 `client` 模式的 `mdx` 条目*就是*一个交互岛：它在每个页面都可用，hydration 行为与放进 [`islands/` 文件夹](/docs/content/islands)的组件完全一致。那个文件夹仍然是零配置的路径 —— 当你想要一个不同于文件名的名称、一个 `media` 查询，或希望交互岛与其他覆盖项并排放置时，再使用 `components.ts` 条目。
+带 `client` 模式的 `mdx` 条目*就是*一个交互岛：它在每个页面都可用，hydration 行为与放进 [`islands/` 文件夹](/docs/content/islands/)的组件完全一致。那个文件夹仍然是零配置的路径 —— 当你想要一个不同于文件名的名称、一个 `media` 查询，或希望交互岛与其他覆盖项并排放置时，再使用 `components.ts` 条目。
 
 ### 为覆盖项标注类型
 
@@ -98,12 +98,12 @@ export default defineComponents({
 | `Breadcrumbs` | 面包屑路径 | `crumbs` |
 | `TableOfContents` | 本页大纲 | `headings`、`title`、`variant` |
 | `Pagination` | 上一页/下一页页脚链接 | `prev`、`next`、`strings` |
-| `Feedback` | 文章下方的“这个页面有帮助吗？”评分（仅在 [`feedback`](/docs/configuration#page-feedback)开启时渲染） | `strings`、`comments` |
+| `Feedback` | 文章下方的“这个页面有帮助吗？”评分（仅在 [`feedback`](/docs/configuration/)开启时渲染） | `strings`、`comments` |
 | `PageHeader` | 文章上方的注入点（无内置实现） | `page`、`headings`、`route` |
 | `PageFooter` | 文章下方的注入点（无内置实现） | `page`、`headings`、`route` |
-| `Footer` | 内容网格之后的[站点页脚](/docs/configuration#footer)：链接、社交资料、仓库链接和 Cookie 设置 | `footer`、`locale`、`site`、`navigation`、`ui` |
+| `Footer` | 内容网格之后的[站点页脚](/docs/configuration/)：链接、社交资料、仓库链接和 Cookie 设置 | `footer`、`locale`、`site`、`navigation`、`ui` |
 
-`PageHeader` 和 `PageFooter` 没有内置组件 —— 在你设置它们之前什么都不渲染，这使它们成为放置促销横幅或“最后更新于”提示的便捷注入点。内置的 `Footer` 保存着通往你的仓库和社交资料的唯一链接，因此 `Footer` 覆盖项（配置无法表达的营销型页脚该放的地方）应该保留它们。设置了 `consent` 时，同样要保留重新打开它的入口：任何带 `data-blume-consent-open` 的元素都可以充当 [Cookie 设置](/docs/configuration/consent#changing-an-answer)链接。
+`PageHeader` 和 `PageFooter` 没有内置组件 —— 在你设置它们之前什么都不渲染，这使它们成为放置促销横幅或“最后更新于”提示的便捷注入点。内置的 `Footer` 保存着通往你的仓库和社交资料的唯一链接，因此 `Footer` 覆盖项（配置无法表达的营销型页脚该放的地方）应该保留它们。设置了 `consent` 时，同样要保留重新打开它的入口：任何带 `data-blume-consent-open` 的元素都可以充当 [Cookie 设置](/docs/configuration/consent/)链接。
 
 布局插槽接受与 MDX 覆盖项相同的[三种引用形式](#reference-form)，因此插槽可以是路径字符串，也可以在你想要交互式页头或页脚时使用已 hydration 的描述符（`{ component, client }`）。
 
@@ -124,13 +124,13 @@ export default function Counter() {
 Use it anywhere: <Counter />
 ```
 
-hydration 策略和框架配置参见 [Islands](/docs/content/islands)。
+hydration 策略和框架配置参见 [Islands](/docs/content/islands/)。
 
 ## 自定义页面 [#custom-pages]
 
 在 `pages/` 文件夹下添加 `.astro` 文件，让完全自定义的路由与文档并存 —— 一个落地页、一个定价页，或手工搭建的索引页。它们保留自己的位置，因此相对 import 和 `getStaticPaths` 都照常工作，并且可以从 `blume:data` 模块读取你的配置、导航和路由。
 
-完整指南参见 [Custom pages](/docs/advanced/custom-pages)。
+完整指南参见 [Custom pages](/docs/advanced/custom-pages/)。
 
 ## 组件注册表
 
@@ -192,6 +192,6 @@ eject 会把 `package.json` 里的脚本指向 `astro dev` 和 `astro build`，�
 
 ### eject 保留了什么
 
-隐藏运行时作为页面提供的路由会被写进应用的 `src/pages`，因此它响应同样的 URL：每个页面的 Markdown 孪生版本、带 `/404.md` 与 `/404.json` 孪生版本的 [404 页面](/docs/advanced/custom-pages#404-page)、托管的 MCP server，以及位于 `/api/docs/…` 和 `/openapi.json` 的 [JSON 文档 API](/docs/discoverability/json-api) —— `llms.txt` 和未找到页面会把 agent 指向它们。
+隐藏运行时作为页面提供的路由会被写进应用的 `src/pages`，因此它响应同样的 URL：每个页面的 Markdown 孪生版本、带 `/404.md` 与 `/404.json` 孪生版本的 [404 页面](/docs/advanced/custom-pages/)、托管的 MCP server，以及位于 `/api/docs/…` 和 `/openapi.json` 的 [JSON 文档 API](/docs/discoverability/json-api/) —— `llms.txt` 和未找到页面会把 agent 指向它们。
 
 ejected 应用的 `build` 脚本运行的是普通的 `astro build`，而 `blume build` 叠加在其上的产物 —— 搜索索引（以及托管提供方的索引同步）、`llms.txt` 和 `llms-full.txt`、`sitemap.xml`、`robots.txt`、`agent-readability.json`、`.well-known` 探测文件、Agent Skills，以及平台的 `_redirects`/`_headers` 文件 —— 依然会产出：ejected 的 `astro.config.mjs` 中的 Blume 集成会从 Astro 的 `astro:build:done` hook 写出它们，扫描项目（你的 `blume.config.ts` 和内容）的方式与 CLI 当年一致。ejected 构建不再做的是 CLI 的 adapter 后处理：Vercel 和 Cloudflare 的 `Accept: text/markdown` 路由拼接、Vercel 函数包审计、`node()` 服务器入口包装（`.well-known` 探测文件的 media type 和 CORS 头、对下载 SVG 的沙箱处理，以及每个重定向的确切状态码）、`netlify()` 服务器构建写入 `.netlify/v1/config.json` 的响应头规则、Cloudflare Worker 的命名（取自你的项目名）及其用于在项目根目录执行 `wrangler deploy` 的 `.wrangler/deploy` 重定向，以及 `--analyze`/`--budget-*` 质量门禁。

@@ -4,7 +4,7 @@ description: 在构建时为每个页面生成 1200×630 的社交卡片，并�
 source: https://useblume.dev/docs/discoverability/open-graph
 ---
 
-得益于 [Takumi](https://takumi.kane.tw)，Blume 能在构建时为每个页面渲染一张 1200×630 的社交卡片 —— 不需要无头浏览器，因此构建依然很快。当 [`deployment.site`](/docs/deployment) 已设置或被自动检测到时它默认开启（`og:image` 的 URL 必须是绝对地址，对爬虫才有用），否则关闭。无论哪种情况，都可以设置 `enabled` 来覆盖这个默认行为：
+得益于 [Takumi](https://takumi.kane.tw)，Blume 能在构建时为每个页面渲染一张 1200×630 的社交卡片 —— 不需要无头浏览器，因此构建依然很快。当 [`deployment.site`](/docs/deployment/) 已设置或被自动检测到时它默认开启（`og:image` 的 URL 必须是绝对地址，对爬虫才有用），否则关闭。无论哪种情况，都可以设置 `enabled` 来覆盖这个默认行为：
 
 ```ts blume.config.ts lineNumbers
 seo: {
@@ -50,14 +50,14 @@ seo:
 ```
 
 :::note
-每个配色项都接受任意 CSS 颜色 —— hex、`oklch(…)`、`rgb(…)` 等等。accent 还接受命名预设（`blue`、`teal`……），与 [`theme.accent`](/docs/configuration/theming#accent) 一致。渲染器无法解析的颜色会让构建失败，而不是悄悄输出一张默认配色的卡片。
+每个配色项都接受任意 CSS 颜色 —— hex、`oklch(…)`、`rgb(…)` 等等。accent 还接受命名预设（`blue`、`teal`……），与 [`theme.accent`](/docs/configuration/theming/) 一致。渲染器无法解析的颜色会让构建失败，而不是悄悄输出一张默认配色的卡片。
 :::
 
 页面标题或站点标题中的 emoji 会渲染成 [Twemoji](https://github.com/jdecked/twemoji) 字形，在卡片渲染时从 CDN 抓取 —— 因此标题含 emoji 的构建需要网络访问。不过每个字形每次构建只抓取一次，无论多少页面用到它。
 
 ## 显示、隐藏或覆盖卡片图层
 
-除大标题之外，卡片还带有三个可选图层：左上角的**品牌标记**（你的 logo，或一个填有站点标题首字母的 accent 色块）、大标题下方的**副标题**（页面的 `description`；没有时用站点的 `description`），以及一个包含你的仓库短名（来自 `github`）和站点 URL 的**页脚** —— 即部署站点的 host 加上 [`deployment.base`](/docs/deployment#subpath-deploys)，因此一个 GitHub Pages 项目站会显示 `user.github.io/repo`。其中任意一项都可以用你自己的字符串覆盖，或用 `false` 隐藏：
+除大标题之外，卡片还带有三个可选图层：左上角的**品牌标记**（你的 logo，或一个填有站点标题首字母的 accent 色块）、大标题下方的**副标题**（页面的 `description`；没有时用站点的 `description`），以及一个包含你的仓库短名（来自 `github`）和站点 URL 的**页脚** —— 即部署站点的 host 加上 [`deployment.base`](/docs/deployment/)，因此一个 GitHub Pages 项目站会显示 `user.github.io/repo`。其中任意一项都可以用你自己的字符串覆盖，或用 `false` 隐藏：
 
 ```ts blume.config.ts lineNumbers
 seo: {
@@ -73,11 +73,11 @@ seo: {
 
 默认情况下，卡片使用 Takumi 的内置字体渲染，它只覆盖基本的拉丁字形 —— 单靠它，日语、中文、韩语、阿拉伯语、印地语、俄语等其它文字的标题会渲染成豆腐块（空方框）。
 
-**默认覆盖所有文字体系。** 在内置字体之后，卡片带有一组 Google Noto 字体的回退栈，每种文字体系一个：西里尔文、希腊文、越南文和带附加符号的拉丁文用 `Noto Sans`，然后是 `Noto Sans JP`、`Noto Sans Arabic`、`Noto Sans Devanagari` 等等。日语或印地语标题无需任何配置就能正确渲染，即使站点没有配置任何 [locales](/docs/content/i18n)。回退按字形生效，因此拉丁文本仍使用内置字体。只有当卡片文字中出现内置字体画不出的字形时，它才会去 Google Fonts 抓取，而且只抓这些字形所需的子集：一张纯英文的卡片什么都不抓，因此只有拉丁文字的站点依然可以离线构建。除非设置 `og.fonts`（它会接管整份列表），否则都用上面这组回退栈。
+**默认覆盖所有文字体系。** 在内置字体之后，卡片带有一组 Google Noto 字体的回退栈，每种文字体系一个：西里尔文、希腊文、越南文和带附加符号的拉丁文用 `Noto Sans`，然后是 `Noto Sans JP`、`Noto Sans Arabic`、`Noto Sans Devanagari` 等等。日语或印地语标题无需任何配置就能正确渲染，即使站点没有配置任何 [locales](/docs/content/i18n/)。回退按字形生效，因此拉丁文本仍使用内置字体。只有当卡片文字中出现内置字体画不出的字形时，它才会去 Google Fonts 抓取，而且只抓这些字形所需的子集：一张纯英文的卡片什么都不抓，因此只有拉丁文字的站点依然可以离线构建。除非设置 `og.fonts`（它会接管整份列表），否则都用上面这组回退栈。
 
 中文、日文和韩文共用大部分汉字，但其中一些字的写法不同，而卡片默认使用日文字形。每个已配置的 locale 会把对应的字族排到最前面，因此带 `zh` locale 的站点会用简体字形渲染汉字，`zh-Hant` 或 `zh-TW` 则用繁体字形。
 
-**设置 [`theme.fonts`](/docs/configuration/theming#fonts)，卡片就会跟着它走。** 当你的配置挑选了自己的字体时，生成的卡片会自动用 display 字体渲染大标题，用 body 字体渲染描述和页脚，于是分享出去的链接与站点保持一致 —— 非拉丁文字的覆盖也自动包含在内，这里无需任何配置。（来自非 Google 提供方的字族会被跳过 —— 卡片渲染器只能从 Google Fonts 抓取 —— 但本地字体文件是可用的。）
+**设置 [`theme.fonts`](/docs/configuration/theming/)，卡片就会跟着它走。** 当你的配置挑选了自己的字体时，生成的卡片会自动用 display 字体渲染大标题，用 body 字体渲染描述和页脚，于是分享出去的链接与站点保持一致 —— 非拉丁文字的覆盖也自动包含在内，这里无需任何配置。（来自非 Google 提供方的字族会被跳过 —— 卡片渲染器只能从 Google Fonts 抓取 —— 但本地字体文件是可用的。）
 
 如果想让卡片用上与站点不同的字体，请显式设置 `og.fonts`。它总是优先于从主题推导出的字体，并替换掉那组文字体系回退，因此请把卡片需要的每个字族都列出来：
 
@@ -101,11 +101,11 @@ Google 字族是在构建时抓取的 —— 因此用到它们的构建需要�
 
 ## 卡片缓存 [#card-cache]
 
-渲染好的卡片会在构建之间缓存到磁盘，缓存键由所有决定其像素的因素构成：页面标题和描述、品牌文字、logo、配色、页脚文字和字体（本地字体文件按其内容计算），再加上 Blume 版本。重新构建时只渲染输入发生变化的卡片，其余直接从缓存读回；构建日志会报告复用了多少张。缓存位于 `node_modules/.cache/blume/og`；在构建之间保留 `node_modules` 的平台上（Vercel 和 Netlify 会，Cloudflare 不会），或者会缓存该目录的 CI runner 上（参见[构建缓存](/docs/deployment#build-cache)），只改动少数页面的部署就只会重新渲染少数几张卡片。没有任何页面用到的卡片会在每次构建后被删除，因此这个目录里始终只有当前站点的卡片。
+渲染好的卡片会在构建之间缓存到磁盘，缓存键由所有决定其像素的因素构成：页面标题和描述、品牌文字、logo、配色、页脚文字和字体（本地字体文件按其内容计算），再加上 Blume 版本。重新构建时只渲染输入发生变化的卡片，其余直接从缓存读回；构建日志会报告复用了多少张。缓存位于 `node_modules/.cache/blume/og`；在构建之间保留 `node_modules` 的平台上（Vercel 和 Netlify 会，Cloudflare 不会），或者会缓存该目录的 CI runner 上（参见[构建缓存](/docs/deployment/)），只改动少数页面的部署就只会重新渲染少数几张卡片。没有任何页面用到的卡片会在每次构建后被删除，因此这个目录里始终只有当前站点的卡片。
 
 ## 自定义页面标题
 
-自定义的 [`.astro` 页面](/docs/advanced/custom-pages)没有 frontmatter 可读，因此它生成的卡片标题来自对其路由最后一段 URL 做“人类化”处理 —— `/getting-started` 会变成 “Getting Started”，而 `/cli` 会变成 “Cli”。用 `og.titles` 按路由显式指定这些卡片的标题（`"/"` 对应首页，它的卡片默认带的是站点标题）：
+自定义的 [`.astro` 页面](/docs/advanced/custom-pages/)没有 frontmatter 可读，因此它生成的卡片标题来自对其路由最后一段 URL 做“人类化”处理 —— `/getting-started` 会变成 “Getting Started”，而 `/cli` 会变成 “Cli”。用 `og.titles` 按路由显式指定这些卡片的标题（`"/"` 对应首页，它的卡片默认带的是站点标题）：
 
 ```ts blume.config.ts lineNumbers
 seo: {
@@ -119,4 +119,4 @@ seo: {
 
 这些条目只对自定义页面生效 —— 内容页面的卡片大标题始终取自页面标题，所以那些页面请在 frontmatter 里改标题。
 
-`seo.image` 是 frontmatter，所以它只覆盖 Markdown 和 MDX 内容。若想让自定义的 [`.astro` 页面](/docs/advanced/custom-pages)拥有自己的社交图片 —— 营销首页或落地页，以及只给首页定制分享图的方式 —— 给 `PageLayout` 传入 `ogImage` 属性。
+`seo.image` 是 frontmatter，所以它只覆盖 Markdown 和 MDX 内容。若想让自定义的 [`.astro` 页面](/docs/advanced/custom-pages/)拥有自己的社交图片 —— 营销首页或落地页，以及只给首页定制分享图的方式 —— 给 `PageLayout` 传入 `ogImage` 属性。

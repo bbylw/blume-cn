@@ -53,7 +53,7 @@ search: {
 },
 ```
 
-每个条目接受一个 `href`（站内路由或外部 URL）和一个 `label`，还可以选填 `icon` —— 一个[内置图标](/docs/content/components#icon)名称、图片路径/URL，或内联 SVG（与导航图标相同的_输入_），默认是一个文件字形。省略 `popular` 或留空则保留侧边栏兜底。在对象形式中不写 `provider` 会保留默认的 Orama 适配器。
+每个条目接受一个 `href`（站内路由或外部 URL）和一个 `label`，还可以选填 `icon` —— 一个[内置图标](/docs/content/components/)名称、图片路径/URL，或内联 SVG（与导航图标相同的_输入_），默认是一个文件字形。省略 `popular` 或留空则保留侧边栏兜底。在对象形式中不写 `provider` 会保留默认的 Orama 适配器。
 
 `href` 要按站点挂载在根路径来写 —— `basePath` 会自动加上，和 `navigation.featured` 一样。外部 URL 则原样透传。
 
@@ -77,9 +77,9 @@ search: {
 },
 ```
 
-每个围栏的正文和标题（上面那个围栏的标题是 `blume.config.ts`）都会变得可搜索；语言标记和围栏标记本身不会。在 `.mdx` 页面上，索引按组件显示出来的文字来读取它们 —— Card 的标题、Tab 的标签、TypeTable 的描述 —— 使用与 [agent surfaces](/docs/discoverability/markdown)相同的序列化器，因此一个 `agents.markdownComponents` 条目同样能覆盖你自己的组件。该选项对 Pagefind 和 Mixedbread 无效。请预期索引会随你的围栏内容一起增长 —— 客户端索引会分发给每位读者，托管适配器则限制记录大小（当某个页面的记录超过套餐上限时，Algolia 会拒绝这批同步，从而保留上一份可用索引），而命中围栏内部的结果会在摘要中显示扁平化的代码。
+每个围栏的正文和标题（上面那个围栏的标题是 `blume.config.ts`）都会变得可搜索；语言标记和围栏标记本身不会。在 `.mdx` 页面上，索引按组件显示出来的文字来读取它们 —— Card 的标题、Tab 的标签、TypeTable 的描述 —— 使用与 [agent surfaces](/docs/discoverability/markdown/)相同的序列化器，因此一个 `agents.markdownComponents` 条目同样能覆盖你自己的组件。该选项对 Pagefind 和 Mixedbread 无效。请预期索引会随你的围栏内容一起增长 —— 客户端索引会分发给每位读者，托管适配器则限制记录大小（当某个页面的记录超过套餐上限时，Algolia 会拒绝这批同步，从而保留上一份可用索引），而命中围栏内部的结果会在摘要中显示扁平化的代码。
 
-在[带版本](/docs/content/versioning)的站点上，结果默认限定在当前查看的版本，对话框页脚有一个 "All versions" 开关（按读者记忆）。跨版本命中的结果会在行内标明其版本。Orama、FlexSearch、Algolia 和 Typesense 都遵循这一限定 —— 托管记录携带一个 `version` 分面，当前文档上传为 `"current"`。Pagefind、Orama Cloud 和 Mixedbread 不按版本限定：它们的结果横跨所有版本，对话框中也不会出现那个开关。
+在[带版本](/docs/content/versioning/)的站点上，结果默认限定在当前查看的版本，对话框页脚有一个 "All versions" 开关（按读者记忆）。跨版本命中的结果会在行内标明其版本。Orama、FlexSearch、Algolia 和 Typesense 都遵循这一限定 —— 托管记录携带一个 `version` 分面，当前文档上传为 `"current"`。Pagefind、Orama Cloud 和 Mixedbread 不按版本限定：它们的结果横跨所有版本，对话框中也不会出现那个开关。
 
 ## 标签
 
@@ -104,7 +104,7 @@ search:
 
 权重对页面的移动幅度取决于适配器：
 
-- **Orama**（默认）和 **FlexSearch** 在排序前把每次匹配都乘上该页面的权重，因此权重为 3 就算作三倍。[MCP server](/docs/discoverability/mcp)与 [assistant](/docs/configuration/assistant)的搜索采用同样的排序方式。
+- **Orama**（默认）和 **FlexSearch** 在排序前把每次匹配都乘上该页面的权重，因此权重为 3 就算作三倍。[MCP server](/docs/discoverability/mcp/)与 [assistant](/docs/configuration/assistant/)的搜索采用同样的排序方式。
 - **Pagefind** 会更重地看待被加权页面的文字。它会抑制重复匹配，因此提升幅度小于乘数：权重为 5 会让该页排名更高，但更接近两倍而不是五倍。Pagefind 把超过 10 的权重按 10 计。
 - **Algolia** 和 **Typesense** 在匹配程度相近的结果之间按权重排序，因此权重只在势均力敌时起决定作用，不会把较弱的匹配抬到强匹配之上。在 Algolia 上，同步会在你设置的任何 ranking 之后，为索引的自定义 ranking 追加 `desc(boost)`。
 - **Orama Cloud** 会取回更大一批结果，再按相关性乘权重重新排序。
@@ -114,9 +114,9 @@ search:
 
 ## 搜索分析 [#search-analytics]
 
-配置了 [analytics 适配器](/docs/configuration/analytics)之后，搜索会报告读者在找什么。查询在稳定下来之后才被记录 —— 停止输入一秒后，或读者选中某个结果或关闭对话框时 —— 记为一个 `search` 事件，包含 `query`、结果数量 `results`，以及发起搜索的 `path`。没有结果的查询会以 `results: 0` 出现，因此按它筛选就能列出文档尚未覆盖的内容。选中某个结果会发出一个 `search_select` 事件，包含 `query`、该结果的 1 起始 `position` 和它的 `url`，用于统计点击率。
+配置了 [analytics 适配器](/docs/configuration/analytics/)之后，搜索会报告读者在找什么。查询在稳定下来之后才被记录 —— 停止输入一秒后，或读者选中某个结果或关闭对话框时 —— 记为一个 `search` 事件，包含 `query`、结果数量 `results`，以及发起搜索的 `path`。没有结果的查询会以 `results: 0` 出现，因此按它筛选就能列出文档尚未覆盖的内容。选中某个结果会发出一个 `search_select` 事件，包含 `query`、该结果的 1 起始 `position` 和它的 `url`，用于统计点击率。
 
-查询按原样发送，最长 100 个字符。你的 analytics 会像看到任何页面的搜索词一样看到它们，因此请把它们当作读者输入来对待。开启 [cookie consent](/docs/configuration/consent)后，只有允许 analytics 的读者才会被计入。
+查询按原样发送，最长 100 个字符。你的 analytics 会像看到任何页面的搜索词一样看到它们，因此请把它们当作读者输入来对待。开启 [cookie consent](/docs/configuration/consent/)后，只有允许 analytics 的读者才会被计入。
 
 ## 适配器
 
@@ -134,7 +134,7 @@ search: orama(),
 
 #### 非拉丁文字
 
-Orama 的标准分词器只保留基本的拉丁字母、数字和少数几个带变音符的元音，因此其他任何文字系统中的文本 —— 日文、中文、韩文和泰文，俄文、希腊文、希伯来文和印地文同样如此 —— 否则会完全匹配不到任何结果。Blume 为你处理好这一点：当 [`i18n.defaultLocale`](/docs/content/i18n)解析为非拉丁文字时，索引会切换到按词切分的分词器（基于浏览器和 Node 原生的 `Intl.Segmenter`）。只需声明你站点的语言：
+Orama 的标准分词器只保留基本的拉丁字母、数字和少数几个带变音符的元音，因此其他任何文字系统中的文本 —— 日文、中文、韩文和泰文，俄文、希腊文、希伯来文和印地文同样如此 —— 否则会完全匹配不到任何结果。Blume 为你处理好这一点：当 [`i18n.defaultLocale`](/docs/content/i18n/)解析为非拉丁文字时，索引会切换到按词切分的分词器（基于浏览器和 Node 原生的 `Intl.Segmenter`）。只需声明你站点的语言：
 
 ```ts blume.config.ts lineNumbers
 i18n: {
@@ -216,7 +216,7 @@ search: typesense({
 
 ### Mixedbread [#mixedbread]
 
-通过 [Mixedbread](https://www.mixedbread.com) 实现语义搜索。查询会经过生成的 `/api/search` 端点代理，该端点持有你的密钥，因此这个适配器**要求服务端输出**：需要来自 `blume/deploy` 的主机适配器，例如 `deployment: vercel()`（见[服务端渲染](/docs/deployment#server-rendering)）。该端点读取 `MIXEDBREAD_API_KEY`。在构建中用 Mixedbread CLI 把内容同步到存储，例如 `mxbai vs sync <STORE_ID> ./content --ci`。
+通过 [Mixedbread](https://www.mixedbread.com) 实现语义搜索。查询会经过生成的 `/api/search` 端点代理，该端点持有你的密钥，因此这个适配器**要求服务端输出**：需要来自 `blume/deploy` 的主机适配器，例如 `deployment: vercel()`（见[服务端渲染](/docs/deployment/)）。该端点读取 `MIXEDBREAD_API_KEY`。在构建中用 Mixedbread CLI 把内容同步到存储，例如 `mxbai vs sync <STORE_ID> ./content --ci`。
 
 ```ts blume.config.ts lineNumbers
 import { mixedbread } from "blume/search";
@@ -243,7 +243,7 @@ search:
   exclude: true
 ```
 
-[隐藏页面](/docs/content/navigation#hidden-pages)默认也会被排除。若仍想索引它们，请显式开启：
+[隐藏页面](/docs/content/navigation/)默认也会被排除。若仍想索引它们，请显式开启：
 
 ```ts blume.config.ts lineNumbers
 search: {

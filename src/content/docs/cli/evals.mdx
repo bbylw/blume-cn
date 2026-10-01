@@ -28,7 +28,7 @@ blume eval  4 question(s) · Codex
 
 每个问题会经过两轮 agent 会话，使用你已经装好的某个 agent CLI——默认是 [Codex](https://developers.openai.com/codex/cli)，或者用 `--agent claude` 换成 [Claude Code](https://claude.com/claude-code)。Blume 不保存任何 API 密钥，也不自己调用任何模型。使用 Codex 时，两轮会话都不会拿到 Codex 的 shell、命令和图像工具，也不会继承你任何环境变量。
 
-1. **读者**只*依靠*你的文档来回答问题。它在一个空目录中运行，文件、shell 和网络工具都被禁用，连接到一个为你提供文档的私有 [MCP 服务器](/docs/discoverability/mcp)——与真实 agent 对着已部署站点所用的是同一组 `search_docs`/`get_page` 工具。它读不到你的仓库，因此它体验文档的方式与一个全新用户完全相同：没写下来的东西就等于不存在。
+1. **读者**只*依靠*你的文档来回答问题。它在一个空目录中运行，文件、shell 和网络工具都被禁用，连接到一个为你提供文档的私有 [MCP 服务器](/docs/discoverability/mcp/)——与真实 agent 对着已部署站点所用的是同一组 `search_docs`/`get_page` 工具。它读不到你的仓库，因此它体验文档的方式与一个全新用户完全相同：没写下来的东西就等于不存在。
 2. **评判者**完全不带任何工具，按你列出的事实给答案打分。换一种说法照样通过；漏掉或与之相悖则不通过——"文档里没写"同样算不通过。
 
 这份 MCP 快照直接由你的内容源构建，因此无需先运行 `blume build`，也不会把任何东西部署或上传到别处。

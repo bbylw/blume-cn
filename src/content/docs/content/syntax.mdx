@@ -20,7 +20,7 @@ Blume 以标准 Markdown 和 MDX 为基础，提供一套精选过的 GitHub 风
 
 ### 自定义锚点 [#custom-anchors]
 
-锚点 id 由标题文本生成，所以标题一旦改写，锚点也会跟着变。改为在末尾追加 `[#custom-id]`，就能把锚点固定下来 —— 这个标记不会出现在渲染结果中，而且无论标题怎么写，链接都照常有效。固定锚点在[翻译语言版本](/docs/content/i18n)中也会保持一致，而自动生成的 id 原本会因语言而异。
+锚点 id 由标题文本生成，所以标题一旦改写，锚点也会跟着变。改为在末尾追加 `[#custom-id]`，就能把锚点固定下来 —— 这个标记不会出现在渲染结果中，而且无论标题怎么写，链接都照常有效。固定锚点在[翻译语言版本](/docs/content/i18n/)中也会保持一致，而自动生成的 id 原本会因语言而异。
 
 ```md
 ## Getting started [#setup]
@@ -28,7 +28,7 @@ Blume 以标准 Markdown 和 MDX 为基础，提供一套精选过的 GitHub 风
 
 按 `/page#setup` 链接到它。这个语法与 Fumadocs 一致，迁移过来的内容可以原样使用。
 
-Pandoc、kramdown 以及基于 Markdown 的规范工具链所用的 `{#custom-id}` 写法，在 `.md` 文件里同样被接受为等价形式。而在 `.mdx` 里，裸写的 `{…}` 会被当成 JSX 表达式，页面将无法编译 —— `blume check` 会把这个标记报告为 `BLUME_MDX_CURLY_ANCHOR` —— 所以请在 `.mdx` 中写 `[#custom-id]`，或者把花括号转义。转义写法在两种格式里都会固定同一个锚点，因此对于被 `.mdx` 页面[引入](/docs/content/includes)的片段来说，它是正确的拼写方式：
+Pandoc、kramdown 以及基于 Markdown 的规范工具链所用的 `{#custom-id}` 写法，在 `.md` 文件里同样被接受为等价形式。而在 `.mdx` 里，裸写的 `{…}` 会被当成 JSX 表达式，页面将无法编译 —— `blume check` 会把这个标记报告为 `BLUME_MDX_CURLY_ANCHOR` —— 所以请在 `.mdx` 中写 `[#custom-id]`，或者把花括号转义。转义写法在两种格式里都会固定同一个锚点，因此对于被 `.mdx` 页面[引入](/docs/content/includes/)的片段来说，它是正确的拼写方式：
 
 ```md
 ## Getting started \{#setup\}
@@ -149,9 +149,9 @@ E = mc^2^ and H~2~O.
 
 链接到其他页面或外部站点。图片可以写内容文件旁边的相对路径、`public/` 下的任意路径（在站点根路径下提供），或远程 URL。
 
-相对页面链接（`./install`、`../guides/setup`）从该页面自身所在的文件夹解析 —— 对于索引页，就是它所引入的那个文件夹 —— 而指向 Markdown 文件的链接（`./setup.md`、`../intro.mdx`）会落到该文件所发布的页面，并带上它的 `slug`。带点的页面名（例如 `node.js.mdx` 页面写作 `./node.js`）只要在那里发布了页面，就算作页面链接；组件上的字符串 `href`（`<Card href="./install">`）也按同样的方式解析。Blume 会把每一条都写成构建后页面中的根相对路由，所以为 GitHub 或 Docusaurus 编写的链接依然有效，[`blume validate`](/docs/cli/validate) 也用同样的规则来检查它们。
+相对页面链接（`./install`、`../guides/setup`）从该页面自身所在的文件夹解析 —— 对于索引页，就是它所引入的那个文件夹 —— 而指向 Markdown 文件的链接（`./setup.md`、`../intro.mdx`）会落到该文件所发布的页面，并带上它的 `slug`。带点的页面名（例如 `node.js.mdx` 页面写作 `./node.js`）只要在那里发布了页面，就算作页面链接；组件上的字符串 `href`（`<Card href="./install">`）也按同样的方式解析。Blume 会把每一条都写成构建后页面中的根相对路由，所以为 GitHub 或 Docusaurus 编写的链接依然有效，[`blume validate`](/docs/cli/validate/) 也用同样的规则来检查它们。
 
-先阅读[快速上手](/docs/quickstart)开始吧。
+先阅读[快速上手](/docs/quickstart/)开始吧。
 
 ```md
 Read the [quickstart](/docs/quickstart) to get started.
@@ -167,7 +167,7 @@ Read the [quickstart](/docs/quickstart) to get started.
 ![Build output](./images/build-output.png)
 ```
 
-`public/` 下的绝对路径（`![Alt text](/screenshot.png)`）会原样提供、不做任何优化 —— 请把它留给必须保持字节和 URL 完全一致的文件，比如文档之外引用的 logo。远程图片同样原样透传，除非它们的主机在 [`image` 配置](/docs/configuration#images)中被授权。
+`public/` 下的绝对路径（`![Alt text](/screenshot.png)`）会原样提供、不做任何优化 —— 请把它留给必须保持字节和 URL 完全一致的文件，比如文档之外引用的 logo。远程图片同样原样透传，除非它们的主机在 [`image` 配置](/docs/configuration/)中被授权。
 
 正文图片默认可以点击放大 —— 读者点击任意一张图都能在灯箱中打开。在 `blume.config.ts` 中设置 `markdown: { imageZoom: false }` 可关闭这一行为，也可以在单张图片上用 `data-no-zoom` 选择退出。
 

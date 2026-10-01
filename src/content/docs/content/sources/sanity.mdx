@@ -27,4 +27,4 @@ export default defineConfig({
 });
 ```
 
-私有数据集的读取 token 来自 `SANITY_TOKEN` 环境变量，适配器声明了它。自定义 Portable Text 块类型通过引擎的 `serializers` 选项映射为 Blume 组件 —— 当你直接构造 `sanitySource` 并把它传给 [`custom()`](/docs/content/sources/custom) 时可用。设置 `serializers` 会以 MDX 写出该来源的页面，所以 serializer 返回的组件或指令都能渲染出来。
+私有数据集的读取 token 来自 `SANITY_TOKEN` 环境变量，适配器声明了它。自定义 Portable Text 块类型通过引擎的 `serializers` 选项映射为 Blume 组件 —— 当你直接构造 `sanitySource` 并把它传给 [`custom()`](/docs/content/sources/custom/) 时可用。设置 `serializers` 会以 MDX 写出该来源的页面，所以 serializer 返回的组件或指令都能渲染出来。

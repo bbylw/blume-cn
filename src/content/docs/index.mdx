@@ -6,11 +6,11 @@ source: https://useblume.dev/docs
 
 把 Markdown 或 MDX 丢进一个文件夹，运行 `blume dev`，就得到一个生产级文档站 —— 导航、搜索、主题、Open Graph 图片，以及一套丰富的组件库 —— 完全不需要编写或维护任何应用样板代码。
 
-**[快速上手](/docs/quickstart)**
+**[快速上手](/docs/quickstart/)**
 
 几分钟内安装 Blume 并发布你的第一个页面。
 
-**[配置](/docs/configuration)**
+**[配置](/docs/configuration/)**
 
 调整标题、主题、搜索和部署。
 
@@ -18,7 +18,7 @@ source: https://useblume.dev/docs
 
 文档应该快速、对 AI 友好、且零配置 —— 甚至连 starter 模板都不需要。有些文档工具在你写第一个字之前，就先塞给你一整套需要维护的代码库。另一些会围绕你的内容生成模板，却把你锁定在它们的托管服务里。
 
-Blume 两头的好处都要。框架本身就是模板，所以你唯一会去碰的永远只有内容本身。当你想定制时，可以从替换内置组件开始，也可以修改那一个配置文件，甚至可以直接 eject，拿到原始的 Astro 站点。[FAQ](/docs/faq) 会讲清楚这与 Mintlify、Fumadocs 等方案相比究竟如何。
+Blume 两头的好处都要。框架本身就是模板，所以你唯一会去碰的永远只有内容本身。当你想定制时，可以从替换内置组件开始，也可以修改那一个配置文件，甚至可以直接 eject，拿到原始的 Astro 站点。[FAQ](/docs/faq/) 会讲清楚这与 Mintlify、Fumadocs 等方案相比究竟如何。
 
 ## Blume 有何不同
 
@@ -28,23 +28,23 @@ Blume 构建在 Astro 和 Vite 之上，默认渲染静态 HTML —— 快、易
 
 ### 开箱即地对 AI 友好
 
-每一个 Blume 站点都能流利地与机器对话。它会输出 [`llms.txt` 和 `llms-full.txt`](/docs/discoverability/llms-txt)，在任意页面 URL 后加 `.md` 即可拿到该页的原始 Markdown，提供一个[由 OpenAPI 描述的 JSON API](/docs/discoverability/json-api)，并在每个页面上给读者提供 **Copy as Markdown** 和 **Open in chat** 操作。你还可以加一个可选的页面内 **assistant**，或托管一个 [**MCP server**](/docs/discoverability/mcp)，让 Claude Code、Cursor 之类的编码 agent 直接搜索和阅读你的文档 —— 无需抓取，也不依赖托管服务。你的 Markdown 对人类和模型同时是唯一事实来源。
+每一个 Blume 站点都能流利地与机器对话。它会输出 [`llms.txt` 和 `llms-full.txt`](/docs/discoverability/llms-txt/)，在任意页面 URL 后加 `.md` 即可拿到该页的原始 Markdown，提供一个[由 OpenAPI 描述的 JSON API](/docs/discoverability/json-api/)，并在每个页面上给读者提供 **Copy as Markdown** 和 **Open in chat** 操作。你还可以加一个可选的页面内 **assistant**，或托管一个 [**MCP server**](/docs/discoverability/mcp/)，让 Claude Code、Cursor 之类的编码 agent 直接搜索和阅读你的文档 —— 无需抓取，也不依赖托管服务。你的 Markdown 对人类和模型同时是唯一事实来源。
 
 ### 零配置 —— 连模板也是
 
-一个文档文件夹就是一个完整项目。没有 starter 需要 clone，没有 Astro 或 Tailwind 需要配置，也没有模板需要维护。导航从你的文件推断得出，[search](/docs/configuration/search) 在开发和生产环境都能工作且不依赖托管服务，主题不过是几个 token。所有东西都有合理的默认值；配置是你需要时才去找的东西，而不是你必须先做的事情。
+一个文档文件夹就是一个完整项目。没有 starter 需要 clone，没有 Astro 或 Tailwind 需要配置，也没有模板需要维护。导航从你的文件推断得出，[search](/docs/configuration/search/) 在开发和生产环境都能工作且不依赖托管服务，主题不过是几个 token。所有东西都有合理的默认值；配置是你需要时才去找的东西，而不是你必须先做的事情。
 
 ### 类型安全贯穿内核
 
-你的 [`blume.config.ts`](/docs/configuration) 和每一个 [`meta.ts`](/docs/content/meta) 都是真正的 TypeScript —— 由 schema 校验，用 `defineConfig` 和 `defineMeta` 编写。你的编辑器会自动补全每一个选项，并在你输入时就捕获拼写错误、非法取值和缺失字段，远早于构建。配置是你可以重构、计算并信赖的代码 —— 而不是弱类型的 YAML。
+你的 [`blume.config.ts`](/docs/configuration/) 和每一个 [`meta.ts`](/docs/content/meta/) 都是真正的 TypeScript —— 由 schema 校验，用 `defineConfig` 和 `defineMeta` 编写。你的编辑器会自动补全每一个选项，并在你输入时就捕获拼写错误、非法取值和缺失字段，远早于构建。配置是你可以重构、计算并信赖的代码 —— 而不是弱类型的 YAML。
 
 ## 全部包含
 
-- **组件** —— 提示框、卡片、步骤、标签页、折叠面板、徽章、文件树和参数表，在 MDX 中[无需 import](/docs/content/components)即可使用。
+- **组件** —— 提示框、卡片、步骤、标签页、折叠面板、徽章、文件树和参数表，在 MDX 中[无需 import](/docs/content/components/)即可使用。
 - **本地搜索** —— Orama 在开发与生产环境都能工作；站点规模大时，Pagefind 只需换一个适配器（`search: pagefind()`）。不依赖托管索引。
-- **AI** —— [`llms.txt`、原始 Markdown URL、带 OpenAPI 描述的 JSON API、Copy as Markdown、Open in chat 和托管的 MCP server](/docs/discoverability)，外加可选的[页面内 assistant](/docs/configuration/assistant)。
+- **AI** —— [`llms.txt`、原始 Markdown URL、带 OpenAPI 描述的 JSON API、Copy as Markdown、Open in chat 和托管的 MCP server](/docs/discoverability/)，外加可选的[页面内 assistant](/docs/configuration/assistant/)。
 - **导航** —— 从文件推断，可用 `meta.ts` 或配置微调。
-- **SEO** —— 元数据、Open Graph 图片、RSS 订阅源和 JSON-LD，[全部内置](/docs/discoverability)。
+- **SEO** —— 元数据、Open Graph 图片、RSS 订阅源和 JSON-LD，[全部内置](/docs/discoverability/)。
 - **定制** —— 组件覆盖、React 交互岛、自定义页面、主题 token，以及通过 `blume add` 安装的源组件注册表。
 - **Eject** —— `blume eject` 生成一个独立的 Astro 项目，且仍然使用 `blume` 包。
 
@@ -54,18 +54,18 @@ Blume CLI 会发现你的内容、构建内容图谱，并在 `.blume/` 下生�
 
 ## 下一步
 
-**[配置](/docs/configuration)**
+**[配置](/docs/configuration/)**
 
 调整标题、主题、搜索和部署。
 
-**[组件](/docs/content/components)**
+**[组件](/docs/content/components/)**
 
 探索内置组件库。
 
-**[可发现性](/docs/discoverability)**
+**[可发现性](/docs/discoverability/)**
 
 发布 `llms.txt`、社交卡片和一个 MCP server。
 
-**[CLI](/docs/cli)**
+**[CLI](/docs/cli/)**
 
 每一条 `blume` 命令和参数。

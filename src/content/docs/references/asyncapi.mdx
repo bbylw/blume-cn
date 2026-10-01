@@ -4,7 +4,7 @@ description: 把 AsyncAPI 规范渲染成原生事件参考，每个操作一个
 source: https://useblume.dev/docs/references/asyncapi
 ---
 
-事件驱动的 API 使用 `blume/reference` 中的 `asyncapi()` 适配器，它登记在 `reference` 下，与任何 [OpenAPI](/docs/references/openapi) 或 [GraphQL](/docs/references/graphql) 适配器并列。它接受与 `openapi()` 相同的选项，并用同一个原生渲染器渲染。每个 `send`/`receive` 操作都会变成一个真实页面，带消息 payload 与 header 的 schema 表、channel 参数、协议绑定、一个依据规范中 `securitySchemes`（服务器级与操作级，可选项渲染成“或”字样的分组）推导出的 Authorization 小节，以及一个 [Try it](#try-it-for-events) 消息编辑器。由于每个操作都是一个真正的 Blume 页面，它有自己的 URL，会出现在**站内搜索**和 `llms.txt` 中，还会得到一张 Open Graph 图片 —— 与手写文档别无二致。
+事件驱动的 API 使用 `blume/reference` 中的 `asyncapi()` 适配器，它登记在 `reference` 下，与任何 [OpenAPI](/docs/references/openapi/) 或 [GraphQL](/docs/references/graphql/) 适配器并列。它接受与 `openapi()` 相同的选项，并用同一个原生渲染器渲染。每个 `send`/`receive` 操作都会变成一个真实页面，带消息 payload 与 header 的 schema 表、channel 参数、协议绑定、一个依据规范中 `securitySchemes`（服务器级与操作级，可选项渲染成“或”字样的分组）推导出的 Authorization 小节，以及一个 [Try it](#try-it-for-events) 消息编辑器。由于每个操作都是一个真正的 Blume 页面，它有自己的 URL，会出现在**站内搜索**和 `llms.txt` 中，还会得到一张 Open Graph 图片 —— 与手写文档别无二致。
 
 ```ts blume.config.ts lineNumbers
 import { defineConfig } from "blume";
@@ -15,7 +15,7 @@ export default defineConfig({
 });
 ```
 
-它把参考挂在 `/events`（一个概览页）上，每个操作各自占其下方的一个页面。`spec` 要么是一个 `http(s)` URL，要么是你项目中某个本地文件的路径，JSON 或 YAML 均可。与所有参考一样，它不会自己添加页眉标签页 —— 把一个[导航标签页](/docs/content/navigation#tabs)指向它的路由，即可让它露出来，并限定操作侧边栏的范围：
+它把参考挂在 `/events`（一个概览页）上，每个操作各自占其下方的一个页面。`spec` 要么是一个 `http(s)` URL，要么是你项目中某个本地文件的路径，JSON 或 YAML 均可。与所有参考一样，它不会自己添加页眉标签页 —— 把一个[导航标签页](/docs/content/navigation/)指向它的路由，即可让它露出来，并限定操作侧边栏的范围：
 
 ```ts blume.config.ts
 navigation: {
@@ -33,15 +33,15 @@ AsyncAPI **2.x 规范会自动规范化到 3.x**，用的是官方 AsyncAPI 转�
 
 ## 共用选项 [#shared-options]
 
-[OpenAPI](/docs/references/openapi) 上记录的一切都照搬过来，[`playground`](#try-it-for-events) 也不例外：[`route`](/docs/references/openapi#route)、带 `label`/`route` 的 [`sources`](/docs/references/openapi#multiple-specs)、`expandSchemas`、那些[按来源的索引](/docs/references/openapi#per-source-indexing)开关（`seoDescriptionSuffix` 同样可用 —— 自动生成的那句话改为点明 channel 与动作，而不是端点），以及按操作的 summary、description、tag 和 endpoint（`SEND user/signup`）建立的搜索索引。
+[OpenAPI](/docs/references/openapi/) 上记录的一切都照搬过来，[`playground`](#try-it-for-events) 也不例外：[`route`](/docs/references/openapi/)、带 `label`/`route` 的 [`sources`](/docs/references/openapi/)、`expandSchemas`、那些[按来源的索引](/docs/references/openapi/)开关（`seoDescriptionSuffix` 同样可用 —— 自动生成的那句话改为点明 channel 与动作，而不是端点），以及按操作的 summary、description、tag 和 endpoint（`SEND user/signup`）建立的搜索索引。
 
 ## 改为嵌入 Scalar [#embedding-scalar-instead]
 
-`asyncapi()` 始终渲染 Blume 自己的页面。若想改为嵌入 [Scalar](https://scalar.com) 的界面，就列出一个指向 AsyncAPI 文档的 [`scalar()`](/docs/references/scalar) 适配器 —— 它的嵌入页会自动识别文档类型，并渲染 channel、操作、消息和一个 Models 小节。Scalar 自己没有 AsyncAPI 演练场，因此这样一换就把消息编辑器换掉了，而且按来源的控制项里也只有 `noindex` 对它适用。
+`asyncapi()` 始终渲染 Blume 自己的页面。若想改为嵌入 [Scalar](https://scalar.com) 的界面，就列出一个指向 AsyncAPI 文档的 [`scalar()`](/docs/references/scalar/) 适配器 —— 它的嵌入页会自动识别文档类型，并渲染 channel、操作、消息和一个 Models 小节。Scalar 自己没有 AsyncAPI 演练场，因此这样一换就把消息编辑器换掉了，而且按来源的控制项里也只有 `noindex` 对它适用。
 
 ## 事件的 Try it [#try-it-for-events]
 
-原生渲染的操作页面在这里也带一个 **Try it** 面板，条件与 [OpenAPI 面板](/docs/references/openapi#try-it-playground)完全一致：以折叠状态在服务端渲染，其 JavaScript 只在读者首次打开时才加载。
+原生渲染的操作页面在这里也带一个 **Try it** 面板，条件与 [OpenAPI 面板](/docs/references/openapi/)完全一致：以折叠状态在服务端渲染，其 JavaScript 只在读者首次打开时才加载。
 
 无论协议为何，面板打开时都是一个 payload 编辑器，内容按消息的 `examples` 预填 —— 若消息没有声明任何 `examples`，则从 payload schema 中采样一个值 —— 并在你输入时按消息 payload schema 校验。它下方是每个 channel 参数一个输入项，以及一个由 channel 的 `servers` 填充的服务器选择器（host 和 path 变量取默认值），另有自由文本字段供填写其它 URL。感知协议的代码示例与表单严格同步，正如 HTTP 操作上的 curl、js 和 python 那样：channel 地址模板会填入你输入的参数值，因此复制出的 `wscat`、`WebSocket`、`kcat` 或 `mosquitto_pub` 代码与表单显示的内容一致。
 

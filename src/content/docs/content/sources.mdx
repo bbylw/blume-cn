@@ -1,0 +1,90 @@
+---
+title: 内容来源
+description: 从本地文件、远程仓库、CMS 或任意自定义后端拉取文档 —— 并把多个来源混进同一个静态优先的站点，全部在构建期读取
+source: https://useblume.dev/docs/content/sources
+---
+
+默认情况下 Blume 读取一个装着 `.md`/`.mdx` 文件的文件夹。**内容来源**让你把页面从别处拉进来 —— 远程仓库、CMS，或任意自定义后端 —— 并把多个来源混进同一个站点。来源在构建期读取，Blume 保持静态优先。
+
+## 默认来源
+
+不做任何配置时，Blume 把内容根目录（默认 `docs`）当作一个文件系统来源来扫描。顶层的 `content.root`、`content.include` 与 `content.exclude` 就是这个单一来源的简写 —— 不需要引入任何东西，也不需要改动。
+
+```ts blume.config.ts
+import { defineConfig } from "blume";
+
+export default defineConfig({
+  content: { root: "docs" },
+});
+```
+
+## 适配器 [#adapters]
+
+`content.sources` 里的每一项都是一个**适配器**：从 `blume/sources` 引入的工厂函数，返回一个 Blume 在构建期读取的普通描述对象。给 `sources` 加一个数组即可组合多个来源。`sources` 一旦出现就会取代隐式的默认来源，所以要把本地文档包在一个 `filesystem()` 条目里 —— 并把 `root`、`include` 或 `exclude` 移进这个条目。简写与 `sources` 不能同时使用；Blume 会指出该把哪个字段移过去。
+
+```ts blume.config.ts
+import { defineConfig } from "blume";
+import { filesystem, mdxRemote } from "blume/sources";
+
+export default defineConfig({
+  content: {
+    sources: [
+      // 站点根目录下的本地文档
+      filesystem({ root: "docs" }),
+
+      // 来自 GitHub 仓库的远程 MDX，挂载在 /sdk 下
+      mdxRemote({
+        prefix: "sdk",
+        github: { owner: "acme", repo: "sdk", ref: "main", path: "docs" },
+      }),
+    ],
+  },
+});
+```
+
+除 `filesystem()` 外，每个内置适配器都有自己的页面，而 [`custom()`](/docs/content/sources/custom/) 可以接入任何其他后端：
+
+| 适配器 | 读取内容 | 运行时依赖 | 环境变量 |
+| --- | --- | --- | --- |
+| [`obsidian()`](/docs/content/sources/obsidian/) | 原地读取 Obsidian 仓库 | — | — |
+| [`mdxRemote()`](/docs/content/sources/remote-mdx/) | GitHub 仓库或 raw URL 里的 `.md`/`.mdx` | — | `GITHUB_TOKEN`（私有仓库） |
+| [`githubReleases()`](/docs/content/sources/github-releases/) | 某个仓库的 Release，转成更新日志条目 | — | `GITHUB_TOKEN`（私有仓库） |
+| [`sanity()`](/docs/content/sources/sanity/) | 对 Sanity 数据集执行 GROQ 查询 | `@sanity/client` | `SANITY_TOKEN`（私有数据集） |
+| [`notion()`](/docs/content/sources/notion/) | 一个 Notion 数据库 | `@notionhq/client` | `NOTION_TOKEN` |
+| [`contentful()`](/docs/content/sources/contentful/) | 一种 Contentful 内容类型 | — | `CONTENTFUL_ACCESS_TOKEN` |
+| [`payload()`](/docs/content/sources/payload/) | 一个 Payload 集合 | — | `PAYLOAD_API_KEY` |
+| [`strapi()`](/docs/content/sources/strapi/) | 一种 Strapi 内容类型 | — | `STRAPI_API_TOKEN` |
+| [`custom()`](/docs/content/sources/custom/) | 你自己实现的任意 `ContentSource` | — | — |
+
+每个接受选项对象的适配器都支持两个共享选项：
+
+- **`prefix`** 把该来源的路由收进 `/<prefix>/…` 命名空间下，这同时也是诊断信息里的来源名称与它的缓存目录名。如果两个来源解析到同一个路由，Blume 会报 `BLUME_DUPLICATE_ROUTE` 构建错误 —— 给每个来源一个不同的 `prefix`。
+- **`pollInterval`**（秒）让远程来源在开发环境按该间隔重新拉取，且只在内容确实变化时才重载。不设置就只拉取一次，并在本次会话内冻结。本地来源（`filesystem()`、`obsidian()`）改为监听文件系统，并忽略这个选项。
+
+适配器的描述对象还会声明它需要的 SDK 与读取的环境变量，因此生成的项目会声明那个包，`blume dev` 与 `blume build` 会在变量未设置时给出警告，`blume doctor` 则会列出已配置的来源。选项在配置加载时校验：缺少必填选项、未知键，或残留的 1.x `{ type: "…" }` 对象都会失败，并给出指明修复方式的提示。
+
+单个 `filesystem()` 来源会以它自己的目录作为生成文档集合的根。多个文件系统来源必须共用一个根，并用 `include` glob 划分范围 —— 第二个根在别处的来源会报 `BLUME_ENTRY_ID_MISMATCH`，以免它的页面悄无声息地 404。
+
+## 缓存与离线构建 [#caching-and-offline-builds]
+
+每个远程来源都会在 `.blume/cache/<source>/` 下保留一份快照。如果拉取失败 —— 一次网络抖动或一次 CMS 故障 —— Blume 会带上警告回退到最近一次可用的快照，而不是让构建失败。预览内容与已发布内容各自持有独立快照，每组不同的来源选项也是，所以构建永远不会回退到用 `--preview` 拉到的草稿；修改某个来源的 `query` 或 `fields` 会重新拉取。缓存位于 `.blume/` 内部，会重新生成，永不提交。
+
+在开发环境中，有快照的远程来源会直接从快照提供，因此重启开发服务器不会重新拉取。运行 `blume sync` 拉取最新内容（正在运行的开发服务器会热重载），或用 `blume sync --force` 先丢掉快照。本地文件系统来源照常热重载。若想按间隔轮询远程来源的变化，给它设置共享的 `pollInterval` 选项（秒）—— 开发服务器会在该间隔重新拉取，且只在内容确实变化时才重载。不设置它可以避免工作时反复请求 API。
+
+## 预览与同步
+
+两个标志控制远程内容的拉取方式与包含范围：
+
+- **`--preview`** 加在 `blume dev` 或 `blume build` 上会渲染草稿并拉取未发布的 CMS 内容 —— Sanity 切换到 `previewDrafts` 视角，Notion 不再按 `Status` 过滤，Contentful 走 Preview API 读取，Payload 与 Strapi 请求草稿。不带该标志的生产构建照常排除草稿，因此预览构建是在内容上线前安全审阅未发布工作的方式。
+- **`blume sync`** 重新拉取每个远程来源并重新生成运行时。开发环境是缓存优先 —— 远程来源只拉取一次，重启后从 `.blume/cache` 提供（快速且对离线友好），所以 `blume sync` 才是你在不重启开发服务器的情况下拉取最新 CMS 内容的方式（服务器正在运行时会热重载）。加上 `--force` 可以先丢掉缓存，或给某个来源设置 `pollInterval` 以自动刷新。
+
+```sh
+blume dev --preview      # 创作流程：实时看到草稿
+blume build --preview    # 渲染完整的预览构建
+blume sync               # 立即刷新远程内容
+blume sync --force       # ……忽略任何已缓存的快照
+```
+
+## 渲染与转义
+
+来源会把自己原生的结构（Portable Text、Notion 块、远程 HTML）归一化成 Markdown/MDX 文本，因此无论页面来自哪里，同一批组件与 Markdown 特性都适用。内置适配器在降级转换富文本时会做转义，所以作者在 CMS 里输入的内容 —— 一个 `{`、一个 `<b>`、一段以 `import` 开头的文字，或 `&copy;` —— 都会按原样渲染。链接只保留 `http(s)`、`mailto:`、`tel:` 与相对目标；其他任何协议（`javascript:`、`data:`）都渲染为链接文字，而来源下载的 SVG 图片会在沙箱中提供。`githubReleases()` 的发布说明与 `mdxRemote()` 的文件被视为你自己的内容：它们的原始 HTML 按原样渲染，因此只把它们指向你信任的仓库。

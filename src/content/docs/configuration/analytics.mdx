@@ -28,7 +28,7 @@ export default defineConfig({
 分析是可选启用的。没有 `analytics` 列表（或列表为空）时，Blume 不会注入任何东西。
 :::
 
-若想先征求读者同意，请设置 [`consent`](/docs/configuration/consent)：这里的每个适配器都会一直等待，直到读者允许分析。
+若想先征求读者同意，请设置 [`consent`](/docs/configuration/consent/)：这里的每个适配器都会一直等待，直到读者允许分析。
 
 下面出现的每一个标识符 —— 项目密钥、衡量 ID、站点 token —— 都是提供方安装代码片段里那个公开的、浏览器侧的标识。每个适配器都会渲染那段代码片段，因此可以安全地提交到你的文档仓库；Blume 从不要求你提供密钥。
 
@@ -432,4 +432,4 @@ analytics: [
 
 ## 自定义事件 [#custom-events]
 
-Blume 的页面反馈（`feedback`，以及开启[书面反馈](/docs/configuration#written-feedback)时的 `feedback_comment`）、[搜索](/docs/configuration/search#search-analytics)（`search`、`search_select`）和[朗读](/docs/configuration/narration#analytics)播放器（`narration_play`、`narration_complete`），会通过每个已配置且带客户端 API 的适配器发送自定义事件 —— PostHog、Mixpanel、Heap、Segment、Hightouch、Amplitude、LogRocket、Adobe、Google Analytics、Google Tag Manager（作为 `window.dataLayer` 上的一次 `{ event }` push）、Plausible、Databuddy、Fathom、OneDollarStats（每个属性值都作为字符串）、Pirsch、Clarity、Hotjar 和 Vercel。Cloudflare 和 Clearbit 没有事件 API。每个事件还会作为 `blume:track` CustomEvent 在 `window` 上触发，其 `detail` 里带有 `{ event, props }`，因此一个 `script()` 适配器可以把它转发到别处。关于部署构建好的站点，见[部署](/docs/deployment)。
+Blume 的页面反馈（`feedback`，以及开启[书面反馈](/docs/configuration/)时的 `feedback_comment`）、[搜索](/docs/configuration/search/)（`search`、`search_select`）和[朗读](/docs/configuration/narration/)播放器（`narration_play`、`narration_complete`），会通过每个已配置且带客户端 API 的适配器发送自定义事件 —— PostHog、Mixpanel、Heap、Segment、Hightouch、Amplitude、LogRocket、Adobe、Google Analytics、Google Tag Manager（作为 `window.dataLayer` 上的一次 `{ event }` push）、Plausible、Databuddy、Fathom、OneDollarStats（每个属性值都作为字符串）、Pirsch、Clarity、Hotjar 和 Vercel。Cloudflare 和 Clearbit 没有事件 API。每个事件还会作为 `blume:track` CustomEvent 在 `window` 上触发，其 `detail` 里带有 `{ event, props }`，因此一个 `script()` 适配器可以把它转发到别处。关于部署构建好的站点，见[部署](/docs/deployment/)。

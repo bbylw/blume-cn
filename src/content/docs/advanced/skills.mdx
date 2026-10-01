@@ -16,7 +16,7 @@ npx skills add haydenbleasel/blume
 
 ## 迁移
 
-`blume-migrate` 把一个已有的文档站迁移到 Blume：Mintlify、Fumadocs、Docusaurus、Starlight、Nextra，或任何其它框架。它以地道的 Blume 为目标，而不是逐行照搬：为每个具名框架提供一份映射参考，为每一个会变动的 URL 配一个重定向，并报告它丢弃了什么。运行它最省事的方式是 [`blume migrate`](/docs/migrating)，它会检测你的框架，并针对随包分发的那份打开 Codex 或 Claude Code。想在别的 agent 里使用它，请安装：
+`blume-migrate` 把一个已有的文档站迁移到 Blume：Mintlify、Fumadocs、Docusaurus、Starlight、Nextra，或任何其它框架。它以地道的 Blume 为目标，而不是逐行照搬：为每个具名框架提供一份映射参考，为每一个会变动的 URL 配一个重定向，并报告它丢弃了什么。运行它最省事的方式是 [`blume migrate`](/docs/migrating/)，它会检测你的框架，并针对随包分发的那份打开 Codex 或 Claude Code。想在别的 agent 里使用它，请安装：
 
 ```bash
 npx skills add haydenbleasel/blume --skill blume-migrate
@@ -38,7 +38,7 @@ Blume 不托管这套自动化 —— 把这个技能接进 Claude Code 的定�
 
 ## 为你自己的站点编写技能 [#writing-your-sites-skill]
 
-`blume-write-skill` 会为你自己的文档编写 [agent 技能](/docs/discoverability/agent-discovery#your-sites-skill)：一份以文档为依据的 `SKILL.md`，教编码 agent 使用你的产品 —— 安装配置、核心概念、常见任务和坑 —— 并把每个主题链接到它所在的页面。它取代了 Blume 在 `/skill.md` 处生成的页面地图。运行它最省事的方式是 `blume skill`，它会算出这个技能该放在哪里，并针对随包分发的那份打开 Codex 或 Claude Code：
+`blume-write-skill` 会为你自己的文档编写 [agent 技能](/docs/discoverability/agent-discovery/)：一份以文档为依据的 `SKILL.md`，教编码 agent 使用你的产品 —— 安装配置、核心概念、常见任务和坑 —— 并把每个主题链接到它所在的页面。它取代了 Blume 在 `/skill.md` 处生成的页面地图。运行它最省事的方式是 `blume skill`，它会算出这个技能该放在哪里，并针对随包分发的那份打开 Codex 或 Claude Code：
 
 ```bash
 blume skill --claude   # 或 --codex

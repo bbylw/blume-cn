@@ -8,7 +8,7 @@ source: https://useblume.dev/docs/discoverability/sitemap-and-robots
 
 ## Sitemap [#sitemap]
 
-Blume 在构建时写出一份包含每个可索引页面的 `sitemap.xml`。它需要一个绝对的 [`deployment.site`](/docs/deployment)，并列出除草稿、隐藏和 [`noindex`](/docs/discoverability/metadata#per-page-overrides) 页面之外的所有页面。在[带版本](/docs/content/versioning)的站点上，canonical 指向线上对应页面的归档页面也会被排除 —— 该被索引的是线上页面。默认开启：
+Blume 在构建时写出一份包含每个可索引页面的 `sitemap.xml`。它需要一个绝对的 [`deployment.site`](/docs/deployment/)，并列出除草稿、隐藏和 [`noindex`](/docs/discoverability/metadata/) 页面之外的所有页面。在[带版本](/docs/content/versioning/)的站点上，canonical 指向线上对应页面的归档页面也会被排除 —— 该被索引的是线上页面。默认开启：
 
 ```ts blume.config.ts lineNumbers
 seo: {
@@ -75,6 +75,6 @@ agents: {
 | `contentSignals.aiInput?` | `boolean` | - | 允许在回答时用于 AI grounding / RAG（`ai-input`）。默认 `true`。 |
 | `contentSignals.aiTrain?` | `boolean` | - | 允许用于 AI 模型训练（`ai-train`）。默认 `true`。 |
 
-内容信号表达的是一种偏好，而不是访问控制：它告诉守规矩的爬虫你希望内容被如何使用，而是否遵守由爬虫自己负责。同一份策略会以 `contentUsage` 的形式镜像在[智能体可读性清单](/docs/discoverability/agent-discovery#agent-readability)里，因此从不读 `robots.txt` 的智能体也能看到它。
+内容信号表达的是一种偏好，而不是访问控制：它告诉守规矩的爬虫你希望内容被如何使用，而是否遵守由爬虫自己负责。同一份策略会以 `contentUsage` 的形式镜像在[智能体可读性清单](/docs/discoverability/agent-discovery/)里，因此从不读 `robots.txt` 的智能体也能看到它。
 
 放入自己的 `public/robots.txt` 即可接管。

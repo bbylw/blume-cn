@@ -20,15 +20,15 @@ blume <command> [options]
 | `blume sync` | 重新拉取远程内容源并重新生成。 |
 | `blume eject` | 把运行时导出为一个独立的 Astro 应用。 |
 | `blume check` | 用 `astro check` 对站点做类型检查。 |
-| [`blume doctor`](/docs/cli/doctor) | 诊断配置与内容问题。 |
-| [`blume validate`](/docs/cli/validate) | 校验内容中的所有链接。 |
-| [`blume audit`](/docs/cli/audit) | 审查构建产物中的 SEO 与站点健康问题。 |
-| [`blume eval`](/docs/cli/evals) | 测试文档：让一个 agent 仅凭文档回答你的问题。 |
-| [`blume translate`](/docs/cli/translate) | 用本地 agent CLI 把文档翻译到已配置的语言。 |
-| [`blume version [id]`](/docs/cli/version) | 把当前文档冻结为一个归档版本（不带 id 时列出已配置的版本）。 |
-| [`blume skill`](/docs/discoverability/agent-discovery#your-sites-skill) | 用 Codex 或 Claude Code 为你的文档编写 agent skill，替代自动生成的那一份。 |
-| [`blume migrate [source]`](/docs/migrating) | 用 Codex 或 Claude Code 把 Mintlify、Fumadocs、Docusaurus、Starlight 或 Nextra 站点迁移到 Blume。 |
-| [`blume upgrade`](/docs/upgrading) | 升级到新的主版本：先升级 `blume`，再列出剩余的配置改动，或把它们交给 Codex 或 Claude Code。 |
+| [`blume doctor`](/docs/cli/doctor/) | 诊断配置与内容问题。 |
+| [`blume validate`](/docs/cli/validate/) | 校验内容中的所有链接。 |
+| [`blume audit`](/docs/cli/audit/) | 审查构建产物中的 SEO 与站点健康问题。 |
+| [`blume eval`](/docs/cli/evals/) | 测试文档：让一个 agent 仅凭文档回答你的问题。 |
+| [`blume translate`](/docs/cli/translate/) | 用本地 agent CLI 把文档翻译到已配置的语言。 |
+| [`blume version [id]`](/docs/cli/version/) | 把当前文档冻结为一个归档版本（不带 id 时列出已配置的版本）。 |
+| [`blume skill`](/docs/discoverability/agent-discovery/) | 用 Codex 或 Claude Code 为你的文档编写 agent skill，替代自动生成的那一份。 |
+| [`blume migrate [source]`](/docs/migrating/) | 用 Codex 或 Claude Code 把 Mintlify、Fumadocs、Docusaurus、Starlight 或 Nextra 站点迁移到 Blume。 |
+| [`blume upgrade`](/docs/upgrading/) | 升级到新的主版本：先升级 `blume`，再列出剩余的配置改动，或把它们交给 Codex 或 Claude Code。 |
 
 ## 通用选项 [#common-flags]
 
@@ -58,7 +58,7 @@ blume <command> [options]
 - `blume eject --yes` — 跳过确认提示。
 - `blume eject --force` — 在已经导出的应用上再次导出，覆盖其 `astro.config.mjs` 和 `src/`。
 
-有独立页面的命令会把自己的全部选项都列在那一页：[`blume doctor`](/docs/cli/doctor)、[`blume validate`](/docs/cli/validate)、[`blume audit`](/docs/cli/audit)、[`blume eval`](/docs/cli/evals)、[`blume translate`](/docs/cli/translate) 和 [`blume version`](/docs/cli/version)。`blume validate`、`blume doctor`、`blume audit`、`blume eval` 和 `blume translate` 接受 `--json`，把机器可读的结果打印到 stdout，供 CI 和编辑器集成使用（诊断的数据结构见 [validate](/docs/cli/validate#json-output)）；`build`、`check` 和 `dev` 只向终端输出。每个命令都会拒绝自己不接受的选项，并给出最接近的那一个作为建议、同时列出它真正接受的选项，因此像 `--isolatd` 这样的拼写错误会直接失败，而不会被悄悄忽略。
+有独立页面的命令会把自己的全部选项都列在那一页：[`blume doctor`](/docs/cli/doctor/)、[`blume validate`](/docs/cli/validate/)、[`blume audit`](/docs/cli/audit/)、[`blume eval`](/docs/cli/evals/)、[`blume translate`](/docs/cli/translate/) 和 [`blume version`](/docs/cli/version/)。`blume validate`、`blume doctor`、`blume audit`、`blume eval` 和 `blume translate` 接受 `--json`，把机器可读的结果打印到 stdout，供 CI 和编辑器集成使用（诊断的数据结构见 [validate](/docs/cli/validate/)）；`build`、`check` 和 `dev` 只向终端输出。每个命令都会拒绝自己不接受的选项，并给出最接近的那一个作为建议、同时列出它真正接受的选项，因此像 `--isolatd` 这样的拼写错误会直接失败，而不会被悄悄忽略。
 
 ## 开发服务器运行时如何校验 [#verifying-while-the-dev-server-runs]
 

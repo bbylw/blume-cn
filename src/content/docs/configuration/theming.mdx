@@ -37,7 +37,7 @@ theme: {
 
 字符串同时作用于两种颜色模式；若要[按模式设置不同强调色](#dark-mode-colors)，请传入一个对象。
 
-位于强调色或操作色填充之上的文字，例如按钮标签或步骤编号，在该颜色上白色满足 AA 时为白色，否则为深色。浅色强调色无需任何额外配置即可获得深色标签。[`blume audit`](/docs/cli/audit#theme-contrast-low) 会用同样的标准检查自定义的强调色、操作色和背景色。
+位于强调色或操作色填充之上的文字，例如按钮标签或步骤编号，在该颜色上白色满足 AA 时为白色，否则为深色。浅色强调色无需任何额外配置即可获得深色标签。[`blume audit`](/docs/cli/audit/) 会用同样的标准检查自定义的强调色、操作色和背景色。
 
 ### Radius
 
@@ -113,7 +113,7 @@ theme: {
 
 #### 子集与 locale
 
-Google、Bunny 和 Fontsource 会把每个字体族拆成按文字系统划分的子集，只有你加载的子集才会得到一个 `@font-face`。Blume 从你的 [`i18n.locales`](/docs/content/i18n) 推导出这个列表：包含越南语、波兰语、俄语或希腊语 locale 的站点，会在 `latin` 之外加载 `vietnamese`、`latin-ext`、`cyrillic` 或 `greek`，这样变音符号和非拉丁字母会用你选定的字体渲染，而不是回退到系统字体。没有 `i18n` 配置块、或只有拉丁-1 语言的站点只加载 `latin`。浏览器只在页面用到某个子集的字符时才下载它，预加载也遵循同一份列表。
+Google、Bunny 和 Fontsource 会把每个字体族拆成按文字系统划分的子集，只有你加载的子集才会得到一个 `@font-face`。Blume 从你的 [`i18n.locales`](/docs/content/i18n/) 推导出这个列表：包含越南语、波兰语、俄语或希腊语 locale 的站点，会在 `latin` 之外加载 `vietnamese`、`latin-ext`、`cyrillic` 或 `greek`，这样变音符号和非拉丁字母会用你选定的字体渲染，而不是回退到系统字体。没有 `i18n` 配置块、或只有拉丁-1 语言的站点只加载 `latin`。浏览器只在页面用到某个子集的字符时才下载它，预加载也遵循同一份列表。
 
 在某个字体族上设置 `subsets` 可以覆盖推导出的列表 —— 例如单 locale 站点，但其内容仍需要该 locale 并不蕴含的文字系统：
 
@@ -148,7 +148,7 @@ theme: {
 路径相对于项目根目录解析。`weight` 和 `style`（`normal`、`italic`、`oblique`）是可选的 —— 省略时 Astro 会从字体文件中读取。
 
 :::note
-当你显式设置 `theme.fonts` 时，你的 display 和 body 字体会自动为生成的 [Open Graph 卡片](/docs/discoverability/open-graph#card-fonts)设置样式，让分享出去的链接与站点风格一致。非 Google 提供方的字体族在那里会被跳过（卡片渲染器只能从 Google Fonts 获取）；本地文件在任何地方都可用。
+当你显式设置 `theme.fonts` 时，你的 display 和 body 字体会自动为生成的 [Open Graph 卡片](/docs/discoverability/open-graph/)设置样式，让分享出去的链接与站点风格一致。非 Google 提供方的字体族在那里会被跳过（卡片渲染器只能从 Google Fonts 获取）；本地文件在任何地方都可用。
 :::
 
 想退回系统字体栈吗？直接在 [`theme.css`](#themecss)中覆盖 `--blume-font-*` token。

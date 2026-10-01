@@ -4,7 +4,7 @@ description: 站点随附的只读 JSON API，供智能体和函数调用框架�
 source: https://useblume.dev/docs/discoverability/json-api
 ---
 
-每个 Blume 站点还会把文档以一个小型只读 **JSON API** 提供出来 —— 它是 [MCP 服务器](/docs/discoverability/mcp)那套工具的 REST 版本，基于同一份页面快照，服务于那些说普通 HTTP 而非 MCP 的智能体和函数调用框架。它默认开启，无需任何配置：
+每个 Blume 站点还会把文档以一个小型只读 **JSON API** 提供出来 —— 它是 [MCP 服务器](/docs/discoverability/mcp/)那套工具的 REST 版本，基于同一份页面快照，服务于那些说普通 HTTP 而非 MCP 的智能体和函数调用框架。它默认开启，无需任何配置：
 
 | 端点 | 返回 |
 | --- | --- |
@@ -14,7 +14,7 @@ source: https://useblume.dev/docs/discoverability/json-api
 | `/api/docs/search?q=` | 全文搜索，作用域参数与 `search_docs` 相同：`limit`、`contentTypes`、`locale`、`version` 和 `filters[key]`。仅服务端输出。 |
 | `/openapi.json` | 整个机器可读界面的 OpenAPI 3.1 描述。 |
 
-页面索引、逐页面文档和导航都是预渲染的，因此静态站点可以从任意托管平台以文件形式提供它们。搜索是一个实时端点，只存在于[服务端输出](/docs/deployment#server-rendering)下，它使用与 `search_docs` 相同的索引。
+页面索引、逐页面文档和导航都是预渲染的，因此静态站点可以从任意托管平台以文件形式提供它们。搜索是一个实时端点，只存在于[服务端输出](/docs/deployment/)下，它使用与 `search_docs` 相同的索引。
 
 ## 错误
 
@@ -44,9 +44,9 @@ source: https://useblume.dev/docs/discoverability/json-api
 
 ## OpenAPI 描述
 
-`/openapi.json` 处的 **OpenAPI 文档**在每次构建时依据你的配置生成，因此它描述的只有已部署站点实际提供的内容：每个 JSON 端点及其唯一的 `operationId`、带类型的参数和响应 schema，此外还有旁边的纯文本入口 —— [`.md` 镜像](/docs/discoverability/markdown)、[`llms.txt`](/docs/discoverability/llms-txt) 和 `llms-full.txt`、[`agent-readability.json`](/docs/discoverability/agent-discovery#agent-readability) —— 以及启用时的 [MCP 端点](/docs/discoverability/mcp)。那些依据 OpenAPI 描述来构建工具的框架，得到的触达能力与 MCP 客户端相同。该文档会被 [API catalog](/docs/discoverability/agent-discovery#api-catalog)、[可读性清单](/docs/discoverability/agent-discovery#agent-readability)、首页的 `Link` 头（`rel="service-desc"`）以及 `llms.txt` 链出。
+`/openapi.json` 处的 **OpenAPI 文档**在每次构建时依据你的配置生成，因此它描述的只有已部署站点实际提供的内容：每个 JSON 端点及其唯一的 `operationId`、带类型的参数和响应 schema，此外还有旁边的纯文本入口 —— [`.md` 镜像](/docs/discoverability/markdown/)、[`llms.txt`](/docs/discoverability/llms-txt/) 和 `llms-full.txt`、[`agent-readability.json`](/docs/discoverability/agent-discovery/) —— 以及启用时的 [MCP 端点](/docs/discoverability/mcp/)。那些依据 OpenAPI 描述来构建工具的框架，得到的触达能力与 MCP 客户端相同。该文档会被 [API catalog](/docs/discoverability/agent-discovery/)、[可读性清单](/docs/discoverability/agent-discovery/)、首页的 `Link` 头（`rel="service-desc"`）以及 `llms.txt` 链出。
 
-这一切都不会影响你自己的 [API 参考](/docs/references/openapi)：被记录的规范会被渲染成页面，绝不会在 `/openapi.json` 提供，而 catalog 会同时列出两者。你自己发布的 `public/openapi.json` 会接管该路由（JSON 端点仍然保留）。当某个文档分区从 `/api` 命名空间提供（`content/api/overview.md`），或某个自定义页面在 `/api/` 下拥有自己的 rest 路由时，`/api/…` 这个兜底路由会让位，因此这些页面依然优先。
+这一切都不会影响你自己的 [API 参考](/docs/references/openapi/)：被记录的规范会被渲染成页面，绝不会在 `/openapi.json` 提供，而 catalog 会同时列出两者。你自己发布的 `public/openapi.json` 会接管该路由（JSON 端点仍然保留）。当某个文档分区从 `/api` 命名空间提供（`content/api/overview.md`），或某个自定义页面在 `/api/` 下拥有自己的 rest 路由时，`/api/…` 这个兜底路由会让位，因此这些页面依然优先。
 
 ## 关闭
 

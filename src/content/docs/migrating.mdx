@@ -35,9 +35,9 @@ npx blume migrate fumadocs --codex
 agent 会按手册的工作流，从来源的配置一路走到一次通过的构建：
 
 1. 写入 `blume.config.ts`，只映射你来源里声明过的部分，其余交给 Blume 的默认值覆盖。
-2. 把内容重组为[文件系统导航](/docs/content/navigation)，把按文件夹排序的文件（Fumadocs 的 `meta.json`、Nextra 的 `_meta`）转成 `meta.ts`。
-3. 重写页面：frontmatter 转成 Blume 的 schema，callout 提示框转成[指令](/docs/content/syntax)，图标换成 Lucide，代码片段改为内联。
-4. 为每一个改动的 URL 添加一个[重定向](/docs/deployment#redirects)，这样不会有任何链接失效。
+2. 把内容重组为[文件系统导航](/docs/content/navigation/)，把按文件夹排序的文件（Fumadocs 的 `meta.json`、Nextra 的 `_meta`）转成 `meta.ts`。
+3. 重写页面：frontmatter 转成 Blume 的 schema，callout 提示框转成[指令](/docs/content/syntax/)，图标换成 Lucide，代码片段改为内联。
+4. 为每一个改动的 URL 添加一个[重定向](/docs/deployment/)，这样不会有任何链接失效。
 5. 把 `package.json` 的脚本指向 `blume dev` 和 `blume build`，并用 `blume` 替换掉旧框架的依赖。
 6. 反复运行 `blume build` 和 `blume validate`，直到两者都通过。
 
@@ -45,7 +45,7 @@ agent 会按手册的工作流，从来源的配置一路走到一次通过的�
 
 ## 其它 agent
 
-不加 `--codex` 或 `--claude` 时，该命令会报告它检测到的来源，打印手册的路径 —— 即随包一起分发的 `blume-migrate` [skill](/docs/advanced/skills) —— 然后不做任何修改就退出。把那个 `SKILL.md` 指向任意其它 agent，或者用它打印出来的命令把该 skill 安装到你的 agent 查找 skill 的位置：
+不加 `--codex` 或 `--claude` 时，该命令会报告它检测到的来源，打印手册的路径 —— 即随包一起分发的 `blume-migrate` [skill](/docs/advanced/skills/) —— 然后不做任何修改就退出。把那个 `SKILL.md` 指向任意其它 agent，或者用它打印出来的命令把该 skill 安装到你的 agent 查找 skill 的位置：
 
 ```bash
 npx skills add haydenbleasel/blume --skill blume-migrate
@@ -53,4 +53,4 @@ npx skills add haydenbleasel/blume --skill blume-migrate
 
 ## 先做对比
 
-[常见问题](/docs/faq)里把 Blume 与 Mintlify、Fumadocs 等工具逐项对比，并说明了迁移到 Blume 时每个框架的映射关系。
+[常见问题](/docs/faq/)里把 Blume 与 Mintlify、Fumadocs 等工具逐项对比，并说明了迁移到 Blume 时每个框架的映射关系。

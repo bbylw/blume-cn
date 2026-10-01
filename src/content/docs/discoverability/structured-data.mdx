@@ -18,7 +18,7 @@ seo: {
 - 把页面本身作为 **article** —— blog 文章为 `BlogPosting`，更新日志和文档为 `TechArticle` —— 带上它的描述和发布日期，
 - 一个由导航路径构建的 **BreadcrumbList**。
 
-当 [`deployment.site`](/docs/deployment) 已设置时，URL 是绝对的。标记了 [`seo.noindex`](/docs/discoverability/metadata#per-page-overrides) 的页面会被跳过。当 [`lastModified`](/docs/configuration#last-modified) 开启时，每个页面的日期还会作为 `dateModified` 输出。
+当 [`deployment.site`](/docs/deployment/) 已设置时，URL 是绝对的。标记了 [`seo.noindex`](/docs/discoverability/metadata/) 的页面会被跳过。当 [`lastModified`](/docs/configuration/) 开启时，每个页面的日期还会作为 `dateModified` 输出。
 
 ## 站点标识
 
@@ -49,4 +49,4 @@ seo: {
 
 ## 自定义页面
 
-通过 `PageLayout` 渲染的自定义 [`.astro` 页面](/docs/advanced/custom-pages)会输出同样的 `WebSite` 图谱，因此营销首页不会是唯一没有结构化数据的那个 URL。传入 `structuredDataEnabled={config.structuredData}` 让它与本设置保持同步，或传入 `structuredDataEnabled={false}` 单独为该页面关闭。
+通过 `PageLayout` 渲染的自定义 [`.astro` 页面](/docs/advanced/custom-pages/)会输出同样的 `WebSite` 图谱，因此营销首页不会是唯一没有结构化数据的那个 URL。传入 `structuredDataEnabled={config.structuredData}` 让它与本设置保持同步，或传入 `structuredDataEnabled={false}` 单独为该页面关闭。

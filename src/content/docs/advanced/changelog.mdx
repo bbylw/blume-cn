@@ -44,14 +44,14 @@ A big batch of components landed this release — columns, frames, trees, and to
 
 - 该条记录的 **title** 就是这一行的标签 —— 没有 title 时则用 `v{version}`。它链到该记录自己的页面，更新说明全文就在那里渲染。
 - `category` 会作为标签渲染在 title 旁边，读者一眼就能分清正式版与预发布版，或者功能与修复。
-- 日期遵循配置的 [`dateFormat`](/docs/configuration#date-format)，但会去掉这一行所属分组里已经显示过的年份。
+- 日期遵循配置的 [`dateFormat`](/docs/configuration/)，但会去掉这一行所属分组里已经显示过的年份。
 - 草稿以及标记了 `sidebar.hidden` 的条目会被跳过。
 
-只有当 `/changelog` 路由上还没有别的东西占据时，这个页面才会出现。要用自己的设计替换它，在 `pages/changelog.astro` 添加一个[自定义页面](/docs/advanced/custom-pages) —— 它会接管该路由，Blume 也就停止生成默认索引。旧时间线所基于的 `<Update>` 组件仍然随包提供，供想在自定义页面里内联渲染更新说明时使用。它不是 MDX 组件之一，所以要在 `.astro` 页面里自行导入：`import Update from "blume/components/content/Update.astro";`。指向 `/changelog` 的头部[标签页](/docs/content/navigation#tabs)会打开这个索引 —— 不需要 `href`。
+只有当 `/changelog` 路由上还没有别的东西占据时，这个页面才会出现。要用自己的设计替换它，在 `pages/changelog.astro` 添加一个[自定义页面](/docs/advanced/custom-pages/) —— 它会接管该路由，Blume 也就停止生成默认索引。旧时间线所基于的 `<Update>` 组件仍然随包提供，供想在自定义页面里内联渲染更新说明时使用。它不是 MDX 组件之一，所以要在 `.astro` 页面里自行导入：`import Update from "blume/components/content/Update.astro";`。指向 `/changelog` 的头部[标签页](/docs/content/navigation/)会打开这个索引 —— 不需要 `href`。
 
 ## 从 GitHub Releases 引入 [#from-github-releases]
 
-与其手写记录，不如把内置的 [`githubReleases()` 源](/docs/content/sources/github-releases)指向一个仓库，于是每次发布都会变成一条 `type: changelog` 记录 —— 同样的时间线和订阅源，内容直接来自你已经在发布的那些 release。Blume 自己的[更新日志](/docs/advanced/changelog)就是这么搭起来的：
+与其手写记录，不如把内置的 [`githubReleases()` 源](/docs/content/sources/github-releases/)指向一个仓库，于是每次发布都会变成一条 `type: changelog` 记录 —— 同样的时间线和订阅源，内容直接来自你已经在发布的那些 release。Blume 自己的[更新日志](/docs/advanced/changelog/)就是这么搭起来的：
 
 ```ts blume.config.ts
 import { filesystem, githubReleases } from "blume/sources";
@@ -68,13 +68,13 @@ content: {
 }
 ```
 
-release 的名字成为 title，它的 tag 成为 `changelog.version`，发布日期则决定时间线的排序。每个发布页还会得到一段独特的 meta description，由它的更新说明概括而来 —— 去掉 markdown、去掉小节标题和 changeset 的提交哈希前缀、裁剪到 [`blume audit`](/docs/cli/audit) 检查的搜索摘要长度 —— 而不是回退到站点描述。私有仓库通过 `GITHUB_TOKEN` 环境变量认证。全部选项见 [GitHub Releases](/docs/content/sources/github-releases)。
+release 的名字成为 title，它的 tag 成为 `changelog.version`，发布日期则决定时间线的排序。每个发布页还会得到一段独特的 meta description，由它的更新说明概括而来 —— 去掉 markdown、去掉小节标题和 changeset 的提交哈希前缀、裁剪到 [`blume audit`](/docs/cli/audit/) 检查的搜索摘要长度 —— 而不是回退到站点描述。私有仓库通过 `GITHUB_TOKEN` 环境变量认证。全部选项见 [GitHub Releases](/docs/content/sources/github-releases/)。
 
 ## RSS 订阅源
 
-Blume 还会在 **`/changelog/rss.xml`** 处构建更新日志订阅源，按 `date` 以最新在前排序。订阅源需要一个绝对的站点 URL，所以请设置 [`deployment.site`](/docs/deployment)；随后 Blume 会在每个页面上注入一个 `<link rel="alternate">` 标签，让读者自动发现它。
+Blume 还会在 **`/changelog/rss.xml`** 处构建更新日志订阅源，按 `date` 以最新在前排序。订阅源需要一个绝对的站点 URL，所以请设置 [`deployment.site`](/docs/deployment/)；随后 Blume 会在每个页面上注入一个 `<link rel="alternate">` 标签，让读者自动发现它。
 
-订阅源默认开启。可在 [`seo.rss`](/docs/discoverability/rss) 下调整：
+订阅源默认开启。可在 [`seo.rss`](/docs/discoverability/rss/) 下调整：
 
 ```ts blume.config.ts lineNumbers
 seo: {
@@ -90,12 +90,12 @@ seo: {
 
 ## 结构化数据
 
-开启[结构化数据](/docs/discoverability/structured-data)后，每条更新日志记录都会以 schema.org **`TechArticle`** 的形式输出，带上它的描述和发布日期，于是搜索引擎可以把各个发布当作带日期的文章来索引。
+开启[结构化数据](/docs/discoverability/structured-data/)后，每条更新日志记录都会以 schema.org **`TechArticle`** 的形式输出，带上它的描述和发布日期，于是搜索引擎可以把各个发布当作带日期的文章来索引。
 
-**[Frontmatter](/docs/content/frontmatter#changelog)**
+**[Frontmatter](/docs/content/frontmatter/)**
 
 完整的更新日志 frontmatter schema。
 
-**[自定义页面](/docs/advanced/custom-pages)**
+**[自定义页面](/docs/advanced/custom-pages/)**
 
 用你自己的布局替换生成的时间线。

@@ -26,7 +26,7 @@ Here's a live counter: <Counter />
 文件名就是组件名，因此它**必须是帕斯卡命名的标识符**——只能包含字母、数字和下划线（`Counter.tsx` → `<Counter />`）。小写文件名，以及带连字符、点或空格的名字（比如 `Time-Picker.tsx`）会被跳过，并给出构建警告。当两个交互岛解析出同一个名字时——`Counter.tsx` 与 `Counter.vue`，或者不同子文件夹下的两个 `Counter.tsx`——Blume 会按文件路径保留第一个、忽略另一个，并给出构建警告。
 
 :::note
-交互岛用于**交互式** UI。若只是想跨页面复用一个静态组件（一个带样式的提示框、一张价格表），请改用 [MDX 覆盖](/docs/configuration/customization)——它不加载任何 JavaScript。
+交互岛用于**交互式** UI。若只是想跨页面复用一个静态组件（一个带样式的提示框、一张价格表），请改用 [MDX 覆盖](/docs/configuration/customization/)——它不加载任何 JavaScript。
 :::
 
 ## 在 `components.ts` 中注册交互岛 [#registering-islands-in-componentsts]
@@ -54,7 +54,7 @@ export default defineComponents({
 });
 ```
 
-与文件夹方式不同，这里没有默认值：不带 `client` 的 `mdx` 条目会渲染成静态 HTML，若该条目是 React、Vue 或 Svelte 组件，Blume 会给出警告。Blume 会静态解析 `components.ts`，因此一个条目必须是导入进来的组件、路径字符串，或一个 `{ component, client, media }` 对象字面量——可接受的形式以及其它写法会得到的报错，见[自定义](/docs/configuration/customization#reference-form)。
+与文件夹方式不同，这里没有默认值：不带 `client` 的 `mdx` 条目会渲染成静态 HTML，若该条目是 React、Vue 或 Svelte 组件，Blume 会给出警告。Blume 会静态解析 `components.ts`，因此一个条目必须是导入进来的组件、路径字符串，或一个 `{ component, client, media }` 对象字面量——可接受的形式以及其它写法会得到的报错，见[自定义](/docs/configuration/customization/)。
 
 ## 水合
 
@@ -148,7 +148,7 @@ export default function PageInfo() {
 
 `useBlume()` 和 `usePage()` 在交互岛挂载前会返回 `null`（这样服务端与客户端渲染出的首帧一致）——请为此做判断。快照只在携带 React 的页面上输出，因此全静态站点不为此付出任何代价。
 
-在用 `PageLayout` 构建的[自定义页面](/docs/advanced/custom-pages)上，传入 `clientData`，好让那里的交互岛能读取它：
+在用 `PageLayout` 构建的[自定义页面](/docs/advanced/custom-pages/)上，传入 `clientData`，好让那里的交互岛能读取它：
 
 ```astro
 <PageLayout

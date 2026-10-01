@@ -146,6 +146,12 @@ export const navGroups: NavGroup[] = [
     description: "把远程 Markdown、CMS 与 Obsidian 仓库混进同一个站点。",
     items: [
       {
+        title: "内容来源总览",
+        href: "/docs/content/sources/",
+        description: "适配器、共享选项、缓存快照与预览同步的总览。",
+        icon: "Database",
+      },
+      {
         title: "Obsidian",
         href: "/docs/content/sources/obsidian/",
         description: "直接发布 Obsidian 仓库，wikilink 与图片在构建期解析。",

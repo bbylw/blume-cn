@@ -4,7 +4,7 @@ description: 给页面标记为博客类型，Blume 就会自动为它加上 RSS
 source: https://useblume.dev/docs/advanced/blog
 ---
 
-在 Blume 里，博客不过是带了一个类型的内容。把某个页面标记为 `type: blog`，Blume 就会自动为它生成 RSS 订阅源和更完整的文章元数据。与[更新日志](/docs/advanced/changelog)不同，这里没有自动生成的索引页 —— 落地页由你自己编排，设计完全握在你手里。
+在 Blume 里，博客不过是带了一个类型的内容。把某个页面标记为 `type: blog`，Blume 就会自动为它生成 RSS 订阅源和更完整的文章元数据。与[更新日志](/docs/advanced/changelog/)不同，这里没有自动生成的索引页 —— 落地页由你自己编排，设计完全握在你手里。
 
 ## 写一篇文章
 
@@ -25,9 +25,9 @@ Documentation should be fast, AI-ready, and zero-config — down to not needing 
 
 ## RSS 订阅源
 
-Blume 会在 **`/blog/rss.xml`** 处构建博客订阅源，按 `date` 以最新在前排序。订阅源需要一个绝对的站点 URL，所以请设置 [`deployment.site`](/docs/deployment)；随后 Blume 会在每个页面上注入一个 `<link rel="alternate">` 标签，让读者自动发现它。
+Blume 会在 **`/blog/rss.xml`** 处构建博客订阅源，按 `date` 以最新在前排序。订阅源需要一个绝对的站点 URL，所以请设置 [`deployment.site`](/docs/deployment/)；随后 Blume 会在每个页面上注入一个 `<link rel="alternate">` 标签，让读者自动发现它。
 
-订阅源默认开启。可在 [`seo.rss`](/docs/discoverability/rss) 下调整：
+订阅源默认开启。可在 [`seo.rss`](/docs/discoverability/rss/) 下调整：
 
 ```ts blume.config.ts lineNumbers
 seo: {
@@ -43,7 +43,7 @@ seo: {
 
 ## 结构化数据
 
-开启[结构化数据](/docs/discoverability/structured-data)后，每篇文章都会以 schema.org **`BlogPosting`** 的形式输出，带上它的描述和发布日期 —— 这是搜索引擎对博客内容所期待的那种更丰富的文章类型。
+开启[结构化数据](/docs/discoverability/structured-data/)后，每篇文章都会以 schema.org **`BlogPosting`** 的形式输出，带上它的描述和发布日期 —— 这是搜索引擎对博客内容所期待的那种更丰富的文章类型。
 
 ## 搭建索引
 
@@ -62,7 +62,7 @@ description: News and writing from the team.
 </CardGroup>
 ```
 
-若想自动列出文章，则在 `pages/blog/index.astro` 添加一个[自定义页面](/docs/advanced/custom-pages)，它从 Astro 的 `docs` 内容集合读取数据，并按路由的 `entryId` 把每个条目与它在 `blume:data` 中的路由配对：
+若想自动列出文章，则在 `pages/blog/index.astro` 添加一个[自定义页面](/docs/advanced/custom-pages/)，它从 Astro 的 `docs` 内容集合读取数据，并按路由的 `entryId` 把每个条目与它在 `blume:data` 中的路由配对：
 
 ```astro pages/blog/index.astro lineNumbers
 ---
@@ -101,12 +101,12 @@ const posts = (await getCollection("docs"))
 </ul>
 ```
 
-要把它包进完整的站点布局，参见[自定义页面](/docs/advanced/custom-pages#using-the-site-layout)。
+要把它包进完整的站点布局，参见[自定义页面](/docs/advanced/custom-pages/)。
 
-**[自定义页面](/docs/advanced/custom-pages)**
+**[自定义页面](/docs/advanced/custom-pages/)**
 
 挂载博客索引，并从 `blume:data` 读取数据。
 
-**[可发现性](/docs/discoverability)**
+**[可发现性](/docs/discoverability/)**
 
 订阅源、Open Graph 图片和结构化数据。

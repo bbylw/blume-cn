@@ -122,7 +122,7 @@ logo: {
 
 `image` 接受与简写形式相同的值 —— 单个路径，或用于分别指定亮色/暗色素材的 `{ light, dark, alt }`（位图必须放在 `public/` 中）。
 
-`href` 是一个像标签页路径那样的默认 locale 路径：在[多 locale 站点](/docs/content/i18n)上，只要对应 locale 提供该路由，品牌链接就会切换到读者所在的 locale（在 `/en/…` 下 `/` 会变成 `/en`），因此点击 logo 不会让读者离开正在阅读的语言。只有默认 locale 提供路由的页面 —— [自定义页面](/docs/advanced/custom-pages)或生成的更新日志索引 —— 会保留自身路径，而不是指向一个会 404 的本地化 URL。绝对 URL 则原样使用。
+`href` 是一个像标签页路径那样的默认 locale 路径：在[多 locale 站点](/docs/content/i18n/)上，只要对应 locale 提供该路由，品牌链接就会切换到读者所在的 locale（在 `/en/…` 下 `/` 会变成 `/en`），因此点击 logo 不会让读者离开正在阅读的语言。只有默认 locale 提供路由的页面 —— [自定义页面](/docs/advanced/custom-pages/)或生成的更新日志索引 —— 会保留自身路径，而不是指向一个会 404 的本地化 URL。绝对 URL 则原样使用。
 
 `text` 独立于标识控制文字标：
 
@@ -187,7 +187,7 @@ banner: {
 
 开启 `dismissible` 后，公告栏会显示一个关闭按钮，此后对该访客保持隐藏。关闭状态的键默认为正文文字，因此修改文案会让公告栏重新出现；设置一个稳定的 `id` 可以让它在多次修改后仍保持关闭。
 
-在[多语言](/docs/content/i18n)站点上，`content` 和链接的 `text` 还可以接受一个从 locale 代码到文字的映射。每个页面显示自己 locale 的条目，回退到默认 locale 的条目；只要对应 locale 提供该页面，链接就会切换到读者所在的 locale：
+在[多语言](/docs/content/i18n/)站点上，`content` 和链接的 `text` 还可以接受一个从 locale 代码到文字的映射。每个页面显示自己 locale 的条目，回退到默认 locale 的条目；只要对应 locale 提供该页面，链接就会切换到读者所在的 locale：
 
 ```ts blume.config.ts lineNumbers
 banner: {
@@ -219,13 +219,13 @@ footer: {
 },
 ```
 
-`links` 按你书写的顺序显示。站内链接按挂在根路径来写；外部链接在新标签页打开。在[多语言](/docs/content/i18n#per-locale-navigation)站点上，`label` 可以是从 locale 代码到文字的映射；只要对应 locale 提供该页面，站内链接就会切换到读者所在的 locale。`socials` 把平台映射到它的资料 URL，图标按你书写的顺序出现。可用平台为 `bluesky`、`discord`、`facebook`、`github`、`hacker-news`、`instagram`、`linkedin`、`medium`、`podcast`、`reddit`、`slack`、`telegram`、`threads`、`website`、`x` 和 `youtube`。一个 `github` 社交项会取代仓库链接；要隐藏该链接请用 [`navigation.repo`](/docs/content/navigation#repository-link)。
+`links` 按你书写的顺序显示。站内链接按挂在根路径来写；外部链接在新标签页打开。在[多语言](/docs/content/i18n/)站点上，`label` 可以是从 locale 代码到文字的映射；只要对应 locale 提供该页面，站内链接就会切换到读者所在的 locale。`socials` 把平台映射到它的资料 URL，图标按你书写的顺序出现。可用平台为 `bluesky`、`discord`、`facebook`、`github`、`hacker-news`、`instagram`、`linkedin`、`medium`、`podcast`、`reddit`、`slack`、`telegram`、`threads`、`website`、`x` 和 `youtube`。一个 `github` 社交项会取代仓库链接；要隐藏该链接请用 [`navigation.repo`](/docs/content/navigation/)。
 
-没有链接、资料或仓库的站点不会有页脚。基于 `PageLayout` 构建的自定义页面也会显示它，除非它们填充了布局自己的 `footer` 插槽。要完全替换页脚，请覆盖 [`Footer` 布局插槽](/docs/configuration/customization#layout-slots)。
+没有链接、资料或仓库的站点不会有页脚。基于 `PageLayout` 构建的自定义页面也会显示它，除非它们填充了布局自己的 `footer` 插槽。要完全替换页脚，请覆盖 [`Footer` 布局插槽](/docs/configuration/customization/)。
 
 ## 内容 [#content]
 
-你的内容放在哪里，以及 Blume 如何发现它。文件如何变成路由，参见 [Pages](/docs/content)。
+你的内容放在哪里，以及 Blume 如何发现它。文件如何变成路由，参见 [Pages](/docs/content/)。
 
 ```ts blume.config.ts lineNumbers
 content: {
@@ -238,16 +238,16 @@ content: {
 | `root` | `"docs"` | Blume 扫描内容的文件夹。单个 `filesystem()` 源的简写；不能与 `sources` 并用。 |
 | `include` | `["**/*.{md,mdx}"]` | 匹配内容文件的 glob。简写形式，与 `root` 相同。 |
 | `exclude` | `["**/_*", "**/.*"]` | 要忽略的 glob（下划线和点号文件）。简写形式，与 `root` 相同。 |
-| `sources` | 一个 `filesystem()` | 来自 `blume/sources` 的内容源适配器，取代简写形式。参见[内容源](/docs/content/sources)。 |
+| `sources` | 一个 `filesystem()` | 来自 `blume/sources` 的内容源适配器，取代简写形式。参见[内容源](/docs/content/sources/)。 |
 | `pages` | `"pages"` | 自定义 `.astro` 页面所在的文件夹。 |
 | `defaultType` | `"doc"` | frontmatter 省略 `type` 时页面使用的 `type`。 |
 | `types` | `{}` | 按类型的内容定义 —— 作用于某个 `type` 页面的自定义 frontmatter 键。参见 [Frontmatter](#frontmatter)。 |
 
-静态资源放在 `public/` 中 —— `public/logo.png` 会在 `/logo.png` 提供，因此像 `![](/images/create.png)` 这样的引用会解析到 `public/images/create.png`。**相对路径**引用的图片（`![](./diagram.png)`）则与你的内容放在一起，并会在[构建时优化](/docs/content/syntax#links-and-images)。
+静态资源放在 `public/` 中 —— `public/logo.png` 会在 `/logo.png` 提供，因此像 `![](/images/create.png)` 这样的引用会解析到 `public/images/create.png`。**相对路径**引用的图片（`![](./diagram.png)`）则与你的内容放在一起，并会在[构建时优化](/docs/content/syntax/)。
 
 ## 图片 [#images]
 
-相对路径引用的本地图片会在构建时自动优化 —— 压缩、转换为 WebP，并补上内在的 `width`/`height` 属性，这样加载时布局不会位移。无需任何配置；撰写指南参见 [Links and images](/docs/content/syntax#links-and-images)。
+相对路径引用的本地图片会在构建时自动优化 —— 压缩、转换为 WebP，并补上内在的 `width`/`height` 属性，这样加载时布局不会位移。无需任何配置；撰写指南参见 [Links and images](/docs/content/syntax/)。
 
 远程图片默认原样提供。若想让 Blume 也在构建时下载并优化它们，需要授权其主机：
 
@@ -281,7 +281,7 @@ export default defineConfig({
 });
 ```
 
-任何 [Standard Schema](https://standardschema.dev) 库都可以 —— Zod（你的项目安装的任意版本）、Valibot、ArkType。扩展之外的键仍会被严格校验，因此查错拼写的能力不变。校验语义参见[自定义键](/docs/content/frontmatter#custom-keys)。
+任何 [Standard Schema](https://standardschema.dev) 库都可以 —— Zod（你的项目安装的任意版本）、Valibot、ArkType。扩展之外的键仍会被严格校验，因此查错拼写的能力不变。校验语义参见[自定义键](/docs/content/frontmatter/)。
 
 `extend` 下的键在全站生效。若只想要求某种内容类型的页面带上某些键 —— RFC 的 `status`、runbook 的 `service` —— 请改为在 `content.types` 下按类型声明：
 
@@ -304,13 +304,13 @@ export default defineConfig({
 });
 ```
 
-一个键要么全站声明，要么按类型声明，不能两者兼有。作用域如何解析，参见[按类型的键](/docs/content/frontmatter#per-type-keys)。
+一个键要么全站声明，要么按类型声明，不能两者兼有。作用域如何解析，参见[按类型的键](/docs/content/frontmatter/)。
 
-`facets` 列出自定义键中那些其值会成为可筛选元数据的键：它们会随搜索文档（`blume-search.json` 和 MCP 索引）一起流转，而 [MCP 工具](/docs/discoverability/mcp)接受一个 `filters` 输入与之匹配，因此 agent 可以只取回例如 `architecture` 领域中状态为 `enforced` 的 RFC。每个分面都必须是一个已声明的自定义键 —— 按类型或全站均可 —— 并且只有字符串（或字符串化的数字/布尔值）才能作为分面。
+`facets` 列出自定义键中那些其值会成为可筛选元数据的键：它们会随搜索文档（`blume-search.json` 和 MCP 索引）一起流转，而 [MCP 工具](/docs/discoverability/mcp/)接受一个 `filters` 输入与之匹配，因此 agent 可以只取回例如 `architecture` 领域中状态为 `enforced` 的 RFC。每个分面都必须是一个已声明的自定义键 —— 按类型或全站均可 —— 并且只有字符串（或字符串化的数字/布尔值）才能作为分面。
 
 ## GitHub [#github]
 
-用 `github` 指向你的仓库。它驱动页脚的[仓库链接](/docs/content/navigation#repository-link)和 **Edit on GitHub** [页面操作](/docs/content/navigation#page-actions)：
+用 `github` 指向你的仓库。它驱动页脚的[仓库链接](/docs/content/navigation/)和 **Edit on GitHub** [页面操作](/docs/content/navigation/)：
 
 ```ts blume.config.ts lineNumbers
 github: {
@@ -340,14 +340,14 @@ github: {
 }
 ```
 
-[`<GithubInfo>`](/docs/content/components) 查询所用的 REST API 基地址由 `host` 推导：带数据驻留的 Enterprise Cloud 租户（`acme.ghe.com`）由其 `api.` 子域提供服务，其他任何主机则按 Enterprise Server 处理（`/api/v3`）。当你的实例在其他位置时，请显式设置 `api`。
+[`<GithubInfo>`](/docs/content/components/) 查询所用的 REST API 基地址由 `host` 推导：带数据驻留的 Enterprise Cloud 租户（`acme.ghe.com`）由其 `api.` 子域提供服务，其他任何主机则按 Enterprise Server 处理（`/api/v3`）。当你的实例在其他位置时，请显式设置 `api`。
 
 :::warning
 只能通过明文 HTTP 访问的实例仍会渲染其计数，但 `GITHUB_TOKEN` 不会随请求明文发送，而是被扣住不发 —— 因此私有仓库的卡片返回时就不带这些计数。
 :::
 
 :::note
-`host` 涵盖 Blume 从 `github` 推导出的所有链接。若只想把页头标识指向别处 —— 比如文档仓库本身是私有的，想指向某个组织 —— 请用带绝对 URL 的 [`navigation.repo`](/docs/content/navigation#repository-link)。
+`host` 涵盖 Blume 从 `github` 推导出的所有链接。若只想把页头标识指向别处 —— 比如文档仓库本身是私有的，想指向某个组织 —— 请用带绝对 URL 的 [`navigation.repo`](/docs/content/navigation/)。
 :::
 
 ## 最后更新 [#last-modified]
@@ -377,7 +377,7 @@ lastModified: 2026-06-20
 
 ## 日期格式 [#date-format]
 
-“最后更新”时间戳和[更新日志](/docs/advanced/changelog)时间线都通过同一个 `dateFormat` 渲染日期，因此两者读起来风格一致。日期总是按站点 locale 渲染；`dateFormat` 控制的是_形状_。它默认为长格式（`July 21, 2026`、`2026年7月21日`）：
+“最后更新”时间戳和[更新日志](/docs/advanced/changelog/)时间线都通过同一个 `dateFormat` 渲染日期，因此两者读起来风格一致。日期总是按站点 locale 渲染；`dateFormat` 控制的是_形状_。它默认为长格式（`July 21, 2026`、`2026年7月21日`）：
 
 ```ts blume.config.ts
 dateFormat: { dateStyle: "long" },
@@ -406,7 +406,7 @@ dateFormat: { year: "numeric", month: "2-digit", day: "2-digit" },
 
 ## SEO 与 agents
 
-元数据、Open Graph 图片、RSS 订阅源、JSON-LD、站点地图和 `robots.txt` 位于 `seo` 之下；`llms.txt`、原始 Markdown、JSON API、MCP server 和探测清单位于 `agents` 之下。两者在[可发现性](/docs/discoverability)章节中逐页讲解，该章节把搜索引擎和 AI agent 当作同一层机器可读内容的两个受众。面向读者的模型功能 —— assistant 和 Open in chat 操作 —— 位于 `ai` 之下。
+元数据、Open Graph 图片、RSS 订阅源、JSON-LD、站点地图和 `robots.txt` 位于 `seo` 之下；`llms.txt`、原始 Markdown、JSON API、MCP server 和探测清单位于 `agents` 之下。两者在[可发现性](/docs/discoverability/)章节中逐页讲解，该章节把搜索引擎和 AI agent 当作同一层机器可读内容的两个受众。面向读者的模型功能 —— assistant 和 Open in chat 操作 —— 位于 `ai` 之下。
 
 ```ts blume.config.ts lineNumbers
 seo: {
@@ -428,7 +428,7 @@ seo: {
 | `robots` | `true` | 生成带 Sitemap 链接的 robots.txt。 |
 | `structuredData` | `true` | 在每个页面的 head 中输出 schema.org JSON-LD。 |
 
-这些功能配上绝对的 [`deployment.site`](/docs/deployment)效果最好，这样才能得到完整 URL。
+这些功能配上绝对的 [`deployment.site`](/docs/deployment/)效果最好，这样才能得到完整 URL。
 
 ## 目录 [#table-of-contents]
 
@@ -458,7 +458,7 @@ export default defineConfig({
 });
 ```
 
-读者的回答会作为一个 `feedback` [自定义事件](/docs/configuration/analytics#custom-events)发送 —— 包含 `helpful`（`"yes"` 或 `"no"`）、`path` 和 `title` —— 走遍每一个配置了事件 API 的 analytics 适配器，同时也会作为 `window` 上的 `blume:track` 事件发出。没有 analytics 适配器时，回答不会被记录在任何地方；开启 [cookie consent](/docs/configuration/consent)后，评分只对允许 analytics 的读者显示，因为对其他人来说回答本来也无处可去。问题和致谢文字都是 UI 字符串，可以用 [`i18n.ui`](/docs/content/i18n#translated-ui) 翻译。
+读者的回答会作为一个 `feedback` [自定义事件](/docs/configuration/analytics/)发送 —— 包含 `helpful`（`"yes"` 或 `"no"`）、`path` 和 `title` —— 走遍每一个配置了事件 API 的 analytics 适配器，同时也会作为 `window` 上的 `blume:track` 事件发出。没有 analytics 适配器时，回答不会被记录在任何地方；开启 [cookie consent](/docs/configuration/consent/)后，评分只对允许 analytics 的读者显示，因为对其他人来说回答本来也无处可去。问题和致谢文字都是 UI 字符串，可以用 [`i18n.ui`](/docs/content/i18n/) 翻译。
 
 ### 文字反馈 [#written-feedback]
 
@@ -480,29 +480,29 @@ export default defineConfig({
 
 | 字段 | 配置内容 | 指南 |
 | --- | --- | --- |
-| `theme` | 强调色、圆角、字体、亮色/暗色模式 | [主题](/docs/configuration/theming) |
-| `navigation` | 显式的侧边栏和页头标签页 | [导航](/docs/content/navigation) |
-| `search` | 提供方（Orama、Pagefind、Algolia 等）和索引 | [搜索](/docs/configuration/search) |
-| `markdown` | Markdown 渲染选项 —— 代码块、标题锚点、图片缩放 | [语法](/docs/content/syntax) |
-| `agents` | `llms.txt`、Markdown 镜像、JSON API、托管的 MCP server、skills，以及面向编码 agent 的探测清单 | [SEO 与 GEO](/docs/discoverability) |
-| `ai` | 页面内 assistant 和 Open in chat 操作 | [Assistant](/docs/configuration/assistant) |
-| `rateLimit` | 单个读者调用 assistant、playground 代理和服务端搜索的频率，使用来自 `blume/ratelimit` 的适配器（默认开启） | [速率限制](/docs/configuration/rate-limiting) |
-| `narration` | “收听本页”播放器，使用浏览器语音或构建时生成的语音 | [Narration](/docs/configuration/narration) |
-| `reference` | API 参考：`openapi()`、`asyncapi()`、`graphql()` 和 `scalar()` 适配器，来自 `blume/reference` | [OpenAPI](/docs/references/openapi)、[AsyncAPI](/docs/references/asyncapi)、[GraphQL](/docs/references/graphql)、[Scalar](/docs/references/scalar) |
-| `api` | 手写端点页面的服务端、鉴权和 Try it 面板 | [手写 API 页面](/docs/references/api-pages) |
-| `analytics` | 来自 `blume/analytics` 的适配器 —— PostHog、Google Analytics、Plausible、Mixpanel、Segment 等 —— 以及自定义脚本 | [Analytics](/docs/configuration/analytics) |
-| `consent` | 来自 `blume/consent` 的 cookie 同意适配器 —— Blume 自带横幅、Osano 或 Ethyca —— 在读者允许之前拦住 analytics | [Cookie consent](/docs/configuration/consent) |
-| `seo` | 元数据、OG 图片、订阅源、结构化数据、站点地图、robots | [SEO 与 GEO](/docs/discoverability) |
-| `deployment` | 来自 `blume/deploy` 的主机适配器，或用于静态构建的 `{ site, base }` | [部署](/docs/deployment) |
-| `redirects` | 永久和临时重定向 | [部署](/docs/deployment#redirects) |
-| `integrations` | 追加在 Blume 内置集成之后的 Astro 集成 | [定制](/docs/configuration/customization#astro-integrations) |
-| `basePath` | 每个生成的路由所挂载的路径前缀（例如 `/docs`），侧边栏看不到它 | [部署](/docs/deployment#mount-the-docs-under-a-path) |
-| `i18n` | Locale、默认 locale 和翻译后的 UI 字符串 | [国际化](/docs/content/i18n) |
-| `versions` | 较旧文档的冻结快照，带版本切换器 | [版本控制](/docs/content/versioning) |
-| `export` | 面向读者的 PDF 和 EPUB 下载 | [导出](/docs/configuration/export) |
-| `examples` | `<Component path>` 示例预览的位置，以及注入其 frame 的 CSS | [Component](/docs/content/components#component) |
-| `react` | 交互岛中的 React 行为 —— React Compiler 的自动 memo 化 | [Islands](/docs/content/islands#frameworks) |
-| `variables` | 任何页面中 `{{name}}` 读取的值 | [变量](/docs/content/variables) |
+| `theme` | 强调色、圆角、字体、亮色/暗色模式 | [主题](/docs/configuration/theming/) |
+| `navigation` | 显式的侧边栏和页头标签页 | [导航](/docs/content/navigation/) |
+| `search` | 提供方（Orama、Pagefind、Algolia 等）和索引 | [搜索](/docs/configuration/search/) |
+| `markdown` | Markdown 渲染选项 —— 代码块、标题锚点、图片缩放 | [语法](/docs/content/syntax/) |
+| `agents` | `llms.txt`、Markdown 镜像、JSON API、托管的 MCP server、skills，以及面向编码 agent 的探测清单 | [SEO 与 GEO](/docs/discoverability/) |
+| `ai` | 页面内 assistant 和 Open in chat 操作 | [Assistant](/docs/configuration/assistant/) |
+| `rateLimit` | 单个读者调用 assistant、playground 代理和服务端搜索的频率，使用来自 `blume/ratelimit` 的适配器（默认开启） | [速率限制](/docs/configuration/rate-limiting/) |
+| `narration` | “收听本页”播放器，使用浏览器语音或构建时生成的语音 | [Narration](/docs/configuration/narration/) |
+| `reference` | API 参考：`openapi()`、`asyncapi()`、`graphql()` 和 `scalar()` 适配器，来自 `blume/reference` | [OpenAPI](/docs/references/openapi/)、[AsyncAPI](/docs/references/asyncapi/)、[GraphQL](/docs/references/graphql/)、[Scalar](/docs/references/scalar/) |
+| `api` | 手写端点页面的服务端、鉴权和 Try it 面板 | [手写 API 页面](/docs/references/api-pages/) |
+| `analytics` | 来自 `blume/analytics` 的适配器 —— PostHog、Google Analytics、Plausible、Mixpanel、Segment 等 —— 以及自定义脚本 | [Analytics](/docs/configuration/analytics/) |
+| `consent` | 来自 `blume/consent` 的 cookie 同意适配器 —— Blume 自带横幅、Osano 或 Ethyca —— 在读者允许之前拦住 analytics | [Cookie consent](/docs/configuration/consent/) |
+| `seo` | 元数据、OG 图片、订阅源、结构化数据、站点地图、robots | [SEO 与 GEO](/docs/discoverability/) |
+| `deployment` | 来自 `blume/deploy` 的主机适配器，或用于静态构建的 `{ site, base }` | [部署](/docs/deployment/) |
+| `redirects` | 永久和临时重定向 | [部署](/docs/deployment/) |
+| `integrations` | 追加在 Blume 内置集成之后的 Astro 集成 | [定制](/docs/configuration/customization/) |
+| `basePath` | 每个生成的路由所挂载的路径前缀（例如 `/docs`），侧边栏看不到它 | [部署](/docs/deployment/) |
+| `i18n` | Locale、默认 locale 和翻译后的 UI 字符串 | [国际化](/docs/content/i18n/) |
+| `versions` | 较旧文档的冻结快照，带版本切换器 | [版本控制](/docs/content/versioning/) |
+| `export` | 面向读者的 PDF 和 EPUB 下载 | [导出](/docs/configuration/export/) |
+| `examples` | `<Component path>` 示例预览的位置，以及注入其 frame 的 CSS | [Component](/docs/content/components/) |
+| `react` | 交互岛中的 React 行为 —— React Compiler 的自动 memo 化 | [Islands](/docs/content/islands/) |
+| `variables` | 任何页面中 `{{name}}` 读取的值 | [变量](/docs/content/variables/) |
 | `feedback` | 每页底部的“这个页面有帮助吗？”评分（默认 `true`），以及可选的文字评论 | [页面反馈](#page-feedback) |
 
 ## 优先级
@@ -519,7 +519,7 @@ export default defineConfig({
 
 3. **文件夹 meta**
 
-    控制某个分区的标题和排序的 [`meta.ts`](/docs/content/meta)。
+    控制某个分区的标题和排序的 [`meta.ts`](/docs/content/meta/)。
 
 4. **页面 frontmatter**
 

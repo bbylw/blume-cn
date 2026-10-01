@@ -12,7 +12,7 @@ Blume 先根据文件系统构建侧边栏，然后让你随意微调——想�
 
 - 文件夹变成**分组**，文件变成**页面**
 - 页面的标签取自它的 frontmatter `title`；分组的标签是「人性化」的文件夹名，常见缩写如 API、CLI、SDK 保持大写（`api-reference` 会显示为 "API Reference"）
-- 条目先按[数字前缀](/docs/content)排序，然后按字母序排序，文件夹的 `index` 页面排在最前
+- 条目先按[数字前缀](/docs/content/)排序，然后按字母序排序，文件夹的 `index` 页面排在最前
 - 带 `index` 页面的文件夹，其分组行会链接到该页面，因此点击板块名就会打开该板块的落地页
 
 对很多站点来说这已经足够——下面的一切都是可选项。
@@ -29,11 +29,11 @@ sidebar:
   order: 1 # 在所属分组内的排序位置
 ```
 
-完整的页面结构参见 [Frontmatter](/docs/content/frontmatter)。
+完整的页面结构参见 [Frontmatter](/docs/content/frontmatter/)。
 
 ## 文件夹分组
 
-每个文件夹都会成为一个侧边栏分组。在它同级页面的位置放一个 [`meta.ts`](/docs/content/meta)，即可设置该分组的标题、图标、顺序以及子项的顺序：
+每个文件夹都会成为一个侧边栏分组。在它同级页面的位置放一个 [`meta.ts`](/docs/content/meta/)，即可设置该分组的标题、图标、顺序以及子项的顺序：
 
 ```ts meta.ts
 import { defineMeta } from "blume";
@@ -45,11 +45,11 @@ export default defineMeta({
 });
 ```
 
-全部字段以及在扫描时计算 meta 的做法，参见[文件夹 Meta](/docs/content/meta)。
+全部字段以及在扫描时计算 meta 的做法，参见[文件夹 Meta](/docs/content/meta/)。
 
 文件夹的 `meta.title` 与它自己 `index` 页面 frontmatter 中的 `title` 是各自独立解析的——在 i18n 下翻译了其中一个却忘了另一个，就会出现侧边栏正确、但落地页自身的 `<title>`/标题仍是旧内容的情况。当二者不一致，且该 index 页面隐藏了自己的侧边栏行（`sidebar.hidden: true`）时，文件夹标题是该页面唯一的侧边栏标签，Blume 会报出 `BLUME_NAV_INDEX_TITLE_MISMATCH` 警告。当 index 行可见时，侧边栏已经同时显示了两个标题，因此把文件夹标题和不同的页面标题配对（「CLI」配「Overview」）没有问题。从回退语言环境填充的未翻译页面不在此列——它们的标题属于回退语言环境，正确的做法是翻译页面，而不是去改它的 frontmatter。
 
-若想给页面分组却_不_增加 URL 层级，请使用带括号的文件夹名——参见[页面](/docs/content#group-folders)。
+若想给页面分组却_不_增加 URL 层级，请使用带括号的文件夹名——参见[页面](/docs/content/)。
 
 ## 显示模式 [#display-modes]
 
@@ -64,7 +64,7 @@ navigation: {
 ```
 
 - **`flat`**（默认）——不可折叠的标题，其页面列在下方。不属于任何分组的页面总是最先列出，位于各分组板块之上，因此不会被误认为某个分组的子项。
-- **`group`**——每个分组是一个可折叠的 `<details>` 展开区。分组默认折叠；包含当前页面的分组总是默认展开，这样只有你所在的部分被展开。无论如何都想让某个分组保持展开，可在[文件夹 Meta](/docs/content/meta)中设置 `collapsed: false`。
+- **`group`**——每个分组是一个可折叠的 `<details>` 展开区。分组默认折叠；包含当前页面的分组总是默认展开，这样只有你所在的部分被展开。无论如何都想让某个分组保持展开，可在[文件夹 Meta](/docs/content/meta/)中设置 `collapsed: false`。
 - **`page`**——每个分组占一行，点击后侧边栏会滑入一个子面板，只显示该分组的条目，顶部有一个返回箭头。面板能感知当前路由，因此直接访问分组内的某个页面会直接打开到它。
 
 :::tip
@@ -75,7 +75,7 @@ navigation: {
 
 ### 按分组覆盖 [#per-group-overrides]
 
-任何自动生成的分组都可以脱离全局模式——无需配置显式侧边栏。在文件夹的 [`meta.ts`](/docs/content/meta) 中设置 `display`，或者——当该文件夹有 `index` 页面时——在该页面 frontmatter 的 `sidebar` 下设置，只有该分组会改变：
+任何自动生成的分组都可以脱离全局模式——无需配置显式侧边栏。在文件夹的 [`meta.ts`](/docs/content/meta/) 中设置 `display`，或者——当该文件夹有 `index` 页面时——在该页面 frontmatter 的 `sidebar` 下设置，只有该分组会改变：
 
 ```ts meta.ts
 import { defineMeta } from "blume";
@@ -109,7 +109,7 @@ sidebar:
 
 ## 目录列表 [#directory-listings]
 
-分组自己的页面可以在其内容下方列出该分组的其他页面，于是板块的落地页同时充当它的目录。在文件夹的 [`meta.ts`](/docs/content/meta) 中设置 `directory`：
+分组自己的页面可以在其内容下方列出该分组的其他页面，于是板块的落地页同时充当它的目录。在文件夹的 [`meta.ts`](/docs/content/meta/) 中设置 `directory`：
 
 ```ts guides/meta.ts lineNumbers
 import { defineMeta } from "blume";
@@ -172,9 +172,9 @@ navigation: {
 }
 ```
 
-标签页可选的 `icon`（一个[内置图标](/docs/content/components#icon)名称、图片路径/URL，或内联 SVG）会显示在标签旁，无论在页眉还是在移动端导航抽屉中。
+标签页可选的 `icon`（一个[内置图标](/docs/content/components/)名称、图片路径/URL，或内联 SVG）会显示在标签旁，无论在页眉还是在移动端导航抽屉中。
 
-启用后的 [OpenAPI](/docs/references/openapi)、[AsyncAPI](/docs/references/asyncapi) 或 [GraphQL](/docs/references/graphql) 引用会挂载到自己的路由上，但不会自动添加标签页——把某个标签页指向该路由，就能让它出现在页眉中（对原生渲染器而言，还能限定其操作侧边栏的范围），标签文字随你定：
+启用后的 [OpenAPI](/docs/references/openapi/)、[AsyncAPI](/docs/references/asyncapi/) 或 [GraphQL](/docs/references/graphql/) 引用会挂载到自己的路由上，但不会自动添加标签页——把某个标签页指向该路由，就能让它出现在页眉中（对原生渲染器而言，还能限定其操作侧边栏的范围），标签文字随你定：
 
 ```ts blume.config.ts
 navigation: {
@@ -184,7 +184,7 @@ navigation: {
 }
 ```
 
-标签页的 `path` 是它所在板块的前缀，同时也是链接目标。如果某个板块的 `path` 不是它自己的某个页面——比如没有 `index.mdx` 的文件夹——链接就会指向 404，因此标签页会改为回退到该板块的第一个页面。位于标签页 `path` 上的静态[自定义页面](/docs/advanced/custom-pages)也算作该板块自己的页面：有了 `pages/guides.astro`，`/guides` 标签页就会落到该页面上，同时 `guides/` 文件夹填充它的侧边栏。自动生成的[更新日志](/docs/advanced/changelog)索引同样如此，于是 `/changelog` 标签页打开的是时间线，而不是最新一条。
+标签页的 `path` 是它所在板块的前缀，同时也是链接目标。如果某个板块的 `path` 不是它自己的某个页面——比如没有 `index.mdx` 的文件夹——链接就会指向 404，因此标签页会改为回退到该板块的第一个页面。位于标签页 `path` 上的静态[自定义页面](/docs/advanced/custom-pages/)也算作该板块自己的页面：有了 `pages/guides.astro`，`/guides` 标签页就会落到该页面上，同时 `guides/` 文件夹填充它的侧边栏。自动生成的[更新日志](/docs/advanced/changelog/)索引同样如此，于是 `/changelog` 标签页打开的是时间线，而不是最新一条。
 
 如果你希望标签页落到别处——比如板块内的某个特定页面——就设置 `href`：
 
@@ -216,7 +216,7 @@ navigation: {
 }
 ```
 
-在 [i18n](/docs/content/i18n) 站点上，标签页的 `label`（以及下拉条目的 `label`）可以是按语言环境映射的对象而不是字符串——优先取当前语言环境的值，其次取默认语言环境的值：
+在 [i18n](/docs/content/i18n/) 站点上，标签页的 `label`（以及下拉条目的 `label`）可以是按语言环境映射的对象而不是字符串——优先取当前语言环境的值，其次取默认语言环境的值：
 
 ```ts blume.config.ts
 navigation: {
@@ -254,9 +254,9 @@ navigation: {
 
 每个条目需要一个 `label`、一个 `path`，以及可选的 `icon`、`description` 和 `tag`。`kind`（`dropdown`、`product`、`version` 或 `language`）只是提示该选择器的用途；它们渲染出的下拉菜单完全相同。
 
-配置了[版本控制](/docs/content/versioning)后，Blume 会自动渲染一个版本选择器——在这里声明自己的 `kind: "version"` 选择器会取代自动生成的那个，因此手写的方案仍然可用。
+配置了[版本控制](/docs/content/versioning/)后，Blume 会自动渲染一个版本选择器——在这里声明自己的 `kind: "version"` 选择器会取代自动生成的那个，因此手写的方案仍然可用。
 
-在比桌面侧边栏更窄的屏幕上，选择器、版本选择器和[语言切换器](/docs/content/i18n#the-language-switcher)会从页眉移到移动端导航抽屉顶部，各自占满抽屉宽度。
+在比桌面侧边栏更窄的屏幕上，选择器、版本选择器和[语言切换器](/docs/content/i18n/)会从页眉移到移动端导航抽屉顶部，各自占满抽屉宽度。
 
 ## 置顶链接 [#featured-links]
 
@@ -271,7 +271,7 @@ navigation: {
 }
 ```
 
-每个链接需要一个 `label`、一个 `href`，以及可选的 `icon`（一个[内置图标](/docs/content/components#icon)名称、图片路径/URL 或内联 SVG——与其他地方完全相同）。`href` 可以指向任何位置：外部 URL 会在新标签页中打开，而内部路由（如 `/contact`）会在构建时与你的页面校验，若没有任何匹配会给出警告。
+每个链接需要一个 `label`、一个 `href`，以及可选的 `icon`（一个[内置图标](/docs/content/components/)名称、图片路径/URL 或内联 SVG——与其他地方完全相同）。`href` 可以指向任何位置：外部 URL 会在新标签页中打开，而内部路由（如 `/contact`）会在构建时与你的页面校验，若没有任何匹配会给出警告。
 
 ## 显式侧边栏 [#explicit-sidebar]
 
@@ -306,7 +306,7 @@ navigation: {
 }
 ```
 
-和标签页标签一样，在[多语言](/docs/content/i18n#per-locale-navigation)站点上，这里的 `label` 也可以是语言环境代码到文本的映射。
+和标签页标签一样，在[多语言](/docs/content/i18n/)站点上，这里的 `label` 也可以是语言环境代码到文本的映射。
 
 `cta` 故意是单数——文档页眉只容得下一件要读者去做的事，而一排按钮什么也没要求。次要链接应放进 `actions`，或者当它们应与侧边栏放在一起时放进 [`featured`](#featured-links)。
 
@@ -314,7 +314,7 @@ navigation: {
 
 ## 仓库链接 [#repository-link]
 
-当你在配置中设置了 [`github`](/docs/configuration) 后，Blume 会在[页脚](/docs/configuration#footer)中你的社交资料之前显示一个 GitHub 图标，链接到你的仓库。它默认开启；用 `navigation.repo` 可以隐藏：
+当你在配置中设置了 [`github`](/docs/configuration/) 后，Blume 会在[页脚](/docs/configuration/)中你的社交资料之前显示一个 GitHub 图标，链接到你的仓库。它默认开启；用 `navigation.repo` 可以隐藏：
 
 ```ts blume.config.ts lineNumbers
 navigation: {
@@ -332,28 +332,28 @@ navigation: {
 }
 ```
 
-这适用于文档仓库为私有仓库的项目。`github` 同时驱动逐页面的编辑链接、GitHub 标记和[代理清单](/docs/discoverability/agent-discovery)中的仓库，因此这类项目必须不设置 `github`——而正是一个 URL 让它仍能显示一个指向公开位置的标记。`footer.socials.github` 中的 URL 会取代这个标记；指向其他主机的链接则应放在页脚的 `links` 或 [`actions`](#header-actions) 中。
+这适用于文档仓库为私有仓库的项目。`github` 同时驱动逐页面的编辑链接、GitHub 标记和[代理清单](/docs/discoverability/agent-discovery/)中的仓库，因此这类项目必须不设置 `github`——而正是一个 URL 让它仍能显示一个指向公开位置的标记。`footer.socials.github` 中的 URL 会取代这个标记；指向其他主机的链接则应放在页脚的 `links` 或 [`actions`](#header-actions) 中。
 
 ## 面包屑与翻页
 
 它们直接来自侧边栏目录树，无需任何配置：
 
 - **面包屑**会在标题上方显示当前页面所属的父分组。
-- 每个页面底部的**上一页和下一页**链接遵循侧边栏顺序，并跳过隐藏的页面。在页面的 frontmatter 中设置 [`pagination: false`](/docs/content/frontmatter) 即可在该页面上取消它们。
+- 每个页面底部的**上一页和下一页**链接遵循侧边栏顺序，并跳过隐藏的页面。在页面的 frontmatter 中设置 [`pagination: false`](/docs/content/frontmatter/) 即可在该页面上取消它们。
 
 ## 本页大纲
 
-右侧栏的大纲会根据每个页面的标题自动生成——默认取 `##` 和 `###`——因此长页面依然便于快速浏览。设置 [`toc`](/docs/configuration#table-of-contents) 可以改变标题范围或关闭大纲。在更窄的屏幕上，右栏会隐藏，大纲则折叠成内容上方的「本页大纲」下拉菜单。
+右侧栏的大纲会根据每个页面的标题自动生成——默认取 `##` 和 `###`——因此长页面依然便于快速浏览。设置 [`toc`](/docs/configuration/) 可以改变标题范围或关闭大纲。在更窄的屏幕上，右栏会隐藏，大纲则折叠成内容上方的「本页大纲」下拉菜单。
 
 ## 页面操作 [#page-actions]
 
 在目录下方，每个页面都会显示一组快捷操作：
 
-- **在 GitHub 上编辑**——直接链接到源文件。在配置中设置 [`github`](/docs/configuration) 后出现。
+- **在 GitHub 上编辑**——直接链接到源文件。在配置中设置 [`github`](/docs/configuration/) 后出现。
 - **回到顶部**——平滑地把长页面滚回顶部。
 
-另外还有一些把页面交给 AI 工具的操作——**复制为 Markdown** 和**在对话中打开**——参见[面向代理的 Markdown](/docs/discoverability/markdown#copy-as-markdown)。
+另外还有一些把页面交给 AI 工具的操作——**复制为 Markdown** 和**在对话中打开**——参见[面向代理的 Markdown](/docs/discoverability/markdown/)。
 
-反馈则放在页面底部：一个「本页对你有帮助吗？」的是/否评分，它会发送 `feedback` 分析事件，且不需要 `github`——参见[页面反馈](/docs/configuration#page-feedback)。
+反馈则放在页面底部：一个「本页对你有帮助吗？」的是/否评分，它会发送 `feedback` 分析事件，且不需要 `github`——参见[页面反馈](/docs/configuration/)。
 
-开启 [`export`](/docs/configuration/export) 后，还有一个**导出**操作，让读者可以把页面下载为 PDF 或 EPUB。
+开启 [`export`](/docs/configuration/export/) 后，还有一个**导出**操作，让读者可以把页面下载为 PDF 或 EPUB。

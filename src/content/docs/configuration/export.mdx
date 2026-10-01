@@ -4,7 +4,7 @@ description: 在目录下方为读者提供 PDF 与 EPUB 导出能力，完全�
 source: https://useblume.dev/docs/configuration/export
 ---
 
-Blume 可以在目录下方添加一个 **Export** 操作（见[页面操作](/docs/content/navigation#page-actions)），让读者把当前页面保存为 **PDF** 或 **EPUB**。它默认关闭，且完全在客户端完成 —— 没有服务端，[静态](/docs/deployment)构建依然是静态的。
+Blume 可以在目录下方添加一个 **Export** 操作（见[页面操作](/docs/content/navigation/)），让读者把当前页面保存为 **PDF** 或 **EPUB**。它默认关闭，且完全在客户端完成 —— 没有服务端，[静态](/docs/deployment/)构建依然是静态的。
 
 ## 启用
 
@@ -46,5 +46,5 @@ PDF 导出走的是浏览器原生的打印对话框，因此 "Save as PDF" 的�
 两种格式导出的都是读者正在查看的**单个页面**，而不是整个站点 —— 这与该操作的位置一致，它就在该页目录的下方。
 
 :::note
-EPUB 里没有 JavaScript 来切换标签页，因此带标签页的内容 —— 例如 [package-install](/docs/content/syntax) 代码块和代码组 —— 会被展开，一次性展示所有面板。客户端渲染的嵌入内容（例如 Mermaid 图）不会包含在内。
+EPUB 里没有 JavaScript 来切换标签页，因此带标签页的内容 —— 例如 [package-install](/docs/content/syntax/) 代码块和代码组 —— 会被展开，一次性展示所有面板。客户端渲染的嵌入内容（例如 Mermaid 图）不会包含在内。
 :::

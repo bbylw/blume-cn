@@ -4,7 +4,7 @@ description: 在分析脚本运行前先询问读者，支持 Blume 自带横幅
 source: https://useblume.dev/docs/configuration/consent
 ---
 
-在 `blume.config.ts` 中设置 `consent`，就能在[分析](/docs/configuration/analytics)脚本运行前先询问读者。它接受一个来自 `blume/consent` 的适配器：Blume 自带的横幅，或者你已经在用的托管同意管理器。
+在 `blume.config.ts` 中设置 `consent`，就能在[分析](/docs/configuration/analytics/)脚本运行前先询问读者。它接受一个来自 `blume/consent` 的适配器：Blume 自带的横幅，或者你已经在用的托管同意管理器。
 
 ```ts blume.config.ts lineNumbers
 import { defineConfig } from "blume";
@@ -20,7 +20,7 @@ export default defineConfig({
 });
 ```
 
-设置 `consent` 后，每个分析适配器都会等待。它的标签已经在页面里，但要到读者允许分析之后才会运行，并且按你列出的顺序运行。拒绝的读者永远不会加载它们，也看不到[页面评分](/docs/configuration#page-feedback)及其评论框，因为他们的回答无处可去。Vercel Web Analytics 无论如何都会加载，因为它的组件不是 Blume 能拦下的标签，但在读者允许分析之前它不会发送任何数据。
+设置 `consent` 后，每个分析适配器都会等待。它的标签已经在页面里，但要到读者允许分析之后才会运行，并且按你列出的顺序运行。拒绝的读者永远不会加载它们，也看不到[页面评分](/docs/configuration/)及其评论框，因为他们的回答无处可去。Vercel Web Analytics 无论如何都会加载，因为它的组件不是 Blume 能拦下的标签，但在读者允许分析之前它不会发送任何数据。
 
 :::note
 同意管理是可选启用的。没有 `consent` 时，分析会像往常一样在页面加载时运行。
@@ -44,7 +44,7 @@ consent: native({
 }),
 ```
 
-`policy` 接受一个页面路由或完整 URL。横幅文案在每个内置语言中都已翻译。要修改措辞，用 `i18n.ui` 覆盖 `consent` 的 [UI 字符串](/docs/content/i18n#translated-ui)（`message`、`accept`、`decline`、`policy`、`settings`）。
+`policy` 接受一个页面路由或完整 URL。横幅文案在每个内置语言中都已翻译。要修改措辞，用 `i18n.ui` 覆盖 `consent` 的 [UI 字符串](/docs/content/i18n/)（`message`、`accept`、`decline`、`policy`、`settings`）。
 
 横幅在 `blume dev` 中同样有效，所以你写作时就能看到它。分析脚本本身只在生产构建中加载。
 
@@ -80,7 +80,7 @@ consent: ethyca({
 
 ## 更改选择 [#changing-an-answer]
 
-设置 `consent` 后，站点页脚会显示一个 **Cookie 设置**链接。它会重新打开 Blume 的横幅，或托管同意管理器的偏好设置面板。如果你用自己的 [`Footer`](/docs/configuration/customization#layout-slots) 替换了页脚，给任意元素加上 `data-blume-consent-open` 属性，就能让它成为这个链接：
+设置 `consent` 后，站点页脚会显示一个 **Cookie 设置**链接。它会重新打开 Blume 的横幅，或托管同意管理器的偏好设置面板。如果你用自己的 [`Footer`](/docs/configuration/customization/) 替换了页脚，给任意元素加上 `data-blume-consent-open` 属性，就能让它成为这个链接：
 
 ```html
 <button data-blume-consent-open type="button">Cookie settings</button>

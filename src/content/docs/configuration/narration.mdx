@@ -20,10 +20,10 @@ export default defineConfig({
 
 | 组件 | 提示 |
 | --- | --- |
-| [提示框](/docs/content/syntax#callouts) | 「注意。」「提示。」「警告。」等等 |
-| [Steps](/docs/content/components#steps) | 「第 1 步。」「第 2 步。」 |
-| [Tabs](/docs/content/components#tabs) | 「macOS 标签页。」每个标签页都会被朗读，不只是当前打开的那个 |
-| [Accordion](/docs/content/components#accordion) 和 [Expandable](/docs/content/components#expandable) | 「可展开区块。」 |
+| [提示框](/docs/content/syntax/) | 「注意。」「提示。」「警告。」等等 |
+| [Steps](/docs/content/components/) | 「第 1 步。」「第 2 步。」 |
+| [Tabs](/docs/content/components/) | 「macOS 标签页。」每个标签页都会被朗读，不只是当前打开的那个 |
+| [Accordion](/docs/content/components/) 和 [Expandable](/docs/content/components/) | 「可展开区块。」 |
 
 当朗读遇到折叠起来的区块或未显示的标签页时，会把它展开，这样高亮总能落在读者看得见的文字上。
 
@@ -45,7 +45,7 @@ export default defineConfig({
 
 ## 生成的语音 [#generated-voices]
 
-传入一个 `provider`，就能在构建时用神经语音模型生成音频。这个 provider 就是 assistant 使用的同一个 [`gateway()`](/docs/configuration/assistant#adapters)适配器，只是指向一个语音模型：
+传入一个 `provider`，就能在构建时用神经语音模型生成音频。这个 provider 就是 assistant 使用的同一个 [`gateway()`](/docs/configuration/assistant/)适配器，只是指向一个语音模型：
 
 ```ts blume.config.ts lineNumbers
 import { defineConfig } from "blume";
@@ -92,11 +92,11 @@ Generating narration: 214 new clip(s), 15,880 characters, with openai/tts-1-hd
 
 ## 语言 [#languages]
 
-朗读会用每个页面自身的内容语言进行，因此在一个[国际化](/docs/content/i18n)的站点上，每个 locale 都用自己对应的声音朗读。这些语音提示和播放器标签在每个内置 UI 语言中都已翻译。要按 locale 覆盖它们，在 [`i18n.ui`](/docs/content/i18n#translated-ui) 中改写 `narration` 下的内容。
+朗读会用每个页面自身的内容语言进行，因此在一个[国际化](/docs/content/i18n/)的站点上，每个 locale 都用自己对应的声音朗读。这些语音提示和播放器标签在每个内置 UI 语言中都已翻译。要按 locale 覆盖它们，在 [`i18n.ui`](/docs/content/i18n/) 中改写 `narration` 下的内容。
 
 ## 为单个页面关闭它 [#turning-it-off-for-a-page]
 
-在页面的 [frontmatter](/docs/content/frontmatter) 中设置 `narration: false`，就能让该页面不出现播放器：
+在页面的 [frontmatter](/docs/content/frontmatter/) 中设置 `narration: false`，就能让该页面不出现播放器：
 
 ```yaml
 ---
@@ -117,4 +117,4 @@ narration: false
 
 ## 分析 [#analytics]
 
-读者开始收听时，播放器会发送一个 `narration_play` 事件，附带 `engine`（`audio` 或 `browser`）和页面的 `path`；页面播放到结尾时再发送 `narration_complete`。这两个事件和其它自定义事件一样，都会经过你的[分析](/docs/configuration/analytics#custom-events)适配器。
+读者开始收听时，播放器会发送一个 `narration_play` 事件，附带 `engine`（`audio` 或 `browser`）和页面的 `path`；页面播放到结尾时再发送 `narration_complete`。这两个事件和其它自定义事件一样，都会经过你的[分析](/docs/configuration/analytics/)适配器。

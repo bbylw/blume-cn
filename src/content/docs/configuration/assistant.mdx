@@ -18,7 +18,7 @@ ai: {
 
 ## 建议问题 [#suggested-questions]
 
-用几条起始提示语填充空状态。每一条都会渲染成一个可点击的建议 —— 点一下就发送 —— 标签旁还可以放一个可选的 [Lucide 图标](/docs/content/components#icon)：
+用几条起始提示语填充空状态。每一条都会渲染成一个可点击的建议 —— 点一下就发送 —— 标签旁还可以放一个可选的 [Lucide 图标](/docs/content/components/)：
 
 ```ts blume.config.ts lineNumbers
 ai: {
@@ -74,9 +74,9 @@ ai: {
 
 ## 接地 [#grounding]
 
-助手是**以你的文档为依据**的。对每个问题，它会检索出最相关的页面 —— 使用与页面内搜索相同的词法 [Orama](/docs/configuration/search) 索引 —— 并把它们注入模型的系统提示词，因此答案来自你的内容，而不是模型自身的知识。助手会被要求只依据检索到的页面作答、在文档没有覆盖时明说，并引用它所依据的页面。
+助手是**以你的文档为依据**的。对每个问题，它会检索出最相关的页面 —— 使用与页面内搜索相同的词法 [Orama](/docs/configuration/search/) 索引 —— 并把它们注入模型的系统提示词，因此答案来自你的内容，而不是模型自身的知识。助手会被要求只依据检索到的页面作答、在文档没有覆盖时明说，并引用它所依据的页面。
 
-读者当前所在的页面会先加入上下文，用来把检索范围限定到该页面的语言 —— 在[带版本](/docs/content/versioning)的站点上，还限定到它的文档版本 —— 让答案与读者所处的文档位置保持相关。检索在请求时执行，数据来自烘焙进构建产物的一份快照，因此不论你用哪个[搜索](/docs/configuration/search)提供方都能工作 —— 即使 `search: false` —— 也无需任何配置。
+读者当前所在的页面会先加入上下文，用来把检索范围限定到该页面的语言 —— 在[带版本](/docs/content/versioning/)的站点上，还限定到它的文档版本 —— 让答案与读者所处的文档位置保持相关。检索在请求时执行，数据来自烘焙进构建产物的一份快照，因此不论你用哪个[搜索](/docs/configuration/search/)提供方都能工作 —— 即使 `search: false` —— 也无需任何配置。
 
 除 **[Inkeep](#inkeep)** 之外，所有适配器都开启接地 —— Inkeep 会对你在其控制台中建立索引的内容执行自己的检索。
 
@@ -192,7 +192,7 @@ export default defineConfig({
 });
 ```
 
-在启用助手又没有外部 `endpoint` 的情况下做静态构建，构建会立刻失败，并提示你去设置宿主适配器。适配器列表见[部署](/docs/deployment)。
+在启用助手又没有外部 `endpoint` 的情况下做静态构建，构建会立刻失败，并提示你去设置宿主适配器。适配器列表见[部署](/docs/deployment/)。
 
 ## 适配器 [#adapters]
 
@@ -223,9 +223,9 @@ export default defineConfig({
 | [`llmgateway()`](#llmgateway) | 任意 [LLMGateway](https://llmgateway.io) 模型 | `LLMGATEWAY_API_KEY` | `@ai-sdk/openai-compatible` |
 | [`inkeep()`](#inkeep) | 任意 [Inkeep](https://inkeep.com) QA 模型 | `INKEEP_API_KEY` | `@ai-sdk/openai-compatible` |
 
-`openai()`、`anthropic()`、`gemini()` 和 `grok()` 直接用你的密钥调用提供方自己的 API —— 中间没有任何东西。这些 SDK 是可选的 peer 依赖，因此把适配器需要的那一个加入你的项目即可（比如 `npm install @ai-sdk/anthropic`）。如果缺少它，`blume build` 会在 Vite 运行之前停下，指出缺哪个包以及安装它的命令，[`blume doctor`](/docs/cli/doctor) 也会报告这一项。
+`openai()`、`anthropic()`、`gemini()` 和 `grok()` 直接用你的密钥调用提供方自己的 API —— 中间没有任何东西。这些 SDK 是可选的 peer 依赖，因此把适配器需要的那一个加入你的项目即可（比如 `npm install @ai-sdk/anthropic`）。如果缺少它，`blume build` 会在 Vite 运行之前停下，指出缺哪个包以及安装它的命令，[`blume doctor`](/docs/cli/doctor/) 也会报告这一项。
 
-适配器返回的描述对象是纯数据 —— 它的种类、选项、读取的环境变量以及所需的 SDK —— 因此生成的路由（以及[抽离](/docs/configuration/customization#eject)出来的那条路由）会把它作为字面量内联进去，并按名字导入提供方的 SDK。请求时没有任何东西去读 `blume.config.ts`，路由里也永远不会写入密钥：适配器只接收保存密钥的环境变量的**名字**，由路由通过 Astro 的 [`getSecret()`](https://docs.astro.build/en/guides/environment-variables/#retrieving-secrets-programmatically) 读取它的值，因此每个部署适配器都以自己的方式提供它 —— Node、Vercel 和 Netlify 上用环境变量，Cloudflare 上用 Worker 的 [bindings](https://docs.astro.build/en/guides/integrations-guide/cloudflare/#environment-variables-and-secrets)。
+适配器返回的描述对象是纯数据 —— 它的种类、选项、读取的环境变量以及所需的 SDK —— 因此生成的路由（以及[抽离](/docs/configuration/customization/)出来的那条路由）会把它作为字面量内联进去，并按名字导入提供方的 SDK。请求时没有任何东西去读 `blume.config.ts`，路由里也永远不会写入密钥：适配器只接收保存密钥的环境变量的**名字**，由路由通过 Astro 的 [`getSecret()`](https://docs.astro.build/en/guides/environment-variables/#retrieving-secrets-programmatically) 读取它的值，因此每个部署适配器都以自己的方式提供它 —— Node、Vercel 和 Netlify 上用环境变量，Cloudflare 上用 Worker 的 [bindings](https://docs.astro.build/en/guides/integrations-guide/cloudflare/#environment-variables-and-secrets)。
 
 ### OpenAI [#openai]
 
@@ -435,7 +435,7 @@ provider: gateway({
 }),
 ```
 
-Blume 只映射自己具名列出的选项（`model`、`reasoning`、`apiKeyEnv`、`headers`），而 `providerOptions` 原样透传，因此它必须是 JSON —— 它会被内联进路由 —— 并且必须使用底层提供方所期待的键（`openai()` 或 gateway 后面的 OpenAI 模型用 `openai`，`anthropic()` 用 `anthropic`，`gemini()` 用 `google`，`grok()` 用 `xai`，OpenRouter 上用 `openrouter`，OpenAI 兼容端点上则用该适配器的 `name`）。启用助手还会为页面内的交互岛开启 React —— 见[定制](/docs/configuration/customization#interactive-islands)。
+Blume 只映射自己具名列出的选项（`model`、`reasoning`、`apiKeyEnv`、`headers`），而 `providerOptions` 原样透传，因此它必须是 JSON —— 它会被内联进路由 —— 并且必须使用底层提供方所期待的键（`openai()` 或 gateway 后面的 OpenAI 模型用 `openai`，`anthropic()` 用 `anthropic`，`gemini()` 用 `google`，`grok()` 用 `xai`，OpenRouter 上用 `openrouter`，OpenAI 兼容端点上则用该适配器的 `name`）。启用助手还会为页面内的交互岛开启 React —— 见[定制](/docs/configuration/customization/)。
 
 ## 推理 [#reasoning]
 
@@ -462,7 +462,7 @@ provider: gateway({ model: "openai/gpt-5.5", reasoning: "none" }),
 
 ## 分析 [#analytics]
 
-配置了[分析提供方](/docs/configuration/analytics)之后，助手会通过页面反馈小组件所用的同一个 `track()` 上报使用情况，因此提问会与你的页面浏览量并排出现：
+配置了[分析提供方](/docs/configuration/analytics/)之后，助手会通过页面反馈小组件所用的同一个 `track()` 上报使用情况，因此提问会与你的页面浏览量并排出现：
 
 | 事件 | 何时触发 | 属性 |
 | --- | --- | --- |
@@ -476,7 +476,7 @@ provider: gateway({ model: "openai/gpt-5.5", reasoning: "none" }),
 
 ## 速率限制 [#rate-limiting]
 
-`POST /api/ask` 端点**不做认证** —— 必须如此，页面内的助手才能调用它。Blume 会校验每个请求 —— 拒绝格式错误的请求体、把它限制在 1–40 条消息、只接受 `user`/`assistant` 角色，以免调用方注入自己的系统提示词、把这条路由挪用成通用 LLM 代理 —— 以限制单次调用能在你的模型上花掉多少。[速率限制](/docs/configuration/rate-limiting)默认开启，它进一步限制单个读者能提多少个问题：超出之后，面板会提示他们几分钟后再试。
+`POST /api/ask` 端点**不做认证** —— 必须如此，页面内的助手才能调用它。Blume 会校验每个请求 —— 拒绝格式错误的请求体、把它限制在 1–40 条消息、只接受 `user`/`assistant` 角色，以免调用方注入自己的系统提示词、把这条路由挪用成通用 LLM 代理 —— 以限制单次调用能在你的模型上花掉多少。[速率限制](/docs/configuration/rate-limiting/)默认开启，它进一步限制单个读者能提多少个问题：超出之后，面板会提示他们几分钟后再试。
 
 ## Bot 防护 [#bot-protection]
 
@@ -507,4 +507,4 @@ site key 会下发到浏览器，可以安全提交；密钥留在服务器上�
 
 使用[外部端点](#external-endpoint)时，面板仍会发送那个 token，放在请求体的 `captcha` 字段里，由你的后端验证。
 
-该端点会与站点其余的机器可读输出面一起，写进 [agent 可读性清单](/docs/discoverability/agent-discovery#agent-readability)。
+该端点会与站点其余的机器可读输出面一起，写进 [agent 可读性清单](/docs/discoverability/agent-discovery/)。

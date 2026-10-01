@@ -4,7 +4,7 @@ description: 按 IP 限制读者调用服务端路由的频率，含 memory、Up
 source: https://useblume.dev/docs/configuration/rate-limiting
 ---
 
-读者每调用一次服务端路由，你都要付出一定成本：[assistant](/docs/configuration/assistant) 会消耗模型 token，[API playground](/docs/references/openapi#cors-and-the-proxy) 代理会向你的 API 转发请求，[Mixedbread 搜索](/docs/configuration/search#mixedbread) 则执行一次付费查询。Blume 会限制单个读者（按 IP 地址识别）调用它们各自的频率。超出限制的读者会收到 `429 Too Many Requests` 以及一个 `Retry-After` 响应头，assistant 则会提示他们几分钟后重试。
+读者每调用一次服务端路由，你都要付出一定成本：[assistant](/docs/configuration/assistant/) 会消耗模型 token，[API playground](/docs/references/openapi/) 代理会向你的 API 转发请求，[Mixedbread 搜索](/docs/configuration/search/) 则执行一次付费查询。Blume 会限制单个读者（按 IP 地址识别）调用它们各自的频率。超出限制的读者会收到 `429 Too Many Requests` 以及一个 `Retry-After` 响应头，assistant 则会提示他们几分钟后重试。
 
 速率限制默认开启，每位读者每条路由每 10 分钟 30 次请求：多到一个人永远不会碰到，少到足以拦下一个脚本。它只对服务端构建有意义；静态站点没有服务端路由可供限制。
 
@@ -67,4 +67,4 @@ export default defineConfig({
 
 设置 `rateLimit: false` 可以放行所有请求 —— 例如当你的托管方防火墙已经在限制这些路由时。主机无法识别来源地址的请求始终会被放行，共享存储计数失败的请求同样如此：失败会被记录下来，因此存储服务中断不会把读者挡在门外。
 
-对于 assistant，请把速率限制与 [bot 检查](/docs/configuration/assistant#bot-protection)搭配使用，以拦下把请求分散到大量地址上的脚本。
+对于 assistant，请把速率限制与 [bot 检查](/docs/configuration/assistant/)搭配使用，以拦下把请求分散到大量地址上的脚本。

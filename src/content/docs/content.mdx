@@ -6,14 +6,14 @@ source: https://useblume.dev/docs/content
 
 你的文档不过是一个装着 Markdown 和 MDX 文件的文件夹。Blume 会把每个文件变成一个页面 —— 路由、导航和元数据都从文件系统推断，因此没有需要保持同步的清单文件。
 
-内容放在你的**内容根目录**下（默认是 `docs/`；用 [`blume.config.ts`](/docs/configuration) 里的 `content.root` 修改）。
+内容放在你的**内容根目录**下（默认是 `docs/`；用 [`blume.config.ts`](/docs/configuration/) 里的 `content.root` 修改）。
 
 ## Markdown 和 MDX
 
 Blume 会渲染两类文件：
 
 - **`.md`** —— 面向纯散文的 Markdown：GFM、frontmatter、智能标点，以及上标和下标。
-- **`.mdx`** —— `.md` 拥有的一切，外加[组件](/docs/content/components)以及 MDX 专有的[指令、包安装和数学公式](/docs/content/syntax)。
+- **`.mdx`** —— `.md` 拥有的一切，外加[组件](/docs/content/components/)以及 MDX 专有的[指令、包安装和数学公式](/docs/content/syntax/)。
 
 页面只是散文时用 `.md`，需要组件或指令时用 `.mdx`。切换只需重命名文件。
 
@@ -41,9 +41,9 @@ Blume 会渲染两类文件：
 02-installation.mdx  ->  /installation
 ```
 
-名称开头的版本号或 ISO 日期是名称的一部分，而不是顺序标记：`1.2.0.mdx` 的路由是 `/1.2.0`，`2024-01-05-launch.mdx` 的路由是 `/2024-01-05-launch`。只有文件和文件夹名会去掉前缀（Obsidian 仓库里的笔记按文件算）。frontmatter 中的 `slug`，以及来自[内容源](/docs/content/sources)（比如某个 CMS 或 GitHub Releases）的页面，则保留它们被赋予的名称。
+名称开头的版本号或 ISO 日期是名称的一部分，而不是顺序标记：`1.2.0.mdx` 的路由是 `/1.2.0`，`2024-01-05-launch.mdx` 的路由是 `/2024-01-05-launch`。只有文件和文件夹名会去掉前缀（Obsidian 仓库里的笔记按文件算）。frontmatter 中的 `slug`，以及来自[内容源](/docs/content/sources/)（比如某个 CMS 或 GitHub Releases）的页面，则保留它们被赋予的名称。
 
-排序有多层规则 —— 完整的优先级见[导航](/docs/content/navigation)。
+排序有多层规则 —— 完整的优先级见[导航](/docs/content/navigation/)。
 
 ## 分组文件夹 [#group-folders]
 
@@ -83,11 +83,11 @@ changelog:
 ---
 ```
 
-类型与文件所在的位置无关，但按惯例，博客文章放在 `blog/` 下，更新日志条目放在 `changelog/` 下。两者都会自动获得一个 RSS 订阅源，更新日志条目还会被收集进自动生成的 [`/changelog` 时间线](/docs/advanced/changelog)。如何撰写这两类内容，分别见[博客](/docs/advanced/blog)和[更新日志](/docs/advanced/changelog)。
+类型与文件所在的位置无关，但按惯例，博客文章放在 `blog/` 下，更新日志条目放在 `changelog/` 下。两者都会自动获得一个 RSS 订阅源，更新日志条目还会被收集进自动生成的 [`/changelog` 时间线](/docs/advanced/changelog/)。如何撰写这两类内容，分别见[博客](/docs/advanced/blog/)和[更新日志](/docs/advanced/changelog/)。
 
 ## 订阅源 [#feeds]
 
-Blume 会为 [`seo.rss.types`](/docs/discoverability/rss) 中列出的每一种内容类型自动生成 RSS 订阅源 —— 默认是 `blog` 和 `changelog` —— 只要它至少有一个页面。订阅源提供在 `/<type>/rss.xml`：
+Blume 会为 [`seo.rss.types`](/docs/discoverability/rss/) 中列出的每一种内容类型自动生成 RSS 订阅源 —— 默认是 `blog` 和 `changelog` —— 只要它至少有一个页面。订阅源提供在 `/<type>/rss.xml`：
 
 | 类型 | 订阅源 |
 | --- | --- |
@@ -105,7 +105,7 @@ description: 我们为什么打造一个 markdown 优先的文档框架。
 ---
 ```
 
-订阅源需要一个绝对的站点 URL，所以请设置 [`deployment.site`](/docs/deployment)。Blume 会给每个页面加上 `<link rel="alternate">` 标签，让浏览器和订阅阅读器自动发现它们。如何撰写这两种内容类型，分别见[博客](/docs/advanced/blog)和[更新日志](/docs/advanced/changelog)。
+订阅源需要一个绝对的站点 URL，所以请设置 [`deployment.site`](/docs/deployment/)。Blume 会给每个页面加上 `<link rel="alternate">` 标签，让浏览器和订阅阅读器自动发现它们。如何撰写这两种内容类型，分别见[博客](/docs/advanced/blog/)和[更新日志](/docs/advanced/changelog/)。
 
 ## 本页导航
 
@@ -113,26 +113,26 @@ description: 我们为什么打造一个 markdown 优先的文档框架。
 
 Blume 会把每个标题转成锚点 slug，因此每个条目都直接链接到它对应的小节 —— 你也可以在 URL 后追加标题的 slug 来深链接到任意标题（`.../my-page#getting-started`）。
 
-默认情况下目录会列出你的 `##` 和 `###` 标题（H2 和 H3）；设置 [`toc`](/docs/configuration#table-of-contents) 可以改变标题范围或关闭目录。某个页面在该范围内没有标题时，它就只是没有目录而已。
+默认情况下目录会列出你的 `##` 和 `###` 标题（H2 和 H3）；设置 [`toc`](/docs/configuration/) 可以改变标题范围或关闭目录。某个页面在该范围内没有标题时，它就只是没有目录而已。
 
 ## 接下来看什么
 
-**[Frontmatter](/docs/content/frontmatter)**
+**[Frontmatter](/docs/content/frontmatter/)**
 
 页面元数据：标题、描述、侧边栏、SEO 和搜索。
 
-**[语法](/docs/content/syntax)**
+**[语法](/docs/content/syntax/)**
 
 你能写下的每一项 Markdown 和 MDX 特性。
 
-**[组件](/docs/content/components)**
+**[组件](/docs/content/components/)**
 
 任意 MDX 页面里可用的 JSX 组件。
 
-**[导航](/docs/content/navigation)**
+**[导航](/docs/content/navigation/)**
 
 规划侧边栏、排序和标签页。
 
-**[文件夹 meta](/docs/content/meta)**
+**[文件夹 meta](/docs/content/meta/)**
 
 用一个 `meta.ts` 文件配置侧边栏分组。

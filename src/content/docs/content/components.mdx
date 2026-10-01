@@ -4,17 +4,17 @@ description: Blume 内置组件总览，涵盖卡片、步骤、标签页、徽�
 source: https://useblume.dev/docs/content/components
 ---
 
-Blume 自带一套无障碍、可换主题的组件，在任何 `.mdx` 页面上都能用，且**无需 import**。下面每个组件都配有实时预览和它的源码。这些组件是原生的、不依赖 React；只有当你的项目用到 React 时才会启用 React——项目里出现任何 `.tsx` 或 `.jsx` 文件、一个 React [交互岛](/docs/content/islands)、[`<Component>`](#component) 示例，或[组件覆盖](/docs/configuration/customization)——或者启用了[助手](/docs/configuration/assistant)时。
+Blume 自带一套无障碍、可换主题的组件，在任何 `.mdx` 页面上都能用，且**无需 import**。下面每个组件都配有实时预览和它的源码。这些组件是原生的、不依赖 React；只有当你的项目用到 React 时才会启用 React——项目里出现任何 `.tsx` 或 `.jsx` 文件、一个 React [交互岛](/docs/content/islands/)、[`<Component>`](#component) 示例，或[组件覆盖](/docs/configuration/customization/)——或者启用了[助手](/docs/configuration/assistant/)时。
 
 ## Card 与 CardGroup
 
 卡片用一个图标、标题和一段简短说明把读者引向某个目的地。用 `CardGroup` 把它们排成响应式网格。落地页、章节索引和“下一步”这类地方都适合用它们——凡是引导读者继续往前走的地方。
 
-**[快速上手](/docs/quickstart)**
+**[快速上手](/docs/quickstart/)**
 
 安装 Blume 并发布你的第一个页面。
 
-**[组件](/docs/content/components)**
+**[组件](/docs/content/components/)**
 
 浏览组件库。
 
@@ -439,7 +439,7 @@ Hover the <Tooltip tip="A set of protocols software uses to communicate." headli
 
 一个可点击的预览，用视觉元素——一个图标或一张图片——领起，上面配标题与描述。适合画廊和作品展示。接受 `title`、`description` 和 `href`；子元素就是那个视觉元素。
 
-**[快速上手](/docs/quickstart)**
+**[快速上手](/docs/quickstart/)**
 
 几分钟内发布你的第一个页面。
 
@@ -548,7 +548,7 @@ export interface ButtonProps {
 
 ## API 字段 [#api-fields]
 
-用来逐个手工记录接口字段的表格行，样式与生成的 [OpenAPI 参考](/docs/references/openapi)一致。`ParamField` 表示一个请求参数，由说明它去向的属性命名：`path`、`query`、`header` 或 `body`。`ResponseField` 表示响应中的一个字段，由 `name` 命名。两者都接受 `type`、`required`、`deprecated` 和一个 `default`，并以内容作为描述；`ResponseField` 还接受用在名字前后做标注的 `pre` 与 `post`。
+用来逐个手工记录接口字段的表格行，样式与生成的 [OpenAPI 参考](/docs/references/openapi/)一致。`ParamField` 表示一个请求参数，由说明它去向的属性命名：`path`、`query`、`header` 或 `body`。`ResponseField` 表示响应中的一个字段，由 `name` 命名。两者都接受 `type`、`required`、`deprecated` 和一个 `default`，并以内容作为描述；`ResponseField` 还接受用在名字前后做标注的 `pre` 与 `post`。
 
 - **`userId`** · path · `string` · 必填
 
@@ -590,7 +590,7 @@ export interface ButtonProps {
 </ResponseField>
 ```
 
-在带 `api` frontmatter 的页面上，这些 `ParamField` 还会用来生成页面的 Try it 面板和请求示例：见[手写 API 页面](/docs/references/api-pages)。这些字段沿用与 Mintlify 相同的名字和属性，因此为它写的页面可以直接照原样渲染。页面的 Markdown 副本会列出每个字段及其类型与标志。
+在带 `api` frontmatter 的页面上，这些 `ParamField` 还会用来生成页面的 Try it 面板和请求示例：见[手写 API 页面](/docs/references/api-pages/)。这些字段沿用与 Mintlify 相同的名字和属性，因此为它写的页面可以直接照原样渲染。页面的 Markdown 副本会列出每个字段及其类型与标志。
 
 ### 请求与响应示例 [#request-and-response-examples]
 
@@ -626,7 +626,7 @@ await acme.users.create({ email: "ada@example.com" });
 
 一张指向 GitHub 仓库的卡片，带有 star 和 fork 数量。这些数字在构建期获取——没有客户端 JavaScript——因此显示的是你上次构建时的数字，而非实时数据；即使 API 不可达，卡片仍会在没有这些数字的情况下渲染。传入 `owner` 和 `repo`，或省略它们以使用 `blume.config` 中的仓库。设置 `GITHUB_TOKEN` 环境变量可以提高 API 速率限制；`token` 属性能为某一张卡片覆盖该变量，但环境变量能让你不必把 token 写进内容里。
 
-卡片会从 [`github.host`](/docs/configuration#github-enterprise) 读取实例，因此在 Enterprise 托管的站点上，显式的 `owner`/`repo` 也会指向那个实例。传入 `host` 可以把某一张卡片指向别处——比如从 Enterprise 站点指向一个公开项目；REST 基址会以与从 `github.host` 相同的方式推导出来。
+卡片会从 [`github.host`](/docs/configuration/) 读取实例，因此在 Enterprise 托管的站点上，显式的 `owner`/`repo` 也会指向那个实例。传入 `host` 可以把某一张卡片指向别处——比如从 Enterprise 站点指向一个公开项目；REST 基址会以与从 `github.host` 相同的方式推导出来。
 
 [haydenbleasel/blume](https://github.com/haydenbleasel/blume)
 
@@ -769,7 +769,7 @@ import CodeBlock from "blume/components/content/CodeBlock.astro";
 <CodeBlock lang="ts" code={source} />
 ```
 
-`title` 设置标题栏上的文字——比如一个文件名——否则那里显示的是语言名；`icons={false}` 会隐藏语言的品牌图标，就像围栏代码可以通过 [`markdown.code.icons`](/docs/content/syntax#code-blocks) 做到的那样。
+`title` 设置标题栏上的文字——比如一个文件名——否则那里显示的是语言名；`icons={false}` 会隐藏语言的品牌图标，就像围栏代码可以通过 [`markdown.code.icons`](/docs/content/syntax/) 做到的那样。
 
 若想自己对 HTML 字符串做高亮（例如在你自己的组件内部），从 `blume/markdown` 导入底层辅助函数：
 

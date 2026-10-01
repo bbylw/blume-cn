@@ -6,7 +6,7 @@ source: https://useblume.dev/docs/references/graphql
 
 把一个 GraphQL schema 指给 Blume，它就会生成一份原生 API 参考：**每个根字段一个真实页面** —— query、mutation 和 subscription —— 外加**每个具名类型一个页面**（object、input object、enum、interface、union 以及自定义标量）。每个页面都会展示参数、默认值、弃用信息和使用反向链接，并配有一段生成的示例操作、代码示例以及一个交互式 [Try it](#try-it-playground) 面板。由于每个页面都是一个真正的 Blume 页面，它有自己的 URL，会出现在**站内搜索**和 `llms.txt` 中，还会得到一张 Open Graph 图片 —— 与手写文档别无二致。
 
-这份参考是 `blume/reference` 中的 `graphql()` 适配器，登记在 `reference` 下，与任何 [OpenAPI](/docs/references/openapi) 或 [AsyncAPI](/docs/references/asyncapi) 适配器并列：
+这份参考是 `blume/reference` 中的 `graphql()` 适配器，登记在 `reference` 下，与任何 [OpenAPI](/docs/references/openapi/) 或 [AsyncAPI](/docs/references/asyncapi/) 适配器并列：
 
 ```ts blume.config.ts lineNumbers
 import { defineConfig } from "blume";
@@ -31,7 +31,7 @@ export default defineConfig({
 
 `endpoint` 是 GraphQL API 的实际访问地址。schema 与 OpenAPI 文档不同，它不指明任何服务器 —— 因此 Try it 面板和生成的代码示例都以这个地址为目标。不写它的话，示例会用一个占位 URL 渲染出来，由读者自行替换。
 
-参考不会自己添加页眉标签页。要让它露出来，把一个[导航标签页](/docs/content/navigation#tabs)指向它的路由 —— 这同时也限定了参考侧边栏的范围：
+参考不会自己添加页眉标签页。要让它露出来，把一个[导航标签页](/docs/content/navigation/)指向它的路由 —— 这同时也限定了参考侧边栏的范围：
 
 ```ts blume.config.ts
 navigation: {
@@ -41,7 +41,7 @@ navigation: {
 
 ## 生成的示例 [#generated-examples]
 
-每个操作页面都带有一段完整且合法的示例操作 —— 每个参数对应一个变量，类型取自 schema，返回类型上带一层有界深度的选择集 —— 外加与之匹配的示例变量，以及一份镜像同一选择集的示例响应。代码示例会以每种配置的语言展示确切的 HTTP 请求（一个发送 `{ query, variables }` 的 JSON `POST`）。可选的[语言](/docs/references/openapi#code-samples-and-schemas)与 `openapi()` 相同，而 `codeSamples: false` 则一个都不显示：
+每个操作页面都带有一段完整且合法的示例操作 —— 每个参数对应一个变量，类型取自 schema，返回类型上带一层有界深度的选择集 —— 外加与之匹配的示例变量，以及一份镜像同一选择集的示例响应。代码示例会以每种配置的语言展示确切的 HTTP 请求（一个发送 `{ query, variables }` 的 JSON `POST`）。可选的[语言](/docs/references/openapi/)与 `openapi()` 相同，而 `codeSamples: false` 则一个都不显示：
 
 ```ts blume.config.ts lineNumbers
 reference: [
@@ -77,13 +77,13 @@ reference: [
 ],
 ```
 
-`spec` 是单条目 `sources` 的简写。需要不同显示选项的 schema 应放进各自独立的 `graphql()` 适配器，每个配一个 `route`。每个来源接受与 `openapi()` 相同的[按来源控制项](/docs/references/openapi#per-source-indexing)：`includeInSearch`、`includeInLlms`、`noindex` 和 `seoDescriptionSuffix`（这里自动生成的那句话会点明具体的 query、mutation 或类型 —— “GraphQL API 中 `pets` query 的参考文档。”）。
+`spec` 是单条目 `sources` 的简写。需要不同显示选项的 schema 应放进各自独立的 `graphql()` 适配器，每个配一个 `route`。每个来源接受与 `openapi()` 相同的[按来源控制项](/docs/references/openapi/)：`includeInSearch`、`includeInLlms`、`noindex` 和 `seoDescriptionSuffix`（这里自动生成的那句话会点明具体的 query、mutation 或类型 —— “GraphQL API 中 `pets` query 的参考文档。”）。
 
 ## Try it 演练场 [#try-it-playground]
 
 query 和 mutation 页面会渲染一个交互式面板：编辑请求体（query 与变量），把它指向你的 endpoint 或一个自定义 URL，然后发送 —— 代码示例会实时更新，因此你复制到的内容与实际发出的请求逐字节一致。用 `playground: false` 关闭它。subscription 页面则改为展示生成的操作和一个示例事件：subscription 跑在有状态的传输之上（WebSocket 或 SSE），而演练场那唯一一次 HTTP `POST` 说不了这种话。
 
-如果你的 GraphQL API 不允许来自文档站点的跨域请求，发送就会走一个 CORS 代理 —— 可以是你自己的 URL，也可以是 `true` 表示使用内置的 `/_api-proxy` 端点（如果你设了 `basePath`，它就在其之下；它需要[服务端输出](/docs/deployment#server-rendering)：一个主机适配器，例如来自 `blume/deploy` 的 `deployment: vercel()`）。内置代理只会转发到已文档化规范所声明的 origin —— 每个配置过的 GraphQL `endpoint`，加上已记录的 [OpenAPI 规范](/docs/references/openapi)里任何绝对的 `servers[].url` —— 因此一个公开的文档部署无法被指向其它主机。这也意味着 `endpoint` 是让代理正常工作的必需项：没有它，代理就没有可为这份参考放行的 origin，会拒绝每一次发送（构建时会就此发出警告）。请求体上限、请求头转发和响应头与 [OpenAPI 代理](/docs/references/openapi#try-it-playground)完全相同。
+如果你的 GraphQL API 不允许来自文档站点的跨域请求，发送就会走一个 CORS 代理 —— 可以是你自己的 URL，也可以是 `true` 表示使用内置的 `/_api-proxy` 端点（如果你设了 `basePath`，它就在其之下；它需要[服务端输出](/docs/deployment/)：一个主机适配器，例如来自 `blume/deploy` 的 `deployment: vercel()`）。内置代理只会转发到已文档化规范所声明的 origin —— 每个配置过的 GraphQL `endpoint`，加上已记录的 [OpenAPI 规范](/docs/references/openapi/)里任何绝对的 `servers[].url` —— 因此一个公开的文档部署无法被指向其它主机。这也意味着 `endpoint` 是让代理正常工作的必需项：没有它，代理就没有可为这份参考放行的 origin，会拒绝每一次发送（构建时会就此发出警告）。请求体上限、请求头转发和响应头与 [OpenAPI 代理](/docs/references/openapi/)完全相同。
 
 ```ts blume.config.ts lineNumbers
 reference: [
@@ -95,4 +95,4 @@ reference: [
 ],
 ```
 
-GraphQL 没有对应的 Scalar 版本：[`scalar()`](/docs/references/scalar) 嵌入页只读取 OpenAPI 和 AsyncAPI 文档，因此 GraphQL 参考始终以原生方式渲染。
+GraphQL 没有对应的 Scalar 版本：[`scalar()`](/docs/references/scalar/) 嵌入页只读取 OpenAPI 和 AsyncAPI 文档，因此 GraphQL 参考始终以原生方式渲染。

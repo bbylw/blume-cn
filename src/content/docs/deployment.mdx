@@ -20,11 +20,11 @@ source: https://useblume.dev/docs/deployment
 
 - 每一个文档页和自定义页，都是静态 HTML
 - 一份本地搜索索引（默认 Orama，可选 Pagefind）
-- 站点 URL 已知时的 [`sitemap.xml`](/docs/discoverability/sitemap-and-robots#sitemap)
-- [`robots.txt`](/docs/discoverability/sitemap-and-robots#robots)，在站点 URL 已知时指向 sitemap
+- 站点 URL 已知时的 [`sitemap.xml`](/docs/discoverability/sitemap-and-robots/)
+- [`robots.txt`](/docs/discoverability/sitemap-and-robots/)，在站点 URL 已知时指向 sitemap
 - 面向 AI 工具的 `llms.txt` 和 `llms-full.txt`
 - 重定向页面
-- 开启 `seo.og.enabled` 时预渲染的 [Open Graph 图片](/docs/discoverability/open-graph)
+- 开启 `seo.og.enabled` 时预渲染的 [Open Graph 图片](/docs/discoverability/open-graph/)
 
 ### 设置站点 URL [#set-your-site-url]
 
@@ -79,12 +79,12 @@ basePath: "/docs",
 
 这与上面两个路径是不同的概念：
 
-- 按来源设置的 [`prefix`](/docs/content/sources#adapters) 为**一个**来源添加命名空间，并且**确实会**新增一个侧边栏分组。
+- 按来源设置的 [`prefix`](/docs/content/sources/) 为**一个**来源添加命名空间，并且**确实会**新增一个侧边栏分组。
 - `deployment.base` 是**整个**应用所从其提供的托管子目录。两者可以叠加 —— 两者都设置时，一个页面会落在 `{deployment.base}/{basePath}/page`。
 
 ## 服务端渲染 [#server-rendering]
 
-静态产物足以覆盖大多数文档。当你需要按请求处理的功能时，切换到服务端输出 —— 最典型的是 [assistant](/docs/configuration/assistant) 端点和 [MCP server](/docs/discoverability/mcp)。做法是指定托管平台：`deployment` 接受一个从 `blume/deploy` 导入的适配器。
+静态产物足以覆盖大多数文档。当你需要按请求处理的功能时，切换到服务端输出 —— 最典型的是 [assistant](/docs/configuration/assistant/) 端点和 [MCP server](/docs/discoverability/mcp/)。做法是指定托管平台：`deployment` 接受一个从 `blume/deploy` 导入的适配器。
 
 ```ts blume.config.ts lineNumbers
 import { defineConfig } from "blume";
@@ -112,7 +112,7 @@ deployment: vercel({
 | `node()` | `@astrojs/node` | 自托管 Node 服务器、容器 |
 | `cloudflare()` | `@astrojs/cloudflare` | Cloudflare Workers 和 Pages |
 
-`vercel()` 和 `node()` 随 Blume 一起提供 —— 选一个就能用。`netlify()` 和 `cloudflare()` 需要在项目里装上对应的包（例如 `bun add -d @astrojs/netlify`）。如果缺少它，`blume build` 会停下并给出适合你包管理器的安装命令，`blume dev` 会给出警告，[`blume doctor`](/docs/cli/doctor) 会把它报告出来。用 pnpm 10 或更新版本时，还需要在 `pnpm-workspace.yaml` 的 `allowBuilds` 下批准这些包带来的构建脚本（`sharp`，以及 Cloudflare 的 `workerd`），否则 pnpm 会中止安装。
+`vercel()` 和 `node()` 随 Blume 一起提供 —— 选一个就能用。`netlify()` 和 `cloudflare()` 需要在项目里装上对应的包（例如 `bun add -d @astrojs/netlify`）。如果缺少它，`blume build` 会停下并给出适合你包管理器的安装命令，`blume dev` 会给出警告，[`blume doctor`](/docs/cli/doctor/) 会把它报告出来。用 pnpm 10 或更新版本时，还需要在 `pnpm-workspace.yaml` 的 `allowBuilds` 下批准这些包带来的构建脚本（`sharp`，以及 Cloudflare 的 `workerd`），否则 pnpm 会中止安装。
 
 指定一个适配器会把构建切换为服务端输出。如果你想在该托管平台上仍然保持静态构建 —— 保留它的站点检测以及它会读取的平台文件 —— 传入 `output: "static"`：
 
@@ -124,14 +124,14 @@ deployment: netlify({ output: "static" }),
 
 在 `blume build` 之后，`cloudflare()` 的服务端构建可以用 `npx wrangler deploy` 从项目根目录部署：Blume 会把重定向过的 Wrangler 配置写到 `.wrangler/deploy/`（并把 `.wrangler/` 加进 `.gitignore`），并用你的项目给 Worker 命名 —— 取 `package.json` 的 `name`，否则取站点主机名，再否则取文件夹名 —— 除非项目根目录下你自己的 `wrangler.jsonc` 设置了 `name`。
 
-在 Vercel 和 Cloudflare 上，服务端构建还会开启 [`Accept: text/markdown` 内容协商](/docs/discoverability/markdown#content-negotiation)，这样一个带上该请求头、来请求任意内容页面的 agent，会在同一个 URL 上收到它的原始 Markdown 镜像。在 Vercel 上，Blume 会把按请求头条件生效的重写规则植入部署的路由配置；在 Cloudflare 上，它会在 Astro 那个 Worker 之前生成一个小 Worker，并把 `assets.run_worker_first` 指向除带指纹的构建产物以及原始 `.md`、`.txt`、`.json`、`.well-known` 文件之外的每一条路径 —— 否则平台会在任何服务器代码运行之前就返回预渲染的页面（以及某个无页面支撑的 URL 对应的 `404.html`）；这些豁免掉的文件则保留它们的零 Worker 快速路径。这个 Worker 还会在针对预渲染的逐页 JSON 文档（`/api/docs/pages/{route}.json`）的请求抵达时，从资源绑定中给出响应，因为否则 Astro 会把它路由到 `/api/` 这个 catch-all。
+在 Vercel 和 Cloudflare 上，服务端构建还会开启 [`Accept: text/markdown` 内容协商](/docs/discoverability/markdown/)，这样一个带上该请求头、来请求任意内容页面的 agent，会在同一个 URL 上收到它的原始 Markdown 镜像。在 Vercel 上，Blume 会把按请求头条件生效的重写规则植入部署的路由配置；在 Cloudflare 上，它会在 Astro 那个 Worker 之前生成一个小 Worker，并把 `assets.run_worker_first` 指向除带指纹的构建产物以及原始 `.md`、`.txt`、`.json`、`.well-known` 文件之外的每一条路径 —— 否则平台会在任何服务器代码运行之前就返回预渲染的页面（以及某个无页面支撑的 URL 对应的 `404.html`）；这些豁免掉的文件则保留它们的零 Worker 快速路径。这个 Worker 还会在针对预渲染的逐页 JSON 文档（`/api/docs/pages/{route}.json`）的请求抵达时，从资源绑定中给出响应，因为否则 Astro 会把它路由到 `/api/` 这个 catch-all。
 
 :::note
-`vercel` 和 `cloudflare` 同时也是两个[分析适配器](/docs/configuration/analytics)的名字。当同一份配置里两者都用到时，给其中一个导入起别名：`import { cloudflare as cloudflareDeploy } from "blume/deploy"`。
+`vercel` 和 `cloudflare` 同时也是两个[分析适配器](/docs/configuration/analytics/)的名字。当同一份配置里两者都用到时，给其中一个导入起别名：`import { cloudflare as cloudflareDeploy } from "blume/deploy"`。
 :::
 
 :::note
-服务端功能有自己的配置 —— 例如 assistant 需要一个模型 API key。设置方法见 [assistant 指南](/docs/configuration/assistant)。
+服务端功能有自己的配置 —— 例如 assistant 需要一个模型 API key。设置方法见 [assistant 指南](/docs/configuration/assistant/)。
 :::
 
 ## 私有文档
@@ -148,7 +148,7 @@ Blume 自己不带登录系统。静态构建就是一堆普通文件，任何�
 
 Blume 写入 `dist/` 的一切都在这层保护之后，包括页面、搜索索引、`.md` 副本、`llms.txt` 和 Open Graph 图片。有几个功能会伸到它之外：
 
-- 托管的[搜索服务](/docs/configuration/search)（Algolia、Orama Cloud、Typesense 或 Mixedbread）会在那个服务上保留你自己的一份内容副本。内置的 Orama、FlexSearch 和 Pagefind 索引是 `dist/` 里的文件，因此它们保持私有。
+- 托管的[搜索服务](/docs/configuration/search/)（Algolia、Orama Cloud、Typesense 或 Mixedbread）会在那个服务上保留你自己的一份内容副本。内置的 Orama、FlexSearch 和 Pagefind 索引是 `dist/` 里的文件，因此它们保持私有。
 - 保护范围之外的服务读不到你的页面。**Open in chat** 会把一个打不开的链接交给 ChatGPT 或 Claude，Slack 或 X 的链接预览无法显示你的 Open Graph 卡片，agent 也读不到 `llms.txt` 或 MCP server。设置 `ai.openInChat: false` 可以隐藏这些对话操作。
 
 ## 重定向 [#redirects]
@@ -206,13 +206,13 @@ redirects: [
 | Assistant（AI Gateway） | `AI_GATEWAY_API_KEY`（或 Vercel OIDC） |
 | Assistant（其它适配器） | 该适配器的默认密钥环境变量（`OPENAI_API_KEY`、`ANTHROPIC_API_KEY`、`GEMINI_API_KEY`、`XAI_API_KEY`、`OPENROUTER_API_KEY`、`LLMGATEWAY_API_KEY`、`INKEEP_API_KEY`），或你传给它的 `apiKeyEnv` |
 | Mixedbread 搜索 | `MIXEDBREAD_API_KEY` |
-| [内容源](/docs/content/sources) | `NOTION_TOKEN`（`notion()`）、`SANITY_TOKEN`（`sanity()`）、`CONTENTFUL_ACCESS_TOKEN`（`contentful()`）、`PAYLOAD_API_KEY`（`payload()`）、`STRAPI_API_TOKEN`（`strapi()`）、`GITHUB_TOKEN`（`githubReleases()`，以及从 GitHub 读取的 `mdxRemote()`） |
+| [内容源](/docs/content/sources/) | `NOTION_TOKEN`（`notion()`）、`SANITY_TOKEN`（`sanity()`）、`CONTENTFUL_ACCESS_TOKEN`（`contentful()`）、`PAYLOAD_API_KEY`（`payload()`）、`STRAPI_API_TOKEN`（`strapi()`）、`GITHUB_TOKEN`（`githubReleases()`，以及从 GitHub 读取的 `mdxRemote()`） |
 
 本地开发把它们放在 `.env.local`，生产环境放在你所用托管平台的环境变量里。内容源会在抓取时读取自己的密钥，在 `blume dev` 和 `blume build` 期间都会如此，所以要把它设在你的站点构建时能读到的地方。搜索索引同步（Algolia、Orama Cloud、Typesense）所需的构建时密钥，会在同步步骤中单独给出警告。
 
 ## 构建缓存 [#build-cache]
 
-Blume 保留两份缓存供构建复用。Astro 和 Vite 的缓存在 `.blume/.cache/` 下（其中包括内容存储和图片转换）。已渲染的 [OG 卡片](/docs/discoverability/open-graph#card-cache) 位于 `node_modules/.cache/blume/og`，所以重新构建时只会渲染那些标题、描述或品牌信息发生变化的卡片。某个平台是否在多次部署之间保留该目录，情况各不相同：
+Blume 保留两份缓存供构建复用。Astro 和 Vite 的缓存在 `.blume/.cache/` 下（其中包括内容存储和图片转换）。已渲染的 [OG 卡片](/docs/discoverability/open-graph/) 位于 `node_modules/.cache/blume/og`，所以重新构建时只会渲染那些标题、描述或品牌信息发生变化的卡片。某个平台是否在多次部署之间保留该目录，情况各不相同：
 
 - **Vercel** 会从构建缓存里恢复 `node_modules/**`，所以卡片会延续（缓存上限 1 GB，保留一个月，按分支做 key —— 新分支从生产缓存开始）。
 - **Netlify** 会恢复 `node_modules`，所以卡片会延续。

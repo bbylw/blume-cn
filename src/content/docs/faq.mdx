@@ -32,7 +32,7 @@ Blume 走第三条路：**框架就是模板。** 你把一个装满 Markdown �
 这并不是「比什么都好」—— 当你想要一个托管好的产品，或想要对应用的完全掌控时，托管平台和完整框架才是正确选择。Blume 是给那些既不想要拥有平台、也不想拥有管道设施，却仍需要一个生产级文档站的团队。
 :::
 
-更长的版本见[为什么会有 Blume](/docs)。
+更长的版本见[为什么会有 Blume](/docs/)。
 
 ## Blume 免费且开源吗？
 
@@ -40,23 +40,23 @@ Blume 走第三条路：**框架就是模板。** 你把一个装满 Markdown �
 
 ## 我需要了解 Astro、React 或 Tailwind 吗？
 
-不需要。一个装满 Markdown 的文件夹就是一个完整站点 —— 导航、搜索和主题要么被推断出来，要么用几个 token 设定。只有当你想做定制时才会触及底层技术栈：[交互岛](/docs/content/islands)（React）、[组件覆盖](/docs/configuration/customization) 或[主题 token](/docs/configuration/theming)（Tailwind）。即便如此，[`blume.config.ts`](/docs/configuration) 也是有类型的，所以你的编辑器会引导你。
+不需要。一个装满 Markdown 的文件夹就是一个完整站点 —— 导航、搜索和主题要么被推断出来，要么用几个 token 设定。只有当你想做定制时才会触及底层技术栈：[交互岛](/docs/content/islands/)（React）、[组件覆盖](/docs/configuration/customization/) 或[主题 token](/docs/configuration/theming/)（Tailwind）。即便如此，[`blume.config.ts`](/docs/configuration/) 也是有类型的，所以你的编辑器会引导你。
 
 ## 我可以用 React 组件和 MDX 吗？
 
-可以。任意页面都可以是 `.md` 或 `.mdx`，而 MDX 让你[无需 import](/docs/content/components)就能放入内置组件。你还可以添加自己的 `.tsx`/`.jsx` [交互岛](/docs/content/islands)。只有当你的项目用到 React 时，Blume 才会开启它 —— 项目里存在任何 `.tsx` 或 `.jsx` 文件（包括你的交互岛）、一个 React 的 [`<Component>`](/docs/content/components#component) 示例、一处[组件覆盖](/docs/configuration/customization)，或[assistant](/docs/configuration/assistant) —— 所以没有这些的站点不会带上任何框架 JavaScript。
+可以。任意页面都可以是 `.md` 或 `.mdx`，而 MDX 让你[无需 import](/docs/content/components/)就能放入内置组件。你还可以添加自己的 `.tsx`/`.jsx` [交互岛](/docs/content/islands/)。只有当你的项目用到 React 时，Blume 才会开启它 —— 项目里存在任何 `.tsx` 或 `.jsx` 文件（包括你的交互岛）、一个 React 的 [`<Component>`](/docs/content/components/) 示例、一处[组件覆盖](/docs/configuration/customization/)，或[assistant](/docs/configuration/assistant/) —— 所以没有这些的站点不会带上任何框架 JavaScript。
 
 ## 我能部署到哪里？
 
-任何地方。`blume build` 默认输出静态 HTML，你可以从任意静态托管或 CDN 提供它 —— Vercel、Netlify、Cloudflare Pages、GitHub Pages、S3 或你自己的服务器。仅服务端的特性（assistant、MCP server、按需渲染）需要服务端输出：把来自 `blume/deploy` 的一个托管适配器 —— `vercel()`、`netlify()`、`cloudflare()` 或 `node()` —— 指定为 `deployment`。见[部署](/docs/deployment)。
+任何地方。`blume build` 默认输出静态 HTML，你可以从任意静态托管或 CDN 提供它 —— Vercel、Netlify、Cloudflare Pages、GitHub Pages、S3 或你自己的服务器。仅服务端的特性（assistant、MCP server、按需渲染）需要服务端输出：把来自 `blume/deploy` 的一个托管适配器 —— `vercel()`、`netlify()`、`cloudflare()` 或 `node()` —— 指定为 `deployment`。见[部署](/docs/deployment/)。
 
 ## 搜索需要托管服务吗？
 
-不需要。[Orama](/docs/configuration/search) 会构建一份本地索引，在开发和生产环境中都能工作，没有任何东西需要托管或付费。对于非常大的站点，[Pagefind](/docs/configuration/search#pagefind) 只需换一个适配器：`search: pagefind()`。无论用哪一个，索引都会随你的站点一起发布。
+不需要。[Orama](/docs/configuration/search/) 会构建一份本地索引，在开发和生产环境中都能工作，没有任何东西需要托管或付费。对于非常大的站点，[Pagefind](/docs/configuration/search/) 只需换一个适配器：`search: pagefind()`。无论用哪一个，索引都会随你的站点一起发布。
 
 ## 我该怎么定制外观？
 
-从[主题 token](/docs/configuration/theming) 开始 —— 强调色、字体、圆角，以及一个用于处理 Tailwind 能表达的一切其它样式的 `theme.css`。想更进一步，可以[覆盖内置组件](/docs/configuration/customization)或添加[自定义页面](/docs/configuration/customization#custom-pages)。当你想要 Astro 项目本身时，[`blume eject`](/docs/configuration/customization#eject) 会交给你一个独立应用，且它依然使用 `blume` 包。
+从[主题 token](/docs/configuration/theming/) 开始 —— 强调色、字体、圆角，以及一个用于处理 Tailwind 能表达的一切其它样式的 `theme.css`。想更进一步，可以[覆盖内置组件](/docs/configuration/customization/)或添加[自定义页面](/docs/configuration/customization/)。当你想要 Astro 项目本身时，[`blume eject`](/docs/configuration/customization/) 会交给你一个独立应用，且它依然使用 `blume` 包。
 
 ## 为什么 oxfmt / Ultracite 会把我的指令压成一行？
 
@@ -74,7 +74,7 @@ Blume 走第三条路：**框架就是模板。** 你把一个装满 Markdown �
 :::note 用 blume dev 重新生成项目。 :::
 ```
 
-一旦开头的 `:::note` 围栏和正文连成了一行，它就不再是指令，于是会作为字面文本渲染，而不是一个[提示框](/docs/content/syntax#callouts)。
+一旦开头的 `:::note` 围栏和正文连成了一行，它就不再是指令，于是会作为字面文本渲染，而不是一个[提示框](/docs/content/syntax/)。
 
 ### 为什么会这样
 
@@ -184,6 +184,6 @@ Blume 走第三条路：**框架就是模板。** 你把一个装满 Markdown �
 }
 ```
 
-在 monorepo 里，请把同一份 `entry` 列表放到 `workspaces` 中 docs workspace 之下。凡是你不用的约定都把对应那行删掉 —— 用于[组件覆盖](/docs/configuration/customization#component-overrides)的 `components.ts`、用于[交互岛](/docs/configuration/customization#interactive-islands)的 `islands/`，以及用于[自定义页面](/docs/configuration/customization#custom-pages)的 `pages/`（如果你改过 `content.pages`，最后那行要相应调整）。
+在 monorepo 里，请把同一份 `entry` 列表放到 `workspaces` 中 docs workspace 之下。凡是你不用的约定都把对应那行删掉 —— 用于[组件覆盖](/docs/configuration/customization/)的 `components.ts`、用于[交互岛](/docs/configuration/customization/)的 `islands/`，以及用于[自定义页面](/docs/configuration/customization/)的 `pages/`（如果你改过 `content.pages`，最后那行要相应调整）。
 
-Knip 只能跟踪真实的导入。一个只出现在字符串里的包 —— 比如一个调用 `injectScript("page", "import('some-package')")` 的 [Astro 集成](/docs/configuration/customization#astro-integrations) —— 仍然需要一条 `ignoreDependencies` 条目。
+Knip 只能跟踪真实的导入。一个只出现在字符串里的包 —— 比如一个调用 `injectScript("page", "import('some-package')")` 的 [Astro 集成](/docs/configuration/customization/) —— 仍然需要一条 `ignoreDependencies` 条目。

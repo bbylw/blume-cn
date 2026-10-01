@@ -16,7 +16,7 @@ agents: {
 }
 ```
 
-清单只列出你已启用的东西 —— [原始 Markdown](/docs/discoverability/markdown) 镜像模式、[JSON API](/docs/discoverability/json-api) 及其 OpenAPI 描述、[`llms.txt`](/docs/discoverability/llms-txt) 和 `llms-full.txt`、[MCP 服务器](/docs/discoverability/mcp) 及其发现文档、[assistant](/docs/configuration/assistant) 端点、[sitemap](/docs/discoverability/sitemap-and-robots#sitemap) 以及 [RSS 订阅源](/docs/discoverability/rss) —— 外加你的站点名称、描述、源码仓库，以及 [content-signal](/docs/discoverability/sitemap-and-robots#content-signals) 使用策略。设置了 [`deployment.site`](/docs/deployment) 时 URL 为绝对地址，否则为根相对地址：
+清单只列出你已启用的东西 —— [原始 Markdown](/docs/discoverability/markdown/) 镜像模式、[JSON API](/docs/discoverability/json-api/) 及其 OpenAPI 描述、[`llms.txt`](/docs/discoverability/llms-txt/) 和 `llms-full.txt`、[MCP 服务器](/docs/discoverability/mcp/) 及其发现文档、[assistant](/docs/configuration/assistant/) 端点、[sitemap](/docs/discoverability/sitemap-and-robots/) 以及 [RSS 订阅源](/docs/discoverability/rss/) —— 外加你的站点名称、描述、源码仓库，以及 [content-signal](/docs/discoverability/sitemap-and-robots/) 使用策略。设置了 [`deployment.site`](/docs/deployment/) 时 URL 为绝对地址，否则为根相对地址：
 
 ```json agent-readability.json
 {
@@ -46,7 +46,7 @@ agents: {
 }
 ```
 
-`contentNegotiation` 字段只有在部署后的站点确实遵守 `Accept: text/markdown` 头时才会出现 —— 参见[内容协商](/docs/discoverability/markdown#content-negotiation)；其它任何部署上，清单都只声明 `.md` 镜像模式。
+`contentNegotiation` 字段只有在部署后的站点确实遵守 `Accept: text/markdown` 头时才会出现 —— 参见[内容协商](/docs/discoverability/markdown/)；其它任何部署上，清单都只声明 `.md` 镜像模式。
 
 把 `agents.agentReadability` 设为 `false` 即可跳过；也可以自行提供 `public/agent-readability.json` 来接管 —— Blume 绝不会覆盖你放在 `public/` 里的文件。
 
@@ -63,7 +63,7 @@ Link: </.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+j
   </index.md>; rel="alternate"; type="text/markdown"
 ```
 
-每个条目只在其对应功能开启时才出现。`alternate` 链接指向首页的 Markdown 镜像 —— 当首页路由是内容页面时，是该页自己的[原始 Markdown](/docs/discoverability/markdown)；若它是落地页，则回退为合成的 `llms.txt`。`service-desc` 链接（[RFC 8631](https://www.rfc-editor.org/rfc/rfc8631)）指向 [JSON API](/docs/discoverability/json-api) 的 OpenAPI 描述，`api-catalog` 指向[生成的 API catalog](#api-catalog)，`ai-catalog` 指向 [AI catalog](#ai-catalog)。这个头出现在 Blume 控制的每个界面上：静态构建通过生成的 `_headers` 文件（Netlify 和 Cloudflare），Vercel 上的服务端构建通过部署的路由规则，以及开发服务器（用 `curl -I localhost:4321` 检查）。开发服务器的头只列出它自己提供的东西 —— `service-desc` 和 `alternate` 两个链接 —— 因为 `blume build` 才会把各份 catalog、`agent-readability.json` 和 `llms.txt` 写进构建产物。
+每个条目只在其对应功能开启时才出现。`alternate` 链接指向首页的 Markdown 镜像 —— 当首页路由是内容页面时，是该页自己的[原始 Markdown](/docs/discoverability/markdown/)；若它是落地页，则回退为合成的 `llms.txt`。`service-desc` 链接（[RFC 8631](https://www.rfc-editor.org/rfc/rfc8631)）指向 [JSON API](/docs/discoverability/json-api/) 的 OpenAPI 描述，`api-catalog` 指向[生成的 API catalog](#api-catalog)，`ai-catalog` 指向 [AI catalog](#ai-catalog)。这个头出现在 Blume 控制的每个界面上：静态构建通过生成的 `_headers` 文件（Netlify 和 Cloudflare），Vercel 上的服务端构建通过部署的路由规则，以及开发服务器（用 `curl -I localhost:4321` 检查）。开发服务器的头只列出它自己提供的东西 —— `service-desc` 和 `alternate` 两个链接 —— 因为 `blume build` 才会把各份 catalog、`agent-readability.json` 和 `llms.txt` 写进构建产物。
 
 不过并非每个智能体都从根目录进入 —— 有的顺着搜索结果或分享链接落到深层页面上，根本看不到首页那个头。所以每个渲染出的页面也在它的 HTML `<head>` 里带上同样的发现链接，使用同一批 IANA 已注册的关系：
 
@@ -83,11 +83,11 @@ Link: </.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+j
 <link rel="alternate" href="/docs/example.md" type="text/markdown" />
 ```
 
-这里的 `alternate` 链接指向_该页面自己的_[原始 Markdown 镜像](/docs/discoverability/markdown)，智能体因此可以直接从落脚的 HTML 跳到省 token 的版本。由于这些 head 链接随预渲染的 HTML 一起走，它们在那些完全忽略 `_headers`、根本无法发送自定义响应头的主机上同样有效（GitHub Pages、S3）—— 无论智能体是从哪个页面进来的。
+这里的 `alternate` 链接指向_该页面自己的_[原始 Markdown 镜像](/docs/discoverability/markdown/)，智能体因此可以直接从落脚的 HTML 跳到省 token 的版本。由于这些 head 链接随预渲染的 HTML 一起走，它们在那些完全忽略 `_headers`、根本无法发送自定义响应头的主机上同样有效（GitHub Pages、S3）—— 无论智能体是从哪个页面进来的。
 
 ## API catalog [#api-catalog]
 
-当站点发布 API 时，Blume 会在 `/.well-known/api-catalog` 生成一份 [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727) API catalog —— 一个 [linkset](https://www.rfc-editor.org/rfc/rfc9264)，让智能体仅凭域名就能枚举出你的 API，并带着其已注册的 `application/linkset+json` 媒体类型和该 RFC 的 `profile="https://www.rfc-editor.org/info/rfc9727"` 参数，在每个构建界面上对外提供。这里没有可配置项：这份 catalog 由 `blume.config.ts` 中已有的内容推导而来。每个 [OpenAPI、AsyncAPI 或 GraphQL 参考](/docs/references/openapi) 都会成为一个条目，锚定在它渲染出的文档路由上，`service-doc` 指向那些文档，若规范位于可抓取的 URL 则 `service-desc` 指向规范本身；站点自己的 [JSON API](/docs/discoverability/json-api) 会成为一个由其 `/openapi.json` 描述的条目；[MCP 服务器](/docs/discoverability/mcp) 则成为一个以自身发现文档作为服务描述的条目：
+当站点发布 API 时，Blume 会在 `/.well-known/api-catalog` 生成一份 [RFC 9727](https://www.rfc-editor.org/rfc/rfc9727) API catalog —— 一个 [linkset](https://www.rfc-editor.org/rfc/rfc9264)，让智能体仅凭域名就能枚举出你的 API，并带着其已注册的 `application/linkset+json` 媒体类型和该 RFC 的 `profile="https://www.rfc-editor.org/info/rfc9727"` 参数，在每个构建界面上对外提供。这里没有可配置项：这份 catalog 由 `blume.config.ts` 中已有的内容推导而来。每个 [OpenAPI、AsyncAPI 或 GraphQL 参考](/docs/references/openapi/) 都会成为一个条目，锚定在它渲染出的文档路由上，`service-doc` 指向那些文档，若规范位于可抓取的 URL 则 `service-desc` 指向规范本身；站点自己的 [JSON API](/docs/discoverability/json-api/) 会成为一个由其 `/openapi.json` 描述的条目；[MCP 服务器](/docs/discoverability/mcp/) 则成为一个以自身发现文档作为服务描述的条目：
 
 ```json .well-known/api-catalog
 {
@@ -127,7 +127,7 @@ Link: </.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+j
 }
 ```
 
-没有 API 参考、没有 MCP 服务器、又关掉了 [JSON API](/docs/discoverability/json-api) 的站点不会产出 catalog —— 里面也无处可放。和其它地方一样，你自行提供的 `public/.well-known/api-catalog` 文件会覆盖生成的那份。
+没有 API 参考、没有 MCP 服务器、又关掉了 [JSON API](/docs/discoverability/json-api/) 的站点不会产出 catalog —— 里面也无处可放。和其它地方一样，你自行提供的 `public/.well-known/api-catalog` 文件会覆盖生成的那份。
 
 ## AI catalog [#ai-catalog]
 
@@ -200,7 +200,7 @@ API catalog 列出的是 API。**AI catalog** 列出的则是智能体能从这�
 
 ARD 当前版本从 `/.well-known/ard.json` 读取清单，并把 `ai-catalog.json` 称作它的前代路径，因此 Blume 把同一份文档写到两处，在每个页面的 head 里用两种链接关系（`ai-catalog` 和 `ard`）声明它，并在 `llms.txt` 和 `agent-readability.json` 中列出它。这份 catalog 及其 `.well-known` 邻居（API catalog、MCP 发现文件）在每个构建界面上都以 `Access-Control-Allow-Origin: *` 提供，因此从另一个 origin 读取它们的注册表不会受阻。
 
-条目标识符锚定在你的域名上，因此这份 catalog 需要一个 [`deployment.site`](/docs/deployment) —— 没有它就不会产出任何东西。它默认开启；`agents.catalog: false` 可以关掉它。生成的查询由站点标题和每个条目自身的名称推导而来。若要为某个条目自定义，用标识符的尾部（`<namespace>:<name>`）作为键：
+条目标识符锚定在你的域名上，因此这份 catalog 需要一个 [`deployment.site`](/docs/deployment/) —— 没有它就不会产出任何东西。它默认开启；`agents.catalog: false` 可以关掉它。生成的查询由站点标题和每个条目自身的名称推导而来。若要为某个条目自定义，用标识符的尾部（`<namespace>:<name>`）作为键：
 
 ```ts blume.config.ts
 export default defineConfig({
@@ -219,7 +219,7 @@ export default defineConfig({
 
 ## WebMCP
 
-[WebMCP](https://webmachinelearning.github.io/webmcp/) 是一项正在兴起的浏览器 API，让页面可以直接把工具注册到智能体浏览器上 —— 不需要单独连接服务器。每个 Blume 页面都会把文档的只读界面注册到页面的模型上下文上：`search_docs`（站内搜索）、`get_page`（某个页面的[原始 Markdown](/docs/discoverability/markdown)）和 `list_pages`（那份 [`llms.txt`](/docs/discoverability/llms-txt) 索引）。这段脚本很小，在真正调用某个工具之前不会加载任何搜索机制；在所有还没有该 API 的浏览器里它都会静默失效 —— 目前除 [Chrome 的早期预览](https://developer.chrome.com/blog/webmcp-epp)之外，所有浏览器都属于这一类。它注册到仍在变动的规范所暴露的界面上（`navigator.modelContext` 或 `document.modelContext`），通过 `provideContext` 或按工具的 `registerTool` 来完成。
+[WebMCP](https://webmachinelearning.github.io/webmcp/) 是一项正在兴起的浏览器 API，让页面可以直接把工具注册到智能体浏览器上 —— 不需要单独连接服务器。每个 Blume 页面都会把文档的只读界面注册到页面的模型上下文上：`search_docs`（站内搜索）、`get_page`（某个页面的[原始 Markdown](/docs/discoverability/markdown/)）和 `list_pages`（那份 [`llms.txt`](/docs/discoverability/llms-txt/) 索引）。这段脚本很小，在真正调用某个工具之前不会加载任何搜索机制；在所有还没有该 API 的浏览器里它都会静默失效 —— 目前除 [Chrome 的早期预览](https://developer.chrome.com/blog/webmcp-epp)之外，所有浏览器都属于这一类。它注册到仍在变动的规范所暴露的界面上（`navigator.modelContext` 或 `document.modelContext`），通过 `provideContext` 或按工具的 `registerTool` 来完成。
 
 它默认开启；设置 `webmcp: false` 即可退出：
 
@@ -234,11 +234,11 @@ agents: {
 每次构建都会为你的文档写一份 [agent skill](https://agentskills.io)，即一份编码智能体可以安装、用来配合你的产品工作的 `SKILL.md`。它在 `/skill.md` 提供，并列在 [skills 索引](#skills-discovery)中。Blume 用它已经了解的站点信息来构建它，不调用任何模型，因此零成本，而且你的文档一改它就跟着变。它包含：
 
 - 站点的标题和描述，以及智能体何时该使用这个 skill
-- 如何把任意页面当作 Markdown 读取，以及在站点提供它们时，`llms.txt`、`llms-full.txt`、[MCP 服务器](/docs/discoverability/mcp)、JSON API 和更新日志
+- 如何把任意页面当作 Markdown 读取，以及在站点提供它们时，`llms.txt`、`llms-full.txt`、[MCP 服务器](/docs/discoverability/mcp/)、JSON API 和更新日志
 - 你的 API 参考
 - 一份按侧边栏顺序排列的文档地图，每个页面都链到它的 Markdown，并附一行描述
 
-这个 skill 以你站点的 `title` 命名（`Acme Docs` 会变成 `acme-docs`）。它覆盖默认语言下的当前版本，不含 API 操作页和更新日志条目（它们各自在地图上方有一行说明），最多列出 200 个页面，其余的指向 `llms.txt`。链接是绝对地址，因此这个 skill 需要 [`deployment.site`](/docs/deployment)；没有它的构建会跳过这一步。
+这个 skill 以你站点的 `title` 命名（`Acme Docs` 会变成 `acme-docs`）。它覆盖默认语言下的当前版本，不含 API 操作页和更新日志条目（它们各自在地图上方有一行说明），最多列出 200 个页面，其余的指向 `llms.txt`。链接是绝对地址，因此这个 skill 需要 [`deployment.site`](/docs/deployment/)；没有它的构建会跳过这一步。
 
 自动生成的这份 skill 是一份通往你文档的指南，而不是你产品的摘要。若要一份真正教会智能体使用你产品的 skill —— 安装配置、核心概念、常见任务和坑 —— 可以让你的编码智能体根据文档来写：
 
@@ -246,7 +246,7 @@ agents: {
 blume skill --claude   # 或 --codex
 ```
 
-`blume skill` 会让 Claude Code 或 Codex 打开 [`blume-write-skill`](/docs/advanced/skills#writing-your-sites-skill) 这个 skill，它会在你的 [`agents.skills`](#skills-discovery) 文件夹下（未设置时为 `./skills`，同时把它写进你的配置）写出一份以站点命名的 `SKILL.md`，从而替换掉自动生成的那份。你像对待其它文件一样审阅并提交它；它只花掉你智能体一次 token，而不是每次构建都花一次。文档有大改动后要再跑一次，因为手写的 skill 不会自己更新。不带参数时，`blume skill` 会打印这个 skill 将放到哪里，以及如何让另一个智能体指向它。
+`blume skill` 会让 Claude Code 或 Codex 打开 [`blume-write-skill`](/docs/advanced/skills/) 这个 skill，它会在你的 [`agents.skills`](#skills-discovery) 文件夹下（未设置时为 `./skills`，同时把它写进你的配置）写出一份以站点命名的 `SKILL.md`，从而替换掉自动生成的那份。你像对待其它文件一样审阅并提交它；它只花掉你智能体一次 token，而不是每次构建都花一次。文档有大改动后要再跑一次，因为手写的 skill 不会自己更新。不带参数时，`blume skill` 会打印这个 skill 将放到哪里，以及如何让另一个智能体指向它。
 
 `agents.skills` 里任何同名的 skill —— 不论你怎么写 —— 都会替换索引里自动生成的那份；若它是一个单独的 `SKILL.md`，在 `/skill.md` 上也一样被替换。你自行提供的 `public/skill.md` 两者都能压过。要关掉这个 skill：
 
@@ -258,7 +258,7 @@ agents: {
 
 ## Skills 发现 [#skills-discovery]
 
-如果你的项目提供了 [agent skills](https://agentskills.io) —— [Blume 自己的仓库就提供了](/docs/advanced/skills) —— 那就把 `agents.skills` 指向存放它们的目录，构建就会依照 [Agent Skills Discovery RFC](https://github.com/cloudflare/agent-skills-discovery-rfc) 发布它们以便被发现：
+如果你的项目提供了 [agent skills](https://agentskills.io) —— [Blume 自己的仓库就提供了](/docs/advanced/skills/) —— 那就把 `agents.skills` 指向存放它们的目录，构建就会依照 [Agent Skills Discovery RFC](https://github.com/cloudflare/agent-skills-discovery-rfc) 发布它们以便被发现：
 
 ```ts blume.config.ts lineNumbers
 agents: {
@@ -268,7 +268,7 @@ agents: {
 
 这个路径从你的项目根目录解析，每个含 `SKILL.md` 的子目录都会成为一个已发布的 skill。只含单个 `SKILL.md` 的 skill 会被逐字复制到 `/.well-known/agent-skills/<name>/SKILL.md`（`type: "skill-md"`）；带配套资源（`scripts/`、`references/`、`assets/`）的 skill 则被打包成一个确定性的 `.tar.gz`（`type: "archive"`），使其相对引用在解压后依然可用，并保留脚本的可执行位。位于 `/.well-known/agent-skills/index.json` 的发现索引带有 v0.2.0 的 `$schema`，并为每个 skill 记录其名称、类型、描述（取自 `SKILL.md` 的 frontmatter）、构件 URL，以及客户端校验下载所用的 SHA-256 摘要。
 
-`name`/`description` 缺失或不符合规范的 skill 会被跳过并给出构建警告，而不是带着问题发布；而你自行提供的 `public/.well-known/agent-skills/index.json` 会接管整个界面。已发布的 skill —— 包括[你站点自己的那份](#your-sites-skill) —— 也会列在 [`llms.txt`](/docs/discoverability/llms-txt#generated-sections) 里。
+`name`/`description` 缺失或不符合规范的 skill 会被跳过并给出构建警告，而不是带着问题发布；而你自行提供的 `public/.well-known/agent-skills/index.json` 会接管整个界面。已发布的 skill —— 包括[你站点自己的那份](#your-sites-skill) —— 也会列在 [`llms.txt`](/docs/discoverability/llms-txt/) 里。
 
 ## 基于 DNS 的发现（DNS-AID） [#dns-based-discovery-dns-aid]
 
@@ -280,7 +280,7 @@ _index._agents.docs.example.com. 3600 IN HTTPS 1 docs.example.com. alpn=h2
 
 如果你的服务商提供 `HTTPS` 记录类型就用它（Vercel DNS 提供；它不支持普通的 `SVCB` 类型），否则用带 `alpn` 和 `port` 参数的 ServiceMode `SVCB` 记录。该草案还建议用 DNSSEC 对区域签名，好让做验证的解析器返回经过认证的答案 —— Cloudflare 之类的服务商一键就能启用，而有些服务商（包括 Vercel DNS）则完全不支持。
 
-`blume audit --url <origin>` 会替你检查这件事：当 [`deployment.site`](/docs/deployment) 已设置时，网络这一层会通过 DNS-over-HTTPS 查询该入口，若记录不存在就报告应当发布的确切记录，还会说明答案是否经过 DNSSEC 认证。如果你的网络屏蔽了公共解析器（Google、Cloudflare），设置 `BLUME_DOH_URL` 把查询指向你自己的解析器。
+`blume audit --url <origin>` 会替你检查这件事：当 [`deployment.site`](/docs/deployment/) 已设置时，网络这一层会通过 DNS-over-HTTPS 查询该入口，若记录不存在就报告应当发布的确切记录，还会说明答案是否经过 DNSSEC 认证。如果你的网络屏蔽了公共解析器（Google、Cloudflare），设置 `BLUME_DOH_URL` 把查询指向你自己的解析器。
 
 ## Web Bot Auth
 
