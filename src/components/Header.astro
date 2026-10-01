@@ -223,7 +223,9 @@ const isDocs = pathname.startsWith("/docs") && !isQuickstart && !isComponents &&
       width: 19rem;
     }
   }
-  .header__search :global(button) {
+  /* 只作用于搜索触发按钮：模态框在 DOM 上是 .header__search 的后代，
+     裸 button 选择器会把模态里的 ESC 等按钮也撑到 100% 宽 */
+  .header__search :global(button[data-search-trigger]) {
     width: 100%;
   }
   .header__icon-btn {

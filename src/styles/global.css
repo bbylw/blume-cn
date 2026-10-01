@@ -422,6 +422,12 @@
   .dark .prose-docs :where(a):not(:where([class~="not-prose"] *)) {
     color: var(--fg);
   }
+
+  /* 排版插件的 kbd 令牌只有浅色值；暗色下不接过来键帽会近乎不可见 */
+  .dark .prose-docs {
+    --tw-prose-kbd: var(--fg);
+    --tw-prose-kbd-shadows: color-mix(in oklab, var(--fg) 14%, transparent);
+  }
 }
 
 /* ============================================================

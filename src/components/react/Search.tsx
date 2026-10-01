@@ -31,16 +31,16 @@ function tokenize(query: string): string[] {
 }
 
 function snippetOf(doc: Doc, tokens: string[]): string {
-  const hay = `${doc.title}。${doc.description}。${doc.headings.join("。")}。${doc.text}`;
-  const lower = hay.toLowerCase();
+  // 摘要取正文命中处的上下文，而不是把描述与全部标题拼成一串关键词汤
+  const lower = doc.text.toLowerCase();
   let at = -1;
   for (const t of tokens) {
     const i = lower.indexOf(t);
     if (i >= 0 && (at === -1 || i < at)) at = i;
   }
   if (at === -1) return doc.description;
-  const start = Math.max(0, at - 45);
-  return `${start > 0 ? "…" : ""}${hay.slice(start, start + 130)}…`;
+  const start = Math.max(0, at - 40);
+  return `${start > 0 ? "…" : ""}${doc.text.slice(start, start + 120)}…`;
 }
 
 function scoreDoc(doc: Doc, raw: string, tokens: string[]): number {
@@ -80,6 +80,8 @@ export default function Search() {
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLUListElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
+  // 中文输入法组合期间不 setState，否则受控输入重渲染会重置光标、打乱组合中的文字
+  const composingRef = useRef(false);
 
   // 索引 289KB：挂载时不拉，第一次打开搜索框时才取
   useEffect(() => {
@@ -166,6 +168,7 @@ export default function Search() {
       <button
         type="button"
         ref={triggerRef}
+        data-search-trigger
         onClick={show}
         aria-expanded={open}
         aria-label="搜索文档（⌘K）"
@@ -199,11 +202,20 @@ export default function Search() {
                 ref={inputRef}
                 value={query}
                 onChange={(e) => {
+                  if (composingRef.current) return;
                   setQuery(e.target.value);
                   setActive(0);
                 }}
+                onCompositionStart={() => {
+                  composingRef.current = true;
+                }}
+                onCompositionEnd={(e) => {
+                  composingRef.current = false;
+                  setQuery(e.currentTarget.value);
+                  setActive(0);
+                }}
                 placeholder="搜索页面、标题与正文…"
-                className="w-full bg-transparent text-[15px] outline-none placeholder:text-fg-subtle"
+                className="min-w-0 flex-1 bg-transparent text-[15px] outline-none placeholder:text-fg-subtle"
                 autoComplete="off"
               />
               <button type="button" onClick={hide} className="shrink-0 rounded border border-line px-1.5 py-0.5 text-[10px] text-fg-subtle hover:text-fg">

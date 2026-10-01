@@ -58,6 +58,46 @@ const groupTitle = groupTitleOf(href);
     padding: 0.35rem 1rem;
     border-bottom: 1px solid var(--border);
   }
+  /* 代码块顶栏：语言标签由 CSS 在构建期即占位（无运行时位移），复制按钮由脚本注入 */
+  .prose-docs pre[data-language] {
+    position: relative;
+    padding-top: 2.05rem;
+    border-radius: 0.75rem;
+  }
+  .prose-docs pre[data-language]::before {
+    content: attr(data-language);
+    position: absolute;
+    inset: 0 0 auto 0;
+    padding: 0.35rem 1rem;
+    border-bottom: 1px solid var(--border);
+    border-radius: 0.75rem 0.75rem 0 0;
+    background-color: var(--bg-muted);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--fg-subtle);
+  }
+  .prose-docs pre[data-language] > .code-copy {
+    position: absolute;
+    top: 0.28rem;
+    right: 0.5rem;
+    padding: 0.15rem 0.5rem;
+    border: 1px solid var(--border);
+    border-radius: 0.375rem;
+    background-color: var(--bg-subtle);
+    color: var(--fg-subtle);
+    font-size: 0.6875rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition:
+      color 0.14s ease,
+      border-color 0.14s ease;
+  }
+  .prose-docs pre[data-language] > .code-copy:hover {
+    color: var(--fg);
+    border-color: var(--border-strong);
+  }
   /* 标题锚点的显隐规则在 global.css 的 @layer components 里，
      与揭示规则同层才能靠特异性胜出（无层样式会压过有层样式） */
   /* KaTeX */

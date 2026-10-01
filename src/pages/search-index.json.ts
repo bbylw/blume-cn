@@ -36,7 +36,9 @@ export const GET: APIRoute = async () => {
   const docs: SearchDoc[] = entries.map((entry) => {
     const href = slugToHref(entry.id);
     const body = entry.body ?? "";
-    const headings = [...body.matchAll(/^#{2,3}\s+(.+)$/gm)].map((m) => {
+    // 代码围栏里的 `## xxx` 是示例而非真标题，先剔除再提取，避免索引混入噪音
+    const prose = body.replace(/```[\s\S]*?```/g, " ");
+    const headings = [...prose.matchAll(/^#{2,3}\s+(.+)$/gm)].map((m) => {
       return (m[1] ?? "").replace(/\s*\[#[\w-]+\]\s*$/, "").trim();
     });
 

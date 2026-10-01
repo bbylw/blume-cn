@@ -104,6 +104,36 @@ const jsonLd = {
   <Footer />
 </BaseLayout>
 
+<script>
+  function initCodeCopy() {
+    for (const pre of document.querySelectorAll<HTMLElement>(
+      "article pre[data-language]:not([data-copy-ready])",
+    )) {
+      pre.dataset.copyReady = "true";
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "code-copy";
+      btn.textContent = "复制";
+      btn.setAttribute("aria-label", "复制代码");
+      btn.addEventListener("click", async () => {
+        const text = pre.querySelector("code")?.innerText ?? pre.innerText;
+        try {
+          await navigator.clipboard.writeText(text);
+          btn.textContent = "已复制";
+        } catch {
+          btn.textContent = "失败";
+        }
+        setTimeout(() => {
+          btn.textContent = "复制";
+        }, 1600);
+      });
+      pre.appendChild(btn);
+    }
+  }
+  initCodeCopy();
+  document.addEventListener("astro:page-load", initCodeCopy);
+</script>
+
 <style>
   .shell {
     display: grid;
