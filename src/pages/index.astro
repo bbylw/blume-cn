@@ -1,7 +1,7 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
 import Footer from "../components/Footer.astro";
-import { navGroups } from "../lib/nav";
+import { navGroups, navItems } from "../lib/nav";
 
 const install = "npx blume init";
 
@@ -153,8 +153,8 @@ const jsonLd = {
 
         <ul class="hero__stats">
           <li><strong>0</strong><span>需要配置的样板文件</span></li>
-          <li><strong>0 KB</strong><span>核心主题的客户端框架 JS</span></li>
-          <li><strong>63</strong><span>中文文档页面</span></li>
+          <li><strong>0</strong><span>外部托管服务：搜索与语料全本地</span></li>
+          <li><strong>{navItems.length}</strong><span>中文文档页面</span></li>
           <li><strong>MIT</strong><span>永久免费且开源</span></li>
         </ul>
       </div>

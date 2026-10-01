@@ -4,7 +4,8 @@ import "../styles/global.css";
 interface Props {
   title: string;
   description: string;
-  canonical?: URL | string;
+  /** 传 null 表示不输出 canonical（例如 404 没有真实路由） */
+  canonical?: URL | string | null;
   /** 是否允许搜索引擎收录 */
   noindex?: boolean;
   ogImage?: string;
@@ -50,7 +51,7 @@ const markdownUrl =
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
-    <link rel="canonical" href={canonicalUrl} />
+    {canonical !== null && <link rel="canonical" href={canonicalUrl} />}
     {noindex && <meta name="robots" content="noindex, nofollow" />}
     <meta name="generator" content={Astro.generator} />
 

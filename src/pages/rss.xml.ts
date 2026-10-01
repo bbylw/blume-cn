@@ -6,9 +6,8 @@ import { slugToHref } from "../lib/nav";
 export const prerender = true;
 
 export const GET: APIRoute = async (context) => {
-  const entries = (await getCollection("docs")).sort((a, b) =>
-    (b.data.updated?.getTime() ?? 0) - (a.data.updated?.getTime() ?? 0),
-  );
+  // 内容目前没有 updated 日期，按它排序是空转；条目保持内容集合顺序
+  const entries = await getCollection("docs");
 
   return rss({
     title: "Blume 中文文档",
@@ -20,6 +19,6 @@ export const GET: APIRoute = async (context) => {
       link: slugToHref(entry.id),
       pubDate: entry.data.updated,
     })),
-    customData: "<language>zh-CN</language>",
+    customData: `<language>zh-CN</language><lastBuildDate>${new Date().toUTCString()}</lastBuildDate>`,
   });
 };

@@ -1,6 +1,7 @@
 ---
 import katex from "katex";
-// KaTeX 样式随组件按需打包：只有渲染了公式的页面才会加载这份 CSS
+// 注意：mdx-components.ts 静态导入全部组件，Astro 会把它们的 CSS 合成一份共享 chunk，
+// 因此这份 KaTeX 样式会出现在每个页面，而不是只在使用公式的页面
 import "katex/dist/katex.min.css";
 
 interface Props {

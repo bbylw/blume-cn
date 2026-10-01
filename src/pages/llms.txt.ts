@@ -27,9 +27,10 @@ export const GET: APIRoute = async ({ site }: APIContext) => {
     lines.push(`## ${group.title}`, "");
     for (const item of group.items) {
       const entry = byHref.get(item.href);
+      // noindex 的页面不在 byHref 里，连同导航项一起跳过
+      if (!entry) continue;
       const url = `${origin}${item.href}`;
-      const desc = entry?.data.description ?? item.description;
-      lines.push(`- [${item.title}](${url}): ${desc}`);
+      lines.push(`- [${item.title}](${url}): ${entry.data.description ?? item.description}`);
     }
     lines.push("");
   }

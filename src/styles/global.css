@@ -318,9 +318,20 @@
     color: var(--accent);
   }
 
-  /* 标题锚点 */
+  /* 标题锚点：默认隐藏，悬停或键盘聚焦时揭示。
+     隐藏与揭示必须同处本层——无层样式恒胜有层样式，分开放会让 opacity:0 永远赢 */
+  .prose-docs :is(h2, h3, h4) > a.anchor-hash,
+  .prose-docs :is(h2, h3, h4) .anchor-hash {
+    display: inline-block;
+    margin-left: 0.4rem;
+    color: var(--fg-subtle);
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    font-weight: 400;
+  }
   .prose-docs :where(h2, h3, h4):hover .anchor-hash,
-.prose-docs :where(h2, h3, h4) > .anchor-hash:focus-visible {
+  .prose-docs :where(h2, h3, h4) > .anchor-hash:focus-visible {
     opacity: 1;
   }
 
@@ -428,4 +439,10 @@
 
 .target-flash {
   animation: hf-flash 1.4s ease-out;
+}
+
+/* 抽屉与搜索各自持有 <html> 上的一个 class，互不覆盖对方的滚动锁；
+   此前两者都直接写 body.style.overflow 并互相 restore，Escape 后会漏锁 */
+html:is(.lock-drawer, .lock-search) body {
+  overflow: hidden;
 }

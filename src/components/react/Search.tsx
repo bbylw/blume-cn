@@ -49,10 +49,10 @@ function scoreDoc(doc: Doc, raw: string, tokens: string[]): number {
   const heads = doc.headings.join(" ").toLowerCase();
   const text = doc.text.toLowerCase();
 
-  if (!title.includes(raw)) {
-    // 标题里必须至少有一个 token 命中，避免全库噪音
-    if (!tokens.some((t) => title.includes(t))) return 0;
-  }
+  // 单字（中文一元组）在语料里到处都能命中，仍要求标题命中以避噪；
+  // 多字查询放开到描述、小标题与正文，否则正文检索形同虚设
+  const singleCharOnly = tokens.length > 0 && tokens.every((t) => t.length < 2);
+  if (singleCharOnly && !title.includes(raw) && !tokens.some((t) => title.includes(t))) return 0;
 
   let score = 0;
   if (title === raw) score += 120;
@@ -149,12 +149,8 @@ export default function Search() {
   }, [open, hits, active, show, hide]);
 
   useEffect(() => {
-    if (!open) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
+    document.documentElement.classList.toggle("lock-search", open);
+    return () => document.documentElement.classList.remove("lock-search");
   }, [open]);
 
   useEffect(() => {

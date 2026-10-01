@@ -95,7 +95,7 @@ const isDocs = pathname.startsWith("/docs") && !isQuickstart && !isComponents &&
     drawer.hidden = !open;
     toggle?.setAttribute("aria-expanded", String(open));
     toggle?.setAttribute("aria-label", open ? "关闭导航" : "打开导航");
-    document.body.style.overflow = open ? "hidden" : "";
+    document.documentElement.classList.toggle("lock-drawer", open);
     if (open) panelClose?.focus();
     else toggle?.focus();
   }
@@ -105,7 +105,8 @@ const isDocs = pathname.startsWith("/docs") && !isQuickstart && !isComponents &&
     el.addEventListener("click", () => setDrawer(false));
   }
   document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape") setDrawer(false);
+    // 抽屉关着时 Escape 不做任何事，否则会把焦点抢到（窄屏外不可见的）导航按钮上
+    if (e.key === "Escape" && drawer && !drawer.hidden) setDrawer(false);
   });
 </script>
 

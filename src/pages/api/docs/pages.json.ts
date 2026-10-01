@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ site }) => {
       id: entry.id,
       href,
       url: `${origin}${href}`,
-      markdown: `${origin}${href}.md`,
+      markdown: `${origin}${href.replace(/\/$/, "")}.md`,
       title: entry.data.title,
       description: entry.data.description ?? "",
       group: groupOf.get(href) ?? "文档",

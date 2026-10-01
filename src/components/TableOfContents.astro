@@ -35,8 +35,12 @@ const items = headings
 }
 
 <script>
+  let observer: IntersectionObserver | undefined;
+
   function initToc() {
     const toc = document.querySelector<HTMLElement>("[data-toc]");
+    // 初次加载时本脚本与 astro:page-load 都会触发一次，先断开旧的避免观察器累积
+    observer?.disconnect();
     if (!toc) return;
 
     const links = new Map<string, HTMLAnchorElement>();
@@ -45,7 +49,7 @@ const items = headings
       if (key) links.set(key, link);
     }
 
-    const observer = new IntersectionObserver(
+    observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
           const link = links.get(entry.target.id);

@@ -2,7 +2,7 @@
 import { getCollection, render } from "astro:content";
 import DocsLayout from "../../layouts/DocsLayout.astro";
 import { mdxComponents } from "../../mdx-components";
-import { navItems, getNavItem, slugToHref, navGroups } from "../../lib/nav";
+import { getNavItem, slugToHref, getPager, groupTitleOf } from "../../lib/nav";
 
 export async function getStaticPaths() {
   const entries = await getCollection("docs");
@@ -17,12 +17,8 @@ const { Content, headings } = await render(entry);
 
 const href = slugToHref(entry.id);
 const item = getNavItem(href);
-const flat = navItems.map((i) => i.href);
-const idx = flat.indexOf(href);
-const prev = idx > 0 ? navItems[idx - 1] : undefined;
-const next = idx >= 0 && idx < flat.length - 1 ? navItems[idx + 1] : undefined;
-
-const groupTitle = navGroups.find((g) => g.items.some((i) => i.href === href))?.title;
+const { prev, next } = getPager(href);
+const groupTitle = groupTitleOf(href);
 ---
 
 <DocsLayout
@@ -62,17 +58,8 @@ const groupTitle = navGroups.find((g) => g.items.some((i) => i.href === href))?.
     padding: 0.35rem 1rem;
     border-bottom: 1px solid var(--border);
   }
-  /* 标题锚点 */
-  .prose-docs :is(h2, h3, h4) > a.anchor-hash,
-  .prose-docs :is(h2, h3, h4) .anchor-hash {
-    display: inline-block;
-    margin-left: 0.4rem;
-    color: var(--fg-subtle);
-    text-decoration: none;
-    opacity: 0;
-    transition: opacity 0.15s ease;
-    font-weight: 400;
-  }
+  /* 标题锚点的显隐规则在 global.css 的 @layer components 里，
+     与揭示规则同层才能靠特异性胜出（无层样式会压过有层样式） */
   /* KaTeX */
   .prose-docs .katex {
     font-size: 1.02em;

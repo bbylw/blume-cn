@@ -1,4 +1,5 @@
 import { defineMdastPlugin, defineHastPlugin } from "satteri";
+import GithubSlugger from "github-slugger";
 import type { Element, Text } from "hast";
 import type { BlockContent, Code } from "mdast";
 
@@ -101,40 +102,55 @@ export const blumeMath = defineMdastPlugin({
    ============================================================ */
 const ANCHOR_RE = /\s*\[#([\w-]+)\]\s*$/;
 
-export const blumeHeadingAnchors = defineHastPlugin({
-  name: "blume-heading-anchors",
-  element: {
-    filter: ["h2", "h3", "h4"],
-    visit(node: Readonly<Element>, ctx) {
-      const children = node.children ?? [];
-      const last = children[children.length - 1];
-      let explicit: string | undefined;
+/** satteri 的原生渲染器在本插件之后才给标题加 id，这里只能自己推导。 */
+const textOf = (node: Element): string => {
+  let out = "";
+  const walk = (child: Element | Text): void => {
+    if (child.type === "text") out += child.value;
+    for (const grand of (child as Element).children ?? []) walk(grand as Element | Text);
+  };
+  for (const child of node.children ?? []) walk(child as Element | Text);
+  return out;
+};
 
-      if (last?.type === "text") {
-        const match = ANCHOR_RE.exec((last as Text).value);
-        if (match?.[1]) {
-          explicit = match[1];
-          const textNode = last as Text;
-          ctx.replaceNode(textNode, {
-            type: "text",
-            value: textNode.value.slice(0, match.index),
-          } as never);
+/** 工厂形式：satteri 每次编译调用一次，slugger 因此按文档独立去重（重复标题得 -1 后缀）。 */
+export const blumeHeadingAnchors = () => {
+  const slugger = new GithubSlugger();
+  return defineHastPlugin({
+    name: "blume-heading-anchors",
+    element: {
+      filter: ["h2", "h3", "h4"],
+      visit(node: Readonly<Element>, ctx) {
+        const children = node.children ?? [];
+        const last = children[children.length - 1];
+        let explicit: string | undefined;
+
+        if (last?.type === "text") {
+          const match = ANCHOR_RE.exec((last as Text).value);
+          if (match?.[1]) {
+            explicit = match[1];
+            const textNode = last as Text;
+            ctx.replaceNode(textNode, {
+              type: "text",
+              value: textNode.value.slice(0, match.index),
+            } as never);
+          }
         }
-      }
 
-      if (explicit) ctx.setProperty(node, "id", explicit);
-      const id = explicit ?? (typeof node.properties?.id === "string" ? node.properties.id : "") ?? "";
+        if (explicit) ctx.setProperty(node, "id", explicit);
+        const id = explicit ?? slugger.slug(textOf(node).trim());
 
-      ctx.appendChild(node, {
-        type: "element",
-        tagName: "a",
-        // 可聚焦的链接不能 aria-hidden，否则键盘与读屏体验割裂；给它可读名称
-        properties: { className: ["anchor-hash"], href: `#${id}`, ariaLabel: "本节链接" },
-        children: [{ type: "text", value: "#" }],
-      } as never);
+        ctx.appendChild(node, {
+          type: "element",
+          tagName: "a",
+          // 可聚焦的链接不能 aria-hidden，否则键盘与读屏体验割裂；给它可读名称
+          properties: { className: ["anchor-hash"], href: `#${id}`, ariaLabel: "本节链接" },
+          children: [{ type: "text", value: "#" }],
+        } as never);
+      },
     },
-  },
-});
+  });
+};
 
 export const blumeMdastPlugins = [blumeCallouts, blumeCodeFences, blumeMath];
 export const blumeHastPlugins = [blumeHeadingAnchors];

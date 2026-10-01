@@ -475,6 +475,19 @@ export function getNavItem(href: string): NavItem | undefined {
   return navItems.find((i) => i.href === href);
 }
 
+/** 上一篇 / 下一篇，按 navItems 的扁平顺序 */
+export function getPager(href: string): { prev?: NavItem; next?: NavItem } {
+  const idx = navItems.findIndex((i) => i.href === href);
+  return {
+    prev: idx > 0 ? navItems[idx - 1] : undefined,
+    next: idx >= 0 && idx < navItems.length - 1 ? navItems[idx + 1] : undefined,
+  };
+}
+
+export function groupTitleOf(href: string): string | undefined {
+  return navGroups.find((g) => g.items.some((i) => i.href === href))?.title;
+}
+
 /** 页面 slug（去掉 /docs 前缀与尾斜杠），例如 /docs/content/meta/ -> content/meta */
 export function hrefToSlug(href: string): string {
   return href.replace(/^\/docs\/?/, "").replace(/\/$/, "");

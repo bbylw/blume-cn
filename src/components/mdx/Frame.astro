@@ -12,7 +12,7 @@ const { caption, hint, class: className = "" } = Astro.props;
   <div class="frame__body">
     <slot />
   </div>
-  {caption && <figcaption class="frame__caption" set:html={caption} />}
+  {caption && <figcaption class="frame__caption">{caption}</figcaption>}
   {hint && <p class="frame__hint">{hint}</p>}
 </figure>
 
