@@ -1,9 +1,10 @@
 import type { APIContext, APIRoute } from "astro";
 import { getCollection } from "astro:content";
+import { slugToHref } from "../lib/nav";
 
 export const prerender = true;
 
-const HREF_OF = (id: string) => `/docs/${id}`.replace(/\/$/, "");
+const HREF_OF = (id: string) => slugToHref(id);
 
 /** llms-full.txt —— 全部页面的完整 Markdown 语料 */
 export const GET: APIRoute = async ({ site }: APIContext) => {

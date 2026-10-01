@@ -9,7 +9,8 @@ import { blumeMdastPlugins, blumeHastPlugins } from "./src/plugins/blume-markdow
 
 export default defineConfig({
   site: process.env.SITE_URL ?? "https://blume.ndjp.net",
-  trailingSlash: "ignore",
+  // 目录式产物（GitHub Pages 默认）：/docs/quickstart/ 直接命中 index.html
+  trailingSlash: "always",
   integrations: [mdx(), react(), sitemap()],
   vite: {
     plugins: [tailwindcss()],

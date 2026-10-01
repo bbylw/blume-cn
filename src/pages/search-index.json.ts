@@ -1,7 +1,6 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
-import { navGroups } from "../lib/nav";
-import { hrefToSlug } from "../lib/nav";
+import { navGroups, slugToHref } from "../lib/nav";
 
 interface SearchDoc {
   href: string;
@@ -35,7 +34,7 @@ export const GET: APIRoute = async () => {
   const entries = await getCollection("docs", ({ data }) => !data.noindex);
 
   const docs: SearchDoc[] = entries.map((entry) => {
-    const href = `/docs/${hrefToSlug(entry.id)}`;
+    const href = slugToHref(entry.id);
     const body = entry.body ?? "";
     const headings = [...body.matchAll(/^#{2,3}\s+(.+)$/gm)].map((m) => {
       return (m[1] ?? "").replace(/\s*\[#[\w-]+\]\s*$/, "").trim();

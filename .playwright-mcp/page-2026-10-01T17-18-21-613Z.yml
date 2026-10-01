@@ -1,0 +1,549 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e6]:
+      - paragraph [ref=e7]: Markdown 优先 · 构建于 Astro 与 Vite
+      - heading "面向人类与 智能体的开源文档框架" [level=1] [ref=e9]
+      - paragraph [ref=e10]: 把 Markdown 或 MDX 文件丢进文件夹，启动开发服务器，就能得到一个生产级的文档站点 —— 导航、搜索、主题、Open Graph 图片，以及一整套组件库。无需编写或维护任何应用样板。
+      - generic [ref=e11]:
+        - link "快速开始" [ref=e12] [cursor=pointer]:
+          - /url: /docs/quickstart
+        - link "阅读文档" [ref=e15] [cursor=pointer]:
+          - /url: /docs
+        - link "英文官网" [ref=e16] [cursor=pointer]:
+          - /url: https://useblume.dev
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - generic [ref=e25]: 终端
+          - button "复制命令" [ref=e26] [cursor=pointer]
+        - code [ref=e31]: $ npx blume init 正在生成 docs/index.mdx 与 blume.config.ts … ✓ 就绪，运行 npm run dev
+      - list [ref=e32]:
+        - listitem [ref=e33]:
+          - strong [ref=e34]: "0"
+          - generic [ref=e35]: 需要配置的样板文件
+        - listitem [ref=e36]:
+          - strong [ref=e37]: 0 KB
+          - generic [ref=e38]: 核心主题的客户端框架 JS
+        - listitem [ref=e39]:
+          - strong [ref=e40]: "63"
+          - generic [ref=e41]: 中文文档页面
+        - listitem [ref=e42]:
+          - strong [ref=e43]: MIT
+          - generic [ref=e44]: 永久免费且开源
+    - generic [ref=e45]:
+      - generic [ref=e46]:
+        - paragraph [ref=e47]: 为什么选择 Blume
+        - heading "框架本身就是模板" [level=2] [ref=e48]
+        - paragraph [ref=e49]: 一些文档工具在你写下第一个字之前就先塞给你一整份代码库。另一些围绕你的内容搭建模板，却把你锁死在它们的托管服务里。Blume 两者都取：你唯一需要碰的就是内容本身。
+      - generic [ref=e50]:
+        - link "默认即快速 Astro + Vite 的静态 HTML 核心主题不携带任何客户端框架 JS，页面开箱即可取得良好的 Core Web Vitals 评分。开发启动与热重载保持 Vite 原生手感，只有需要时才开启服务端特性。" [ref=e51] [cursor=pointer]:
+          - /url: /docs
+          - generic [ref=e52]: 默认即快速
+          - heading "Astro + Vite 的静态 HTML" [level=3] [ref=e53]
+          - paragraph [ref=e54]: 核心主题不携带任何客户端框架 JS，页面开箱即可取得良好的 Core Web Vitals 评分。开发启动与热重载保持 Vite 原生手感，只有需要时才开启服务端特性。
+        - link "AI 就绪 你的 Markdown 同时喂饱人类与模型 自动产出 llms.txt 与 llms-full.txt，任意 .md URL 返回原始 Markdown，附带 JSON API、复制为 Markdown、打开聊天，以及一个托管的 MCP 服务器。" [ref=e55] [cursor=pointer]:
+          - /url: /docs/discoverability
+          - generic [ref=e56]: AI 就绪
+          - heading "你的 Markdown 同时喂饱人类与模型" [level=3] [ref=e57]
+          - paragraph [ref=e58]: 自动产出 llms.txt 与 llms-full.txt，任意 .md URL 返回原始 Markdown，附带 JSON API、复制为 Markdown、打开聊天，以及一个托管的 MCP 服务器。
+        - link "零配置 一个文档文件夹就是完整项目 无需克隆起始模板，无需搭建 Astro 与 Tailwind，无需维护模板。导航从文件推导，搜索在开发与生产都能跑，主题只是几个令牌。" [ref=e59] [cursor=pointer]:
+          - /url: /docs/quickstart
+          - generic [ref=e60]: 零配置
+          - heading "一个文档文件夹就是完整项目" [level=3] [ref=e61]
+          - paragraph [ref=e62]: 无需克隆起始模板，无需搭建 Astro 与 Tailwind，无需维护模板。导航从文件推导，搜索在开发与生产都能跑，主题只是几个令牌。
+        - link "类型安全 配置是真正的 TypeScript blume.config.ts 与每一个 meta.ts 都经过 schema 校验，编辑器在构建之前就能发现拼写错误、非法取值与缺失字段。" [ref=e63] [cursor=pointer]:
+          - /url: /docs/configuration
+          - generic [ref=e64]: 类型安全
+          - heading "配置是真正的 TypeScript" [level=3] [ref=e65]
+          - paragraph [ref=e66]: blume.config.ts 与每一个 meta.ts 都经过 schema 校验，编辑器在构建之前就能发现拼写错误、非法取值与缺失字段。
+    - generic [ref=e68]:
+      - generic [ref=e69]:
+        - paragraph [ref=e70]: 工作原理
+        - heading "一个文件夹，就是一个完整项目" [level=2] [ref=e71]
+        - paragraph [ref=e72]:
+          - text: Blume 命令行加载
+          - code [ref=e73]: blume.config.ts
+          - text: ，把内容扫描成一张图，并在
+          - code [ref=e74]: .blume/
+          - text: 下生成一个隐藏的 Astro 项目，由它在开发与构建时驱动。
+        - paragraph [ref=e75]:
+          - text: 这个运行时是实现细节 —— 你写 Markdown，剩下的交给 Blume —— 直到你执行
+          - code [ref=e76]: blume eject
+          - text: 并亲手接管它。
+        - link "了解自定义与 eject" [ref=e77] [cursor=pointer]:
+          - /url: /docs/configuration/customization
+      - generic [ref=e81]:
+        - generic [ref=e82]: 你的项目
+        - list [ref=e88]:
+          - listitem [ref=e89]: docs/
+          - listitem [ref=e90]: index.mdx
+          - listitem [ref=e91]: quickstart.md
+          - listitem [ref=e92]: content/
+          - listitem [ref=e93]: components.mdx
+          - listitem [ref=e94]: blume.config.ts
+          - listitem [ref=e95]: package.json
+        - list [ref=e99]:
+          - listitem [ref=e100]: ✓ 导航
+          - listitem [ref=e101]: ✓ 本地搜索索引
+          - listitem [ref=e102]: ✓ 主题与 OG 图片
+          - listitem [ref=e103]: ✓ llms.txt / MCP
+          - listitem [ref=e104]: ✓ 站点地图与 RSS
+          - listitem [ref=e105]: ✓ dist/ 静态站点
+    - generic [ref=e106]:
+      - generic [ref=e107]:
+        - paragraph [ref=e108]: 开箱即用
+        - heading "特性" [level=2] [ref=e109]
+        - paragraph [ref=e110]: 一个文档文件夹就是一个完整的项目。每一项都有合理的默认值，配置是你伸手去取的东西，而不是你的起点。
+      - generic [ref=e111]:
+        - link [ref=e112] [cursor=pointer]:
+          - /url: /docs/content/components
+          - heading "组件，无需导入" [level=3] [ref=e113]
+          - paragraph [ref=e114]: 卡片、分栏、步骤、标签页、手风琴、徽章、代码组、文件树、类型表、实时预览、差异对比，在任意 MDX 页面直接用。
+        - link [ref=e115] [cursor=pointer]:
+          - /url: /docs/configuration/search
+          - heading "本地搜索" [level=3] [ref=e116]
+          - paragraph [ref=e117]: Orama 在开发与生产环境均运行，不需要任何托管服务；Pagefind、FlexSearch、Algolia、Typesense 只差一个适配器。
+        - link [ref=e118] [cursor=pointer]:
+          - /url: /docs/content/sources/custom
+          - heading "内容来源" [level=3] [ref=e119]
+          - paragraph [ref=e120]: 本地文件与远程 MDX、GitHub Releases、Notion、Sanity、Contentful、Payload、Strapi 或任意自定义后端混进同一个站点。
+        - link [ref=e121] [cursor=pointer]:
+          - /url: /docs/content/i18n
+          - heading "国际化" [level=3] [ref=e122]
+          - paragraph [ref=e123]: 把翻译好的文件就位，即可获得感知语言区域的路由、按语言划分的导航、翻译后的界面与 SEO。
+        - link [ref=e124] [cursor=pointer]:
+          - /url: /docs/discoverability
+          - heading "SEO 与社交卡片" [level=3] [ref=e125]
+          - paragraph [ref=e126]: 元信息、构建期渲染的 Open Graph 图片、站点地图、robots.txt、RSS 订阅源与 JSON-LD，全部内置。
+        - link [ref=e127] [cursor=pointer]:
+          - /url: /docs/references/openapi
+          - heading "API 参考" [level=3] [ref=e128]
+          - paragraph [ref=e129]: 用 openapi()、asyncapi()、graphql() 把规范渲染成原生参考页面，每个操作一页，含 schema、鉴权与请求演练场。
+        - link [ref=e130] [cursor=pointer]:
+          - /url: /docs/configuration/export
+          - heading "导出" [level=3] [ref=e131]
+          - paragraph [ref=e132]: 让读者把任意页面下载为 PDF 或 EPUB，完全在客户端完成，因此静态构建依然保持静态。
+        - link [ref=e133] [cursor=pointer]:
+          - /url: /docs/configuration/customization
+          - heading "完全自定义" [level=3] [ref=e134]
+          - paragraph [ref=e135]: 组件覆盖、React 孤岛、自定义页面、Tailwind v4 主题令牌，以及源组件注册表（blume add）。
+    - generic [ref=e137]:
+      - generic [ref=e138]:
+        - paragraph [ref=e139]: 命令行
+        - heading "全部命令，一处查完" [level=2] [ref=e140]
+        - paragraph [ref=e141]:
+          - text: 通过包管理器运行
+          - code [ref=e142]: npx blume <命令>
+          - text: ，或写进
+          - code [ref=e143]: package.json
+          - text: 脚本。
+      - table [ref=e145]:
+        - rowgroup [ref=e146]:
+          - row [ref=e147]:
+            - columnheader "命令" [ref=e148]
+            - columnheader "说明" [ref=e149]
+        - rowgroup [ref=e150]:
+          - row [ref=e151]:
+            - cell [ref=e152]:
+              - code [ref=e153]: blume init [dir]
+            - cell "搭建项目（默认交互式）" [ref=e154]
+          - row [ref=e155]:
+            - cell [ref=e156]:
+              - code [ref=e157]: blume dev
+            - cell "启动带热重载的开发服务器" [ref=e158]
+          - row [ref=e159]:
+            - cell [ref=e160]:
+              - code [ref=e161]: blume build
+            - cell "构建静态（或服务端）站点" [ref=e162]
+          - row [ref=e163]:
+            - cell [ref=e164]:
+              - code [ref=e165]: blume preview
+            - cell "预览上一次构建的结果" [ref=e166]
+          - row [ref=e167]:
+            - cell [ref=e168]:
+              - code [ref=e169]: blume add <item>
+            - cell "从注册表安装一个源组件" [ref=e170]
+          - row [ref=e171]:
+            - cell [ref=e172]:
+              - code [ref=e173]: blume sync
+            - cell "重新拉取远程内容来源并重新生成" [ref=e174]
+          - row [ref=e175]:
+            - cell [ref=e176]:
+              - code [ref=e177]: blume eject
+            - cell "将运行时提升为独立的 Astro 应用" [ref=e178]
+          - row [ref=e179]:
+            - cell [ref=e180]:
+              - code [ref=e181]: blume check
+            - cell "用 astro check 对文档站点做类型检查" [ref=e182]
+          - row [ref=e183]:
+            - cell [ref=e184]:
+              - code [ref=e185]: blume validate
+            - cell "校验内部链接、锚点、资源与外部链接" [ref=e186]
+          - row [ref=e187]:
+            - cell [ref=e188]:
+              - code [ref=e189]: blume doctor
+            - cell "诊断配置与内容问题" [ref=e190]
+          - row [ref=e191]:
+            - cell [ref=e192]:
+              - code [ref=e193]: blume audit
+            - cell "审计已构建站点在 SEO 与健康度方面的问题" [ref=e194]
+          - row [ref=e195]:
+            - cell [ref=e196]:
+              - code [ref=e197]: blume eval
+            - cell "由智能体仅依据文档回答你的问题" [ref=e198]
+          - row [ref=e199]:
+            - cell [ref=e200]:
+              - code [ref=e201]: blume translate
+            - cell "用本地智能体 CLI 翻译成已配置的语言区域" [ref=e202]
+          - row [ref=e203]:
+            - cell [ref=e204]:
+              - code [ref=e205]: blume version [id]
+            - cell "把当前文档冻结为一个归档版本" [ref=e206]
+          - row [ref=e207]:
+            - cell [ref=e208]:
+              - code [ref=e209]: blume migrate [source]
+            - cell "借助 Claude Code 或 Codex 迁移到 Blume" [ref=e210]
+          - row [ref=e211]:
+            - cell [ref=e212]:
+              - code [ref=e213]: blume upgrade
+            - cell "升级到新的大版本" [ref=e214]
+    - generic [ref=e216]:
+      - generic [ref=e217]:
+        - paragraph [ref=e218]: 部署
+        - heading "blume build 产出静态 HTML" [level=2] [ref=e219]
+        - paragraph [ref=e220]:
+          - text: 输出到
+          - code [ref=e221]: dist/
+          - text: ，可部署到任意静态托管：Vercel、Netlify、Cloudflare Pages、GitHub Pages、S3 + CloudFront 或任意 CDN。需要请求期特性（助手、MCP 服务器）时，在配置里指定托管适配器即可切换为服务端输出。
+        - code [ref=e223]: "import { defineConfig } from \"blume\"; import { vercel } from \"blume/deploy\"; export default defineConfig({ deployment: vercel(), });"
+      - generic [ref=e224]:
+        - generic [ref=e225]:
+          - paragraph [ref=e226]: 托管适配器
+          - list [ref=e227]:
+            - listitem [ref=e228]:
+              - code [ref=e229]: vercel()
+              - generic [ref=e230]: Vercel
+            - listitem [ref=e231]:
+              - code [ref=e232]: netlify()
+              - generic [ref=e233]: Netlify Functions
+            - listitem [ref=e234]:
+              - code [ref=e235]: node()
+              - generic [ref=e236]: 自托管的 Node 服务器、容器
+            - listitem [ref=e237]:
+              - code [ref=e238]: cloudflare()
+              - generic [ref=e239]: Cloudflare Workers 与 Pages
+          - paragraph [ref=e240]:
+            - text: 适配器永远不会被自动探测，必须在
+            - code [ref=e241]: blume.config.ts
+            - text: 中显式指定。
+        - generic [ref=e242]:
+          - paragraph [ref=e243]: 兼容性
+          - list [ref=e244]:
+            - listitem [ref=e245]:
+              - code [ref=e246]: Node
+              - generic [ref=e247]: 22.12+
+            - listitem [ref=e248]:
+              - code [ref=e249]: 包管理器
+              - generic [ref=e250]: Bun、pnpm、npm、yarn
+            - listitem [ref=e251]:
+              - code [ref=e252]: 适配器
+              - generic [ref=e253]: Vercel、Netlify、Node、Cloudflare
+    - generic [ref=e254]:
+      - generic [ref=e255]:
+        - paragraph [ref=e256]: 文档
+        - heading "从这里开始读" [level=2] [ref=e257]
+      - generic [ref=e258]:
+        - generic [ref=e259]:
+          - heading "开始" [level=3] [ref=e260]
+          - paragraph [ref=e261]: 从零到上线，只需要几分钟。
+          - list [ref=e262]:
+            - listitem [ref=e263]:
+              - link "介绍" [ref=e264] [cursor=pointer]:
+                - /url: /docs
+            - listitem [ref=e265]:
+              - link "快速开始" [ref=e266] [cursor=pointer]:
+                - /url: /docs/quickstart
+            - listitem [ref=e267]:
+              - link "部署" [ref=e268] [cursor=pointer]:
+                - /url: /docs/deployment
+            - listitem [ref=e269]:
+              - link "迁移到 Blume" [ref=e270] [cursor=pointer]:
+                - /url: /docs/migrating
+            - listitem [ref=e271]:
+              - link "升级到 Blume 2" [ref=e272] [cursor=pointer]:
+                - /url: /docs/upgrading
+            - listitem [ref=e273]:
+              - link "常见问题" [ref=e274] [cursor=pointer]:
+                - /url: /docs/faq
+        - generic [ref=e275]:
+          - heading "内容" [level=3] [ref=e276]
+          - paragraph [ref=e277]: 文件如何变成页面，导航如何自动推导。
+          - list [ref=e278]:
+            - listitem [ref=e279]:
+              - link "页面" [ref=e280] [cursor=pointer]:
+                - /url: /docs/content
+            - listitem [ref=e281]:
+              - link "导航" [ref=e282] [cursor=pointer]:
+                - /url: /docs/content/navigation
+            - listitem [ref=e283]:
+              - link "文件夹元数据" [ref=e284] [cursor=pointer]:
+                - /url: /docs/content/meta
+            - listitem [ref=e285]:
+              - link "Frontmatter" [ref=e286] [cursor=pointer]:
+                - /url: /docs/content/frontmatter
+            - listitem [ref=e287]:
+              - link "语法" [ref=e288] [cursor=pointer]:
+                - /url: /docs/content/syntax
+            - listitem [ref=e289]:
+              - link "引入" [ref=e290] [cursor=pointer]:
+                - /url: /docs/content/includes
+            - listitem [ref=e291]:
+              - link "变量" [ref=e292] [cursor=pointer]:
+                - /url: /docs/content/variables
+            - listitem [ref=e293]:
+              - link "组件" [ref=e294] [cursor=pointer]:
+                - /url: /docs/content/components
+            - listitem [ref=e295]:
+              - link "交互组件" [ref=e296] [cursor=pointer]:
+                - /url: /docs/content/islands
+            - listitem [ref=e297]:
+              - link "国际化" [ref=e298] [cursor=pointer]:
+                - /url: /docs/content/i18n
+            - listitem [ref=e299]:
+              - link "版本控制" [ref=e300] [cursor=pointer]:
+                - /url: /docs/content/versioning
+        - generic [ref=e301]:
+          - heading "内容来源" [level=3] [ref=e302]
+          - paragraph [ref=e303]: 把远程 Markdown、CMS 与 Obsidian 仓库混进同一个站点。
+          - list [ref=e304]:
+            - listitem [ref=e305]:
+              - link "Obsidian" [ref=e306] [cursor=pointer]:
+                - /url: /docs/content/sources/obsidian
+            - listitem [ref=e307]:
+              - link "远程 MDX" [ref=e308] [cursor=pointer]:
+                - /url: /docs/content/sources/remote-mdx
+            - listitem [ref=e309]:
+              - link "GitHub Releases" [ref=e310] [cursor=pointer]:
+                - /url: /docs/content/sources/github-releases
+            - listitem [ref=e311]:
+              - link "Sanity" [ref=e312] [cursor=pointer]:
+                - /url: /docs/content/sources/sanity
+            - listitem [ref=e313]:
+              - link "Notion" [ref=e314] [cursor=pointer]:
+                - /url: /docs/content/sources/notion
+            - listitem [ref=e315]:
+              - link "Contentful" [ref=e316] [cursor=pointer]:
+                - /url: /docs/content/sources/contentful
+            - listitem [ref=e317]:
+              - link "Payload" [ref=e318] [cursor=pointer]:
+                - /url: /docs/content/sources/payload
+            - listitem [ref=e319]:
+              - link "Strapi" [ref=e320] [cursor=pointer]:
+                - /url: /docs/content/sources/strapi
+            - listitem [ref=e321]:
+              - link "自定义来源" [ref=e322] [cursor=pointer]:
+                - /url: /docs/content/sources/custom
+        - generic [ref=e323]:
+          - heading "配置" [level=3] [ref=e324]
+          - paragraph [ref=e325]: blume.config.ts 里的每一项功能开关。
+          - list [ref=e326]:
+            - listitem [ref=e327]:
+              - link "配置文件" [ref=e328] [cursor=pointer]:
+                - /url: /docs/configuration
+            - listitem [ref=e329]:
+              - link "主题" [ref=e330] [cursor=pointer]:
+                - /url: /docs/configuration/theming
+            - listitem [ref=e331]:
+              - link "自定义" [ref=e332] [cursor=pointer]:
+                - /url: /docs/configuration/customization
+            - listitem [ref=e333]:
+              - link "搜索" [ref=e334] [cursor=pointer]:
+                - /url: /docs/configuration/search
+            - listitem [ref=e335]:
+              - link "助手" [ref=e336] [cursor=pointer]:
+                - /url: /docs/configuration/assistant
+            - listitem [ref=e337]:
+              - link "速率限制" [ref=e338] [cursor=pointer]:
+                - /url: /docs/configuration/rate-limiting
+            - listitem [ref=e339]:
+              - link "朗读" [ref=e340] [cursor=pointer]:
+                - /url: /docs/configuration/narration
+            - listitem [ref=e341]:
+              - link "分析" [ref=e342] [cursor=pointer]:
+                - /url: /docs/configuration/analytics
+            - listitem [ref=e343]:
+              - link "Cookie 同意" [ref=e344] [cursor=pointer]:
+                - /url: /docs/configuration/consent
+            - listitem [ref=e345]:
+              - link "导出" [ref=e346] [cursor=pointer]:
+                - /url: /docs/configuration/export
+        - generic [ref=e347]:
+          - heading "可发现性" [level=3] [ref=e348]
+          - paragraph [ref=e349]: 让搜索引擎、社交平台与编程智能体都能找到你。
+          - list [ref=e350]:
+            - listitem [ref=e351]:
+              - link "SEO 与 GEO" [ref=e352] [cursor=pointer]:
+                - /url: /docs/discoverability
+            - listitem [ref=e353]:
+              - link "元数据" [ref=e354] [cursor=pointer]:
+                - /url: /docs/discoverability/metadata
+            - listitem [ref=e355]:
+              - link "Open Graph 图片" [ref=e356] [cursor=pointer]:
+                - /url: /docs/discoverability/open-graph
+            - listitem [ref=e357]:
+              - link "结构化数据" [ref=e358] [cursor=pointer]:
+                - /url: /docs/discoverability/structured-data
+            - listitem [ref=e359]:
+              - link "RSS 订阅" [ref=e360] [cursor=pointer]:
+                - /url: /docs/discoverability/rss
+            - listitem [ref=e361]:
+              - link "站点地图与 robots" [ref=e362] [cursor=pointer]:
+                - /url: /docs/discoverability/sitemap-and-robots
+            - listitem [ref=e363]:
+              - link "llms.txt" [ref=e364] [cursor=pointer]:
+                - /url: /docs/discoverability/llms-txt
+            - listitem [ref=e365]:
+              - link "面向智能体的 Markdown" [ref=e366] [cursor=pointer]:
+                - /url: /docs/discoverability/markdown
+            - listitem [ref=e367]:
+              - link "JSON API" [ref=e368] [cursor=pointer]:
+                - /url: /docs/discoverability/json-api
+            - listitem [ref=e369]:
+              - link "MCP 服务器" [ref=e370] [cursor=pointer]:
+                - /url: /docs/discoverability/mcp
+            - listitem [ref=e371]:
+              - link "智能体发现" [ref=e372] [cursor=pointer]:
+                - /url: /docs/discoverability/agent-discovery
+        - generic [ref=e373]:
+          - heading "API 参考" [level=3] [ref=e374]
+          - paragraph [ref=e375]: 把规范文件渲染成原生参考页面。
+          - list [ref=e376]:
+            - listitem [ref=e377]:
+              - link "OpenAPI" [ref=e378] [cursor=pointer]:
+                - /url: /docs/references/openapi
+            - listitem [ref=e379]:
+              - link "AsyncAPI" [ref=e380] [cursor=pointer]:
+                - /url: /docs/references/asyncapi
+            - listitem [ref=e381]:
+              - link "GraphQL" [ref=e382] [cursor=pointer]:
+                - /url: /docs/references/graphql
+            - listitem [ref=e383]:
+              - link "Scalar" [ref=e384] [cursor=pointer]:
+                - /url: /docs/references/scalar
+            - listitem [ref=e385]:
+              - link "手写 API 页面" [ref=e386] [cursor=pointer]:
+                - /url: /docs/references/api-pages
+        - generic [ref=e387]:
+          - heading "命令行" [level=3] [ref=e388]
+          - paragraph [ref=e389]: 每一个 blume 命令、参数与用法。
+          - list [ref=e390]:
+            - listitem [ref=e391]:
+              - link "概览" [ref=e392] [cursor=pointer]:
+                - /url: /docs/cli
+            - listitem [ref=e393]:
+              - link "doctor" [ref=e394] [cursor=pointer]:
+                - /url: /docs/cli/doctor
+            - listitem [ref=e395]:
+              - link "validate" [ref=e396] [cursor=pointer]:
+                - /url: /docs/cli/validate
+            - listitem [ref=e397]:
+              - link "audit" [ref=e398] [cursor=pointer]:
+                - /url: /docs/cli/audit
+            - listitem [ref=e399]:
+              - link "eval" [ref=e400] [cursor=pointer]:
+                - /url: /docs/cli/evals
+            - listitem [ref=e401]:
+              - link "translate" [ref=e402] [cursor=pointer]:
+                - /url: /docs/cli/translate
+            - listitem [ref=e403]:
+              - link "version" [ref=e404] [cursor=pointer]:
+                - /url: /docs/cli/version
+        - generic [ref=e405]:
+          - heading "进阶" [level=3] [ref=e406]
+          - paragraph [ref=e407]: 脱离默认形态的玩法。
+          - list [ref=e408]:
+            - listitem [ref=e409]:
+              - link "智能体技能" [ref=e410] [cursor=pointer]:
+                - /url: /docs/advanced/skills
+            - listitem [ref=e411]:
+              - link "自定义页面" [ref=e412] [cursor=pointer]:
+                - /url: /docs/advanced/custom-pages
+            - listitem [ref=e413]:
+              - link "更新日志" [ref=e414] [cursor=pointer]:
+                - /url: /docs/advanced/changelog
+            - listitem [ref=e415]:
+              - link "博客" [ref=e416] [cursor=pointer]:
+                - /url: /docs/advanced/blog
+    - generic [ref=e418]:
+      - heading "把 Markdown 丢进去，站点就出来了" [level=2] [ref=e419]
+      - paragraph [ref=e420]: 需要 Node.js 22.12 或更高版本，以及一个至少包含一个 .md 或 .mdx 文件的内容文件夹。除此之外没有任何需要配置的东西。
+      - generic [ref=e421]:
+        - link "开始使用" [ref=e422] [cursor=pointer]:
+          - /url: /docs/quickstart
+        - link "从别的框架迁移" [ref=e423] [cursor=pointer]:
+          - /url: /docs/migrating
+  - contentinfo [ref=e424]:
+    - generic [ref=e425]:
+      - paragraph [ref=e430]:
+        - strong [ref=e431]: Blume
+        - text: —— 面向人类与智能体的开源文档框架。快速、AI 就绪、零配置，永久免费。
+      - generic [ref=e432]:
+        - paragraph [ref=e433]: 文档
+        - list [ref=e434]:
+          - listitem [ref=e435]:
+            - link "快速开始" [ref=e436] [cursor=pointer]:
+              - /url: /docs/quickstart
+          - listitem [ref=e437]:
+            - link "配置参考" [ref=e438] [cursor=pointer]:
+              - /url: /docs/configuration
+          - listitem [ref=e439]:
+            - link "内容组件" [ref=e440] [cursor=pointer]:
+              - /url: /docs/content/components
+          - listitem [ref=e441]:
+            - link "命令行" [ref=e442] [cursor=pointer]:
+              - /url: /docs/cli
+          - listitem [ref=e443]:
+            - link "常见问题" [ref=e444] [cursor=pointer]:
+              - /url: /docs/faq
+      - generic [ref=e445]:
+        - paragraph [ref=e446]: 进阶
+        - list [ref=e447]:
+          - listitem [ref=e448]:
+            - link "内容来源" [ref=e449] [cursor=pointer]:
+              - /url: /docs/content/sources/custom
+          - listitem [ref=e450]:
+            - link "国际" [ref=e451] [cursor=pointer]:
+              - /url: /docs/content/i18n
+          - listitem [ref=e452]:
+            - link "版本控制" [ref=e453] [cursor=pointer]:
+              - /url: /docs/content/versioning
+          - listitem [ref=e454]:
+            - link "MCP 服务器" [ref=e455] [cursor=pointer]:
+              - /url: /docs/discoverability/mcp
+          - listitem [ref=e456]:
+            - link "API 参考" [ref=e457] [cursor=pointer]:
+              - /url: /docs/references/openapi
+      - generic [ref=e458]:
+        - paragraph [ref=e459]: 生态
+        - list [ref=e460]:
+          - listitem [ref=e461]:
+            - link "英文官网" [ref=e462] [cursor=pointer]:
+              - /url: https://useblume.dev
+          - listitem [ref=e463]:
+            - link "llms.txt" [ref=e464] [cursor=pointer]:
+              - /url: /llms.txt
+          - listitem [ref=e465]:
+            - link "全量语料" [ref=e466] [cursor=pointer]:
+              - /url: /llms-full.txt
+          - listitem [ref=e467]:
+            - link "RSS 订阅" [ref=e468] [cursor=pointer]:
+              - /url: /rss.xml
+          - listitem [ref=e469]:
+            - link "GitHub" [ref=e470] [cursor=pointer]:
+              - /url: https://github.com/haydenbleasel/blume
+    - generic [ref=e471]:
+      - paragraph [ref=e472]: © 2026 Blume 中文文档 · 遵循 MIT 许可证
+      - paragraph [ref=e473]:
+        - text: 本页为社区翻译，英文原文为
+        - link "useblume.dev" [ref=e474] [cursor=pointer]:
+          - /url: https://useblume.dev/docs
+        - text: 。

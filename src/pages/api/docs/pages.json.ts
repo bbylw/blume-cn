@@ -1,10 +1,10 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
-import { navGroups } from "../../../lib/nav";
+import { navGroups, slugToHref } from "../../../lib/nav";
 
 export const prerender = true;
 
-const HREF_OF = (id: string) => `/docs/${id}`.replace(/\/$/, "");
+const HREF_OF = (id: string) => slugToHref(id);
 
 /** JSON API：页面索引，供 function-calling 框架与智能体消费 */
 export const GET: APIRoute = async ({ site }) => {

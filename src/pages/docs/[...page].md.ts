@@ -1,9 +1,10 @@
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
+import { slugToHref } from "../../lib/nav";
 
 export const prerender = true;
 
-const HREF_OF = (id: string) => `/docs/${id}`.replace(/\/$/, "");
+const HREF_OF = (id: string) => slugToHref(id);
 
 export async function getStaticPaths() {
   const entries = await getCollection("docs");

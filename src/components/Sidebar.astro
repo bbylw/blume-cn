@@ -9,8 +9,9 @@ interface Props {
 
 const { pathname, variant = "desktop" } = Astro.props;
 
+// 侧边栏 href 带尾斜杠，URL 可能没有（/docs/x 与 /docs/x/ 是同一页）
 const clean = pathname.replace(/\/+$/, "") || "/";
-const isActive = (href: string) => clean === href;
+const isActive = (href: string) => clean === href.replace(/\/+$/, "");
 
 const groups = navGroups.map((group, index) => ({
   ...group,

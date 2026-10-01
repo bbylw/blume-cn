@@ -1,6 +1,7 @@
 import rss from "@astrojs/rss";
 import type { APIRoute } from "astro";
 import { getCollection } from "astro:content";
+import { slugToHref } from "../lib/nav";
 
 export const prerender = true;
 
@@ -16,7 +17,7 @@ export const GET: APIRoute = async (context) => {
     items: entries.map((entry) => ({
       title: entry.data.title,
       description: entry.data.description ?? "",
-      link: `/docs/${entry.id}`.replace(/\/$/, ""),
+      link: slugToHref(entry.id),
       pubDate: entry.data.updated,
     })),
     customData: "<language>zh-CN</language>",

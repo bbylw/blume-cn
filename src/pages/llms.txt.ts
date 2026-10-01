@@ -1,10 +1,10 @@
 import type { APIContext, APIRoute } from "astro";
 import { getCollection } from "astro:content";
-import { navGroups, navItems } from "../lib/nav";
+import { navGroups, navItems, slugToHref } from "../lib/nav";
 
 export const prerender = true;
 
-const HREF_OF = (id: string) => `/docs/${id}`.replace(/\/$/, "");
+const HREF_OF = (id: string) => slugToHref(id);
 
 /** llms.txt 索引 —— 给编程智能体与聊天助手的站点地图 */
 export const GET: APIRoute = async ({ site }: APIContext) => {
