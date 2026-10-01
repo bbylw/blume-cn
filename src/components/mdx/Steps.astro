@@ -1,0 +1,24 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className = "" } = Astro.props;
+---
+
+<div class:list={["steps", className]}>
+  <slot />
+</div>
+
+<style>
+  .steps {
+    counter-reset: step;
+    margin-block: 1.75rem;
+  }
+  .steps :global(.step) {
+    counter-increment: step;
+  }
+  .steps :global(.step .step__marker::before) {
+    content: counter(step);
+  }
+</style>

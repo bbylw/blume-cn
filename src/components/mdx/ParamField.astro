@@ -1,0 +1,78 @@
+---
+interface Props {
+  name?: string;
+  type?: string;
+  required?: boolean;
+  deprecated?: boolean;
+  default?: string;
+}
+
+const { name, type, required, deprecated, default: def } = Astro.props;
+---
+
+<div class="param-field">
+  <div class="param-field__head">
+    {name && <code class="param-field__name">{name}</code>}
+    {type && <code class="param-field__type">{type}</code>}
+    {required && <span class="param-field__flag">必填</span>}
+    {deprecated && <span class="param-field__flag param-field__flag--warn">已废弃</span>}
+    {def && <span class="param-field__default">默认 <code>{def}</code></span>}
+  </div>
+  <div class="param-field__body">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .param-field {
+    border-left: 2px solid var(--border);
+    padding: 0.25rem 0 0.25rem 0.875rem;
+    margin-block: 0.75rem;
+  }
+  .param-field__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+  }
+  .param-field__name {
+    font-family: var(--font-mono);
+    font-weight: 650;
+    font-size: 0.8125rem;
+    color: var(--fg);
+  }
+  .param-field__type {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--accent);
+  }
+  .param-field__flag {
+    font-size: 0.6875rem;
+    font-weight: 650;
+    color: var(--accent);
+  }
+  .param-field__flag--warn {
+    color: #dc2626;
+  }
+  .dark .param-field__flag--warn {
+    color: #f87171;
+  }
+  .param-field__default {
+    font-size: 0.75rem;
+    color: var(--fg-subtle);
+  }
+  .param-field__default code {
+    font-family: var(--font-mono);
+  }
+  .param-field__body {
+    font-size: 0.875rem;
+    color: var(--fg-muted);
+    line-height: 1.75;
+  }
+  .param-field__body :global(> :first-child) {
+    margin-top: 0.35rem;
+  }
+  .param-field__body :global(> :last-child) {
+    margin-bottom: 0;
+  }
+</style>

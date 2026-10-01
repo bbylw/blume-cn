@@ -1,0 +1,31 @@
+---
+import { getEntry, render } from "astro:content";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { mdxComponents } from "../../mdx-components";
+import { navItems, navGroups, slugToHref } from "../../lib/nav";
+
+const entry = await getEntry("docs", "index");
+if (!entry) throw new Error("缺少 src/content/docs/index.mdx");
+
+const { Content, headings } = await render(entry);
+
+const href = slugToHref(entry.id);
+const flat = navItems.map((i) => i.href);
+const idx = flat.indexOf(href);
+const prev = idx > 0 ? navItems[idx - 1] : undefined;
+const next = idx >= 0 && idx < flat.length - 1 ? navItems[idx + 1] : undefined;
+const group = navGroups.find((g) => g.items.some((i) => i.href === href))?.title;
+---
+
+<DocsLayout
+  title={entry.data.title}
+  description={entry.data.description ?? ""}
+  headings={headings}
+  group={group}
+  prev={prev ? { title: prev.title, href: prev.href } : undefined}
+  next={next ? { title: next.title, href: next.href } : undefined}
+  updated={entry.data.updated}
+  noindex={entry.data.noindex}
+>
+  <Content components={mdxComponents} />
+</DocsLayout>

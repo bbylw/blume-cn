@@ -1,0 +1,75 @@
+---
+title: API 页面
+description: 用 api frontmatter 手写端点文档，Blume 据此生成 Try it 面板、请求示例和响应示例
+source: https://useblume.dev/docs/references/api-pages
+---
+
+并非每个 API 都有 OpenAPI 规范，有些端点手写反而更清楚。一个带 `api` frontmatter 的页面记录一个端点：它的[字段](/docs/content/components#api-fields)描述请求与响应，[OpenAPI 参考](/docs/references/openapi)页面的其余部分则由 Blume 依据这些字段生成 —— 顶部是 HTTP 方法与路径，内容旁边一列是 Try it 面板和请求示例，以及钉在它们下方的任何[请求与响应示例](/docs/content/components#request-and-response-examples)。
+
+````mdx docs/users/create.mdx lineNumbers
+---
+title: Create a user
+api: POST /workspaces/{workspaceId}/users
+---
+
+Creates a user and sends them an invite.
+
+<ParamField path="workspaceId" type="string" required>
+  The workspace to add the user to.
+</ParamField>
+
+<ParamField body="email" type="string" required placeholder="ada@example.com">
+  The user's email address.
+</ParamField>
+
+<ParamField body="role" type="string" default="member">
+  One of `owner`, `admin`, or `member`.
+</ParamField>
+
+<ResponseField name="id" type="string" required>
+  The new user's ID.
+</ResponseField>
+
+<ResponseExample>
+
+```json 201
+{ "id": "usr_8f2k", "status": "invited" }
+```
+
+</ResponseExample>
+````
+
+`api` 接一个 HTTP 方法，加上一条路径或一个完整 URL。路径参数写在大括号里 —— `{workspaceId}` —— 并由对应的 `path` 字段填入。完整 URL，例如 `GET https://api.acme.com/v1/users`，会按原样发出；而路径则拼接站点的 [`api.server`](#site-defaults)。
+
+## 演练场与示例 [#playground-and-samples]
+
+页面里的 `ParamField` 会变成 Try it 面板的输入项，就像规范中一个接口的参数那样：`path`、`query` 和 `header` 字段都是参数，`body` 字段拼成 JSON 请求体，而某个字段的嵌套字段（写在它自己的 [`Expandable`](/docs/content/components#expandable) 里）则成为该对象的属性。`type` 为 `string[]` 表示数组；若 `type` 不是 JSON 类型，例如 `enum<string>`，就按字符串发送。字段的 `default` 用来预填请求体，它的 `placeholder` 则是示例里显示的示例值。
+
+面板旁边，页面还会给出 cURL、JavaScript 和 Python 三种请求示例。页面若自带 `RequestExample`，就由它来展示。
+
+还有两个 frontmatter 键用来调整页面：
+
+- `authMethod` 设置该端点的认证方式：`bearer`、`basic`、`key`（放在请求头里的 API key）或 `none`。它会覆盖站点的 [`api.auth`](#site-defaults)。
+- `playground` 设置页面显示什么：`interactive`（默认）显示 Try it 面板和示例，`simple` 只显示示例，`none` 两者都不显示。方法、路径以及任何示例都保留。
+
+## 站点默认值 [#site-defaults]
+
+`blume.config.ts` 里的 `api` 设置每个端点页面共享的内容：
+
+```ts blume.config.ts lineNumbers
+export default defineConfig({
+  api: {
+    server: "https://api.acme.com/v1",
+    auth: { method: "key", name: "x-api-key" },
+    playground: { proxy: true },
+  },
+});
+```
+
+- `server` 是 `api` 路径拼接时用的基础 URL。
+- `auth` 是页面未设置 `authMethod` 时请求的认证方式：`method` 为 `bearer`、`basic`、`key` 或 `none`，`name` 是 API key 所在的请求头（默认 `x-api-key`）。没有 `auth` 时，页面不发送任何凭据。
+- `playground` 接受与 OpenAPI 参考的 [playground 选项](/docs/references/openapi#try-it-playground) 相同的取值：`false` 在每个页面上隐藏 Try it 面板，`proxy` 则把它的请求经由 CORS 代理发出 —— 可以是你自己的 URL，也可以是 `true` 表示使用 Blume 内置的那个。内置代理需要[服务端输出](/docs/deployment#server-rendering)，并且只转发到 `server` 的 origin 以及 `api` frontmatter 中任何完整 URL 的 origin。
+
+页面的布局、字段和示例与其它地方用的是同一套组件，因此页面的 [Markdown 副本](/docs/discoverability/llms-txt) 会列出每个字段，搜索也像对其它页面一样为它建立索引。
+
+frontmatter 的键和组件属性与 Mintlify 一致，因此为它写好的页面无需改动即可继续工作。

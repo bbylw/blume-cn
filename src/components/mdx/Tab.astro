@@ -1,0 +1,12 @@
+---
+interface Props {
+  title: string;
+  class?: string;
+}
+
+const { title, class: className = "" } = Astro.props;
+---
+
+<div class:list={["tab-panel", className]} data-tab-panel data-tab-title={title}>
+  <slot />
+</div>

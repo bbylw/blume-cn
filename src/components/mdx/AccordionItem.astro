@@ -1,0 +1,71 @@
+---
+interface Props {
+  title: string;
+  open?: boolean;
+  class?: string;
+}
+
+const { title, open = false, class: className = "" } = Astro.props;
+---
+
+<details class:list={["accordion-item", className]} open={open}>
+  <summary class="accordion-item__summary">
+    <span class="accordion-item__chevron" aria-hidden="true">
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="m4 6 4 4 4-4"></path>
+      </svg>
+    </span>
+    <span class="accordion-item__title">{title}</span>
+  </summary>
+  <div class="accordion-item__body">
+    <slot />
+  </div>
+</details>
+
+<style>
+  .accordion-item {
+    border-bottom: 1px solid var(--border);
+  }
+  .accordion-item:last-child {
+    border-bottom: 0;
+  }
+  .accordion-item__summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    list-style: none;
+    padding: 0.75rem 0.25rem;
+    font-size: 0.9375rem;
+    font-weight: 620;
+    color: var(--fg);
+    user-select: none;
+  }
+  .accordion-item__summary::-webkit-details-marker {
+    display: none;
+  }
+  .accordion-item__summary:hover {
+    color: var(--accent);
+  }
+  .accordion-item__chevron {
+    display: grid;
+    place-items: center;
+    color: var(--fg-subtle);
+    transition: transform 0.2s ease;
+  }
+  .accordion-item[open] .accordion-item__chevron {
+    transform: rotate(180deg);
+  }
+  .accordion-item__body {
+    padding: 0 0.25rem 1rem 1.5rem;
+    font-size: 0.9375rem;
+    color: var(--fg-muted);
+    line-height: 1.8;
+  }
+  .accordion-item__body :global(> :first-child) {
+    margin-top: 0;
+  }
+  .accordion-item__body :global(> :last-child) {
+    margin-bottom: 0;
+  }
+</style>

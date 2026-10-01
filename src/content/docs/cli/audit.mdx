@@ -1,0 +1,683 @@
+---
+title: 审查
+description: 在构建之后审查 dist/ 中的 HTML，报告 SEO 与站点健康问题，并把每条发现指向具体的源文件和 frontmatter 行
+source: https://useblume.dev/docs/cli/audit
+---
+
+[`blume validate`](/docs/cli/validate) 读的是你的*内容*；`blume audit` 读的是*构建产物*。它在构建之后遍历 `dist/` 中的 HTML，报告 SEO 与站点健康方面的问题——标题、meta description、canonical、Open Graph 与 X 卡片、标题层级、hreflang、图片、站点地图、`robots.txt` 和结构化数据。
+
+由于站点是 Blume 构建的，每条发现都会指明源文件**以及能修复它的那一行 frontmatter**，而不只是爬虫能看到的 URL：
+
+```
+⚠ Meta description too long or too short   5 pages
+    /docs/configuration/export    content/docs/configuration/export.mdx:3
+    fix: Rewrite `description` in the frontmatter to fit the length range.
+```
+
+在构建之后运行它：
+
+```bash
+blume build
+blume audit
+```
+
+发现按检查项分组，而不是逐页罗列，因此这份报告读起来就像一份待办清单。用 `--verbose` 可以把每个受影响的页面连同完整细节一起展开，用 `--only`/`--skip` 则可以一次只处理一个类别。`blume audit --list-checks` 会打印完整的检查项目录，它与本页末尾的[检查项目录](#check-catalog)是同一份——每条发现的 `docsUrl` 都链接到那里对应的条目。
+
+## 选项
+
+- `--fail-on error|warning|info` — CI 关卡：达到该级别或更高级别时以非零码退出。默认为 `error`；`--strict` 是 `--fail-on warning` 的别名。
+- `--url <origin>` — 同时探测一个线上部署的状态码、响应头和重定向链。
+- `--external` — 通过网络探测出站链接。
+- `--only <check|category>` / `--skip <check|category>` — 把报告限定在这些检查项或类别之内（或把它们排除），逗号分隔。如果某个词既不对应检查项也不对应类别，就会报错并给出最接近的那一个，因此拼写错误不会悄悄把报告清空。
+- `--list-checks` — 打印审查能报告的每一个检查项，然后退出。
+- `--verbose` — 列出每一个受影响的页面及每条发现的完整细节，而不只是前几条。
+- `--json` — 把报告以 JSON 输出到 stdout。
+- `--codex` / `--claude` — 把发现交给 Codex 或 Claude Code 交互式地修复。
+
+## 让 CI 失败
+
+退出码就是约定。默认情况下 `blume audit` 只在 error 上失败——也就是那些确定坏掉的问题，比如链到一个从未构建出来的页面、重定向成环、站点地图无效。仅供参考的发现（描述过短、title 重复）属于 warning，不会让构建失败：
+
+```bash
+blume audit                      # 在 error 上失败
+blume audit --fail-on warning    # 在 warning 上也失败
+```
+
+## 检查线上部署
+
+有些事只有真实服务器才能告诉你：`dist/` 中确实存在的页面会不会因为一条错误的重写规则而真的返回 404、响应有没有被压缩，以及某个 `X-Robots-Tag` 响应头是否正在悄悄地把一个 HTML 看起来完全正常的页面排除在索引之外。把审查指向一个部署即可加上这些检查：
+
+```bash
+blume audit --url https://docs.example.com
+blume audit --url https://docs.example.com --external   # 同时探测出站链接
+```
+
+出站链接是分级判定而不是一律判失败：404 是你可以修好的失效链接，而 403 或 5xx 通常是限流或别人的服务故障，因此只报为警告。
+
+## 用 agent 修复发现的问题
+
+如果你在用 [Codex](https://developers.openai.com/codex/cli) 或 [Claude Code](https://claude.com/claude-code)，审查可以把发现直接交给它：
+
+```bash
+blume audit --codex   # 或 --claude
+```
+
+它会把完整的 JSON 报告——包含每一个受影响的页面，而不只是终端里那三页预览——写到一个文件，然后交互式打开 agent，并附上一段提示，逐条引导它处理发现：编辑每条发现指明的源文件、采用它建议的修复，然后重新运行 `blume build` 和 `blume audit`，直到报告干净。这个会话是有意设计成交互式的：你通过 agent 自己的权限流程审阅它的修改，而且 agent 会被明确告知，绝不能靠删掉内容来"修好"一条发现。
+
+`--only` 和 `--skip` 收窄交接内容的方式与收窄报告完全一样，因此你可以一次只交给它一个类别。
+
+## 它检查什么、不检查什么
+
+这套检查项有意比通用 SEO 爬虫更窄。这类爬虫报告的很多东西根本不会发生在 Blume 站点上——它从不输出 `rel=nofollow`，Vite 按内容哈希生成的包也不会缺失或重定向——把它们永远报成 0 只会教会你忽略这份报告。
+
+值得明说的局限：
+
+- **结构化数据**只做格式合法性校验（有效的 JSON、有 `@context`、每个节点都有 `@type`）。Blume 不会对照完整的 schema.org 词表或 Google 的富媒体结果规则做校验。
+- **对比度**只针对你的主题配置所设置的颜色来检查，而不是逐个元素检查。审查不会渲染页面，因此你在 MDX 或 `theme.css` 里手写的颜色不会被测量。
+- **Core Web Vitals**不在检查范围内。它们需要真实浏览器，而一个悄悄什么都没测出来的指标比没有这个指标更糟——因此 `blume audit` 只报告它*能*离线看到的布局偏移原因（没有 `width`/`height` 的图片、过大的资源），其余部分暂时不碰。
+
+审查没有运行的任何检查都会被报为跳过，而不是悄悄判定通过：
+
+```
+⊘ network      skipped — pass --url <origin> (11 checks)
+⊘ external     skipped — pass --external (2 checks)
+```
+
+## 检查项目录 [#check-catalog]
+
+`blume audit` 能报告的每一个检查项，按类别分组，并列出它的默认级别、所属的运行层级以及报告建议的修复方式。`--only` 和 `--skip` 接受这些 id（不写 `BLUME_AUDIT_` 前缀也行）或某个类别的键。键名并不总是分类标题本身，所以请用这张表：`blume audit --only i18n`，而不是 `--only Internationalization`。
+
+| 类别 | 键 |
+| --- | --- |
+| 无障碍 | `accessibility` |
+| 内容 | `content` |
+| 重复内容 | `duplicates` |
+| 可索引性 | `indexability` |
+| 链接 | `links` |
+| 重定向 | `redirects` |
+| 社交卡片 | `social` |
+| 国际化 | `i18n` |
+| 资源 | `assets` |
+| 站点地图 | `sitemap` |
+| robots.txt | `robots` |
+| AI 可发现性 | `ai` |
+| 结构化数据 | `structured-data` |
+| 线上部署 | `network` |
+
+### 内容
+
+#### 缺少 title 标签或为空 [#title-missing]
+
+`BLUME_AUDIT_TITLE_MISSING` · error · 来自构建后的 HTML
+
+修复：在该页面的 frontmatter 中添加 `title`。
+
+#### 存在多个 title 标签 [#title-multiple]
+
+`BLUME_AUDIT_TITLE_MULTIPLE` · error · 来自构建后的 HTML
+
+修复：从页面的布局或 MDX 中删掉多余的 `<title>`。
+
+#### title 过长或过短 [#title-length]
+
+`BLUME_AUDIT_TITLE_LENGTH` · warning · 来自构建后的 HTML
+
+修复：重写 frontmatter 中的 `title`，使其符合长度范围。
+
+#### 缺少 meta description 或为空 [#description-missing]
+
+`BLUME_AUDIT_DESCRIPTION_MISSING` · warning · 来自构建后的 HTML
+
+修复：在该页面的 frontmatter 中添加 `description`。
+
+#### 存在多个 meta description 标签 [#description-multiple]
+
+`BLUME_AUDIT_DESCRIPTION_MULTIPLE` · error · 来自构建后的 HTML
+
+修复：从页面的布局或 MDX 中删掉多余的 description `<meta>`。
+
+#### meta description 过长或过短 [#description-length]
+
+`BLUME_AUDIT_DESCRIPTION_LENGTH` · warning · 来自构建后的 HTML
+
+修复：重写 frontmatter 中的 `description`，使其符合长度范围。
+
+#### 缺少 H1 标签或为空 [#h1-missing]
+
+`BLUME_AUDIT_H1_MISSING` · warning · 来自构建后的 HTML
+
+修复：给该页面一个 `title`——Blume 会把它渲染成页面的 `<h1>`。
+
+#### 存在多个 H1 标签 [#h1-multiple]
+
+`BLUME_AUDIT_H1_MULTIPLE` · warning · 来自构建后的 HTML
+
+修复：把正文中多余的 `# 标题` 降为 `##`——Blume 已经把 `title` 渲染成 h1 了。
+
+#### 字数过少 [#low-word-count]
+
+`BLUME_AUDIT_LOW_WORD_COUNT` · info · 来自构建后的 HTML
+
+修复：扩充该页面，或把它并入一个更大的页面。
+
+#### 标题层级跳级（例如 h2 跳到 h4）[#heading-skip]
+
+`BLUME_AUDIT_HEADING_SKIP` · info · 来自构建后的 HTML
+
+修复：把标题下调一级——跳过的层级会破坏目录的嵌套和屏幕阅读器的大纲。
+
+#### 页面日期落在未来 [#future-dated-page]
+
+`BLUME_AUDIT_FUTURE_DATED_PAGE` · info · 来自构建后的 HTML
+
+修复：改正 `date`，或者把这个页面压后到它本该上线的时候。
+
+#### 未设置 viewport [#viewport-missing]
+
+`BLUME_AUDIT_VIEWPORT_MISSING` · error · 来自构建后的 HTML
+
+修复：在你导出的布局中恢复 viewport `<meta>`。
+
+### 重复内容
+
+#### 重复的 title [#duplicate-title]
+
+`BLUME_AUDIT_DUPLICATE_TITLE` · warning · 来自构建后的 HTML
+
+修复：给每个页面一个各不相同的 `title`——搜索引擎会把它当作结果标题展示。
+
+#### 重复的 meta description [#duplicate-description]
+
+`BLUME_AUDIT_DUPLICATE_DESCRIPTION` · warning · 来自构建后的 HTML
+
+修复：给每个页面一个各不相同的 `description`。
+
+#### 重复页面且没有 canonical [#duplicate-content]
+
+`BLUME_AUDIT_DUPLICATE_CONTENT` · warning · 来自构建后的 HTML
+
+修复：合并这些页面，或在其中除一个之外都设置 `seo.canonical`。
+
+### 可索引性
+
+#### 未设置 deployment.site [#site-not-set]
+
+`BLUME_AUDIT_SITE_NOT_SET` · warning · 来自构建后的 HTML
+
+修复：在 blume.config.ts 中把 `deployment.site` 设为站点的公开 URL。
+
+#### deployment.site 在部署时推断得出 [#site-inferred-at-deploy]
+
+`BLUME_AUDIT_SITE_INFERRED_AT_DEPLOY` · info · 来自构建后的 HTML
+
+修复：审查一次接近生产的构建（例如 `VERCEL=1 VERCEL_PROJECT_PRODUCTION_URL=<host> blume build`），或用 `--url <origin>` 直接审查部署本身。不要把 `deployment.site` 写死——平台会在每次部署时设置它。
+
+#### 页面是 noindex 却声明了 canonical [#canonical-on-noindex]
+
+`BLUME_AUDIT_CANONICAL_ON_NOINDEX` · warning · 来自构建后的 HTML
+
+修复：从 noindex 页面上删掉 canonical——Google 认为这种组合自相矛盾，可能两个都不采纳。
+
+#### 构建产物中包含草稿页面 [#draft-page-published]
+
+`BLUME_AUDIT_DRAFT_PAGE_PUBLISHED` · warning · 来自构建后的 HTML
+
+修复：部署前不带 `--preview` 重新构建；如果该页面已经可以发布，就删掉 `draft: true`。
+
+#### 缺少 canonical URL [#canonical-missing]
+
+`BLUME_AUDIT_CANONICAL_MISSING` · warning · 来自构建后的 HTML
+
+修复：设置 `deployment.site`，让 Blume 能输出绝对的 canonical URL。
+
+#### 页面自身的 canonical 不指向自己 [#canonical-not-self]
+
+`BLUME_AUDIT_CANONICAL_NOT_SELF` · info · 来自构建后的 HTML
+
+修复：把 `seo.canonical` 指向该页面自身，或删掉它以使用默认的自指 canonical。
+
+#### canonical 指向了失效或会重定向的页面 [#canonical-bad-target]
+
+`BLUME_AUDIT_CANONICAL_BAD_TARGET` · error · 来自构建后的 HTML
+
+修复：把 `seo.canonical` 指向一个确实存在且不会重定向的页面。
+
+#### canonical 的协议与站点不一致 [#canonical-protocol-mismatch]
+
+`BLUME_AUDIT_CANONICAL_PROTOCOL_MISMATCH` · error · 来自构建后的 HTML
+
+修复：让 `seo.canonical` 使用与 `deployment.site` 相同的协议。
+
+#### 页面不可索引 [#robots-meta-unexpected]
+
+`BLUME_AUDIT_ROBOTS_META_UNEXPECTED` · info · 来自构建后的 HTML
+
+修复：如果该页面本应被索引，就从它的 frontmatter 中删掉 `noindex`。
+
+#### 页面超出 Googlebot 的 2 MB 抓取上限 [#html-too-large]
+
+`BLUME_AUDIT_HTML_TOO_LARGE` · error · 来自构建后的 HTML
+
+修复：拆分该页面——Googlebot 读取一个 HTML 文档到 2 MB 就停。
+
+#### X-Robots-Tag 响应头与页面的 robots meta 冲突 [#robots-header-conflict]
+
+`BLUME_AUDIT_ROBOTS_HEADER_CONFLICT` · error · 需要 `--url`
+
+修复：删掉 X-Robots-Tag 响应头，或让它与页面的 robots meta 保持一致。
+
+### 链接
+
+#### 页面链到了失效页面 [#link-to-broken]
+
+`BLUME_AUDIT_LINK_TO_BROKEN` · error · 来自构建后的 HTML
+
+修复：修好链接目标，或把它指向的页面创建出来。
+
+#### 页面链到了重定向 [#link-to-redirect]
+
+`BLUME_AUDIT_LINK_TO_REDIRECT` · warning · 来自构建后的 HTML
+
+修复：直接链到最终目标，而不是经过重定向。
+
+#### 孤立页面（只能从导航到达）[#orphan-page]
+
+`BLUME_AUDIT_ORPHAN_PAGE` · warning · 来自构建后的 HTML
+
+修复：从某个相关页面的正文中链到这个页面。
+
+#### 站内链接写死了站点自己的 origin [#internal-link-absolute]
+
+`BLUME_AUDIT_INTERNAL_LINK_ABSOLUTE` · warning · 来自构建后的 HTML
+
+修复：使用相对于根的路径（`/docs/x`），这样链接在预览环境和 `basePath` 下都有效。
+
+#### 页面的出站站内链接带有 nofollow [#internal-link-nofollow]
+
+`BLUME_AUDIT_INTERNAL_LINK_NOFOLLOW` · info · 来自构建后的 HTML
+
+修复：去掉 `rel="nofollow"`——它会阻止该页面在站内传递权重。
+
+#### URL 中出现双斜杠 [#double-slash-url]
+
+`BLUME_AUDIT_DOUBLE_SLASH_URL` · error · 来自构建后的 HTML
+
+修复：检查 `basePath` / `deployment.base`——那里多一个结尾斜杠就会产生 `//`。
+
+#### 链接片段在目标页面上找不到对应 id [#anchor-broken]
+
+`BLUME_AUDIT_ANCHOR_BROKEN` · warning · 来自构建后的 HTML
+
+修复：把片段指向目标页面上确实存在的标题，或修正它本该指向的那个标题。
+
+#### URL 中含有大写字母、下划线或空格 [#url-style]
+
+`BLUME_AUDIT_URL_STYLE` · info · 来自构建后的 HTML
+
+修复：把源文件重命名为全小写、用连字符连接的 slug——如果旧 URL 已经发布过，还要为它添加一个重定向。
+
+### 重定向
+
+#### 失效的重定向 [#redirect-broken]
+
+`BLUME_AUDIT_REDIRECT_BROKEN` · error · 来自构建后的 HTML
+
+修复：把重定向指向一个确实存在的页面。
+
+#### 重定向成环 [#redirect-loop]
+
+`BLUME_AUDIT_REDIRECT_LOOP` · error · 来自构建后的 HTML
+
+修复：打断 `redirects` 里的环——它永远无法收敛。
+
+#### 重定向链 [#redirect-chain]
+
+`BLUME_AUDIT_REDIRECT_CHAIN` · warning · 来自构建后的 HTML
+
+修复：让每一跳都直接指向最终目标。
+
+#### meta refresh 重定向 [#meta-refresh]
+
+`BLUME_AUDIT_META_REFRESH` · warning · 来自构建后的 HTML
+
+修复：在 `blume.config.ts` 里用真正的重定向代替 meta refresh。
+
+#### 重定向的来源同时也是一个真实页面 [#redirect-source-is-page]
+
+`BLUME_AUDIT_REDIRECT_SOURCE_IS_PAGE` · error · 来自构建后的 HTML
+
+修复：删掉这个重定向，或删掉被它遮蔽的那个页面——页面会胜出，重定向永远不会触发。
+
+#### 从 HTTPS 重定向到 HTTP [#redirect-to-http]
+
+`BLUME_AUDIT_REDIRECT_TO_HTTP` · error · 需要 `--url`
+
+修复：重定向到 HTTPS 的 URL。
+
+### 社交卡片
+
+#### 缺少 Open Graph 标签或标签不完整 [#og-incomplete]
+
+`BLUME_AUDIT_OG_INCOMPLETE` · warning · 来自构建后的 HTML
+
+修复：添加一个 `description`——其余 Open Graph 标签 Blume 会替你补齐。
+
+#### 缺少 Open Graph 图片 [#og-image-missing]
+
+`BLUME_AUDIT_OG_IMAGE_MISSING` · warning · 来自构建后的 HTML
+
+修复：设置 `deployment.site` 以启用生成的 OG 图片，或在该页面上设置 `seo.image`。
+
+#### Open Graph 图片不在构建产物中 [#og-image-broken]
+
+`BLUME_AUDIT_OG_IMAGE_BROKEN` · warning · 来自构建后的 HTML
+
+修复：把 `seo.image` 指向一个确实存在的文件，或者重新构建——失效的 og:image 会让这个页面在各处被分享时都渲染成一张空白卡片。
+
+#### Open Graph 图片对大卡片来说太小 [#og-image-small]
+
+`BLUME_AUDIT_OG_IMAGE_SMALL` · warning · 来自构建后的 HTML
+
+修复：使用至少 1200×630 的图片——更小的会渲染模糊，或被裁成小卡片版式。
+
+#### Open Graph URL 与 canonical 不匹配 [#og-url-mismatch]
+
+`BLUME_AUDIT_OG_URL_MISMATCH` · warning · 来自构建后的 HTML
+
+修复：让 `og:url` 与页面的 canonical URL 保持一致。
+
+#### 缺少 X（Twitter）卡片或卡片不完整 [#twitter-card-incomplete]
+
+`BLUME_AUDIT_TWITTER_CARD_INCOMPLETE` · warning · 来自构建后的 HTML
+
+修复：在 blume.config.ts 中设置 `seo.x.handle`，让 X 能够归属这张卡片。
+
+### 国际化
+
+#### 缺少 HTML lang 属性 [#html-lang-missing]
+
+`BLUME_AUDIT_HTML_LANG_MISSING` · error · 来自构建后的 HTML
+
+修复：在你导出的布局中恢复 `<html>` 上的 `lang` 属性。
+
+#### HTML lang 属性无效 [#html-lang-invalid]
+
+`BLUME_AUDIT_HTML_LANG_INVALID` · error · 来自构建后的 HTML
+
+修复：为该语言使用合法的 BCP 47 标签（例如 `en`、`en-GB`）。
+
+#### hreflang 与 HTML lang 不一致 [#hreflang-lang-mismatch]
+
+`BLUME_AUDIT_HREFLANG_LANG_MISMATCH` · error · 来自构建后的 HTML
+
+修复：该页面的 `<html lang>` 必须与它自己的 hreflang 标注一致。
+
+#### hreflang 标注无效 [#hreflang-invalid]
+
+`BLUME_AUDIT_HREFLANG_INVALID` · error · 来自构建后的 HTML
+
+修复：在 hreflang 标注中使用合法的 BCP 47 标签。
+
+#### 缺少自引用的 hreflang 标注 [#hreflang-self-missing]
+
+`BLUME_AUDIT_HREFLANG_SELF_MISSING` · warning · 来自构建后的 HTML
+
+修复：一个页面的 hreflang 集合必须包含一条自引用。
+
+#### 缺少 x-default 的 hreflang 标注 [#hreflang-xdefault-missing]
+
+`BLUME_AUDIT_HREFLANG_XDEFAULT_MISSING` · info · 来自构建后的 HTML
+
+修复：添加一个 `x-default` 备选项，指向默认语言下的页面。
+
+#### hreflang 缺少互指（没有回指标签）[#hreflang-no-return-tag]
+
+`BLUME_AUDIT_HREFLANG_NO_RETURN_TAG` · error · 来自构建后的 HTML
+
+修复：hreflang 组中的每个页面都必须链回组内的其它每一个页面。
+
+#### hreflang 指向了失效、会重定向或非 canonical 的页面 [#hreflang-bad-target]
+
+`BLUME_AUDIT_HREFLANG_BAD_TARGET` · error · 来自构建后的 HTML
+
+修复：把 hreflang 备选项指向一个确实存在且为 canonical 的页面。
+
+#### hreflang 组存在语言冲突 [#hreflang-conflict]
+
+`BLUME_AUDIT_HREFLANG_CONFLICT` · error · 来自构建后的 HTML
+
+修复：hreflang 组中的每种语言必须恰好对应一个页面。
+
+### 无障碍
+
+这些检查跑在你的主题配置上，而不是逐页进行：一个主题色是整个站点的统一选择。检查会像构建那样解析颜色（每种模式取预设的色阶，填充色上配白色或深色标签），并把主题绘制的每一种文字颜色与 WCAG AA 对正文的对比度要求 4.5:1 相比，在浅色和深色模式下都会测量。
+
+#### 主题颜色未达到 WCAG AA 对比度 [#theme-contrast-low]
+
+`BLUME_AUDIT_THEME_CONTRAST_LOW` · warning · 来自主题配置
+
+修复：用 `theme.accent: { light, dark }` 为每种模式分别挑选——浅色模式选更深的色阶，深色模式选更浅的。
+
+它检查页面上的强调色文字、强调色与 `action` 填充上的标签，以及自定义 `background` 上的正文与次要文字。每条发现都会指明那一对颜色、所属模式以及它们的比值。
+
+#### 主题颜色无法检查对比度 [#theme-color-unchecked]
+
+`BLUME_AUDIT_THEME_COLOR_UNCHECKED` · info · 来自主题配置
+
+修复：把颜色写成十六进制、`rgb()`、`hsl()`、`hwb()`、`lab()`、`lch()`、`oklab()`、`oklch()` 或一个具名颜色，这样它的对比度才能被检查。
+
+### 资源
+
+#### 缺少 alt 文本 [#image-alt-missing]
+
+`BLUME_AUDIT_IMAGE_ALT_MISSING` · warning · 来自构建后的 HTML
+
+修复：添加有描述性的 `alt` 文本；如果图片是纯装饰性的，则写 `alt=""`。
+
+#### 图片失效 [#image-broken]
+
+`BLUME_AUDIT_IMAGE_BROKEN` · error · 来自构建后的 HTML
+
+修复：修好图片路径，或把该文件加入 public/。
+
+#### 资源文件过大 [#asset-too-large]
+
+`BLUME_AUDIT_ASSET_TOO_LARGE` · warning · 来自构建后的 HTML
+
+修复：压缩该资源，或改用现代格式（WebP/AVIF）提供。
+
+#### 图片没有 width/height [#image-missing-dimensions]
+
+`BLUME_AUDIT_IMAGE_MISSING_DIMENSIONS` · warning · 来自构建后的 HTML
+
+修复：设置 `width` 和 `height`，让浏览器能预留空间（避免布局偏移）。
+
+#### 引用的脚本、样式或资源不在构建产物中 [#subresource-missing]
+
+`BLUME_AUDIT_SUBRESOURCE_MISSING` · error · 来自构建后的 HTML
+
+修复：修好这处引用，或把缺失的文件补回来。
+
+#### HTTPS/HTTP 混合内容 [#mixed-content]
+
+`BLUME_AUDIT_MIXED_CONTENT` · error · 来自构建后的 HTML
+
+修复：通过 HTTPS 加载该子资源——浏览器会拦截混合内容。
+
+### 站点地图
+
+#### 可索引页面不在站点地图中 [#indexable-page-not-in-sitemap]
+
+`BLUME_AUDIT_INDEXABLE_PAGE_NOT_IN_SITEMAP` · warning · 来自构建后的 HTML
+
+修复：如果该页面本应被索引，就从它的 frontmatter 中删掉 `draft`/`hidden`/`noindex`。
+
+#### noindex 页面出现在站点地图中 [#noindex-in-sitemap]
+
+`BLUME_AUDIT_NOINDEX_IN_SITEMAP` · error · 来自构建后的 HTML
+
+修复：noindex 页面不应该在站点地图中被公布。
+
+#### 非 canonical 页面出现在站点地图中 [#non-canonical-in-sitemap]
+
+`BLUME_AUDIT_NON_CANONICAL_IN_SITEMAP` · error · 来自构建后的 HTML
+
+修复：站点地图中只列出 canonical URL。
+
+#### 站点地图列出了不存在或会重定向的页面 [#sitemap-bad-url]
+
+`BLUME_AUDIT_SITEMAP_BAD_URL` · error · 来自构建后的 HTML
+
+修复：从站点地图中删掉该 URL，或把它指名的页面构建出来。
+
+#### 站点地图有语法错误或格式不对 [#sitemap-invalid]
+
+`BLUME_AUDIT_SITEMAP_INVALID` · error · 来自构建后的 HTML
+
+修复：站点地图必须是 sitemaps.org 的 urlset 或 sitemap index 格式的有效 XML。
+
+#### 站点地图超过 50 MB 或 50,000 个 URL [#sitemap-too-large]
+
+`BLUME_AUDIT_SITEMAP_TOO_LARGE` · error · 来自构建后的 HTML
+
+修复：拆分站点地图——上限是 50 MB 和 50,000 个 URL。
+
+#### 站点地图的 lastmod 无效或落在未来 [#sitemap-lastmod-invalid]
+
+`BLUME_AUDIT_SITEMAP_LASTMOD_INVALID` · warning · 来自构建后的 HTML
+
+修复：使用一个不在未来的、合规的 W3C 日期——一旦发现站点地图在新鲜度上撒谎，搜索引擎就会彻底不再信任它的 lastmod。
+
+#### 站点地图中包含超出其范围的 URL [#sitemap-out-of-scope]
+
+`BLUME_AUDIT_SITEMAP_OUT_OF_SCOPE` · warning · 来自构建后的 HTML
+
+修复：站点地图只能列出与它自身 origin 相同的 URL。
+
+#### 站点地图无法访问 [#sitemap-not-accessible]
+
+`BLUME_AUDIT_SITEMAP_NOT_ACCESSIBLE` · error · 需要 `--url`
+
+修复：让 sitemap.xml 可以在站点根路径下访问。
+
+### robots.txt
+
+#### 缺少 robots.txt [#robots-missing]
+
+`BLUME_AUDIT_ROBOTS_MISSING` · warning · 来自构建后的 HTML
+
+修复：设置 `seo.robots: true` 以生成 robots.txt。
+
+#### robots.txt 有语法错误 [#robots-invalid]
+
+`BLUME_AUDIT_ROBOTS_INVALID` · error · 来自构建后的 HTML
+
+修复：robots.txt 的每一行都必须是 `Field: value` 形式的指令或一条注释。
+
+#### robots.txt 禁止了一个在站点地图中的页面 [#robots-disallows-indexable]
+
+`BLUME_AUDIT_ROBOTS_DISALLOWS_INDEXABLE` · error · 来自构建后的 HTML
+
+修复：一个页面不能既在 robots.txt 中被禁止、又在站点地图中被公布。
+
+#### robots.txt 没有引用站点地图 [#robots-sitemap-missing]
+
+`BLUME_AUDIT_ROBOTS_SITEMAP_MISSING` · info · 来自构建后的 HTML
+
+修复：设置 `deployment.site`，让 robots.txt 能引用站点地图。
+
+#### robots.txt 无法访问 [#robots-not-accessible]
+
+`BLUME_AUDIT_ROBOTS_NOT_ACCESSIBLE` · error · 需要 `--url`
+
+修复：让 robots.txt 可以在站点根路径下访问。
+
+### AI 可发现性
+
+#### 构建产物中缺少 llms.txt [#llms-txt-missing]
+
+`BLUME_AUDIT_LLMS_TXT_MISSING` · warning · 来自构建后的 HTML
+
+修复：重新构建——`agents.llmsTxt` 已启用，但构建中没有 llms.txt。如果这是有意为之，请设置 `agents.llmsTxt: false`。
+
+#### llms.txt 列出了构建并不提供的页面 [#llms-txt-stale-entry]
+
+`BLUME_AUDIT_LLMS_TXT_STALE_ENTRY` · warning · 来自构建后的 HTML
+
+修复：重新构建，让 llms.txt 与站点一致——一条过时的条目会把 AI agent 送到一个并不存在的页面。
+
+#### 可索引页面在 llms.txt 中缺失 [#llms-txt-page-missing]
+
+`BLUME_AUDIT_LLMS_TXT_PAGE_MISSING` · warning · 来自构建后的 HTML
+
+修复：重新构建，让 llms.txt 与站点一致；如果该页面是有意排除的，就在它的 frontmatter 中设置 `ai.exclude: true`。
+
+#### 没有 DNS-AID 的 agent 发现记录 [#dns-aid-missing]
+
+`BLUME_AUDIT_DNS_AID_MISSING` · info · 需要 `--url`
+
+修复：在你的 DNS 服务商处为 `_index._agents.<host>` 发布一条 ServiceMode SVCB 或 HTTPS 记录，让 agent 能通过 DNS（DNS-AID）发现该站点。
+
+#### DNS-AID 记录没有 DNSSEC 认证 [#dns-aid-unsigned]
+
+`BLUME_AUDIT_DNS_AID_UNSIGNED` · info · 需要 `--url`
+
+修复：为该区域启用 DNSSEC，让带验证的解析器返回经过认证的 DNS-AID 应答；如果你的 DNS 服务商不支持 DNSSEC，这些记录在未签名的情况下仍然有效。
+
+### 结构化数据
+
+#### 结构化数据不是有效的 JSON [#jsonld-invalid]
+
+`BLUME_AUDIT_JSONLD_INVALID` · error · 来自构建后的 HTML
+
+修复：JSON-LD 块必须是有效的 JSON。
+
+#### 结构化数据缺少必需属性 [#jsonld-incomplete]
+
+`BLUME_AUDIT_JSONLD_INCOMPLETE` · warning · 来自构建后的 HTML
+
+修复：每个 JSON-LD 节点都需要 `@context` 和 `@type`。
+
+### 线上部署
+
+#### 4XX 页面 [#http-4xx]
+
+`BLUME_AUDIT_HTTP_4XX` · error · 需要 `--url`
+
+修复：该页面被链接或在站点地图中，但部署后访问它得到 404。
+
+#### 5XX 页面 [#http-5xx]
+
+`BLUME_AUDIT_HTTP_5XX` · error · 需要 `--url`
+
+修复：部署后访问该页面时报错。
+
+#### 请求超时 [#http-timeout]
+
+`BLUME_AUDIT_HTTP_TIMEOUT` · error · 需要 `--url`
+
+修复：该页面没有及时响应。
+
+#### 未压缩 [#not-compressed]
+
+`BLUME_AUDIT_NOT_COMPRESSED` · warning · 需要 `--url`
+
+修复：在主机上启用 gzip 或 brotli。
+
+#### 页面响应缓慢 [#slow-response]
+
+`BLUME_AUDIT_SLOW_RESPONSE` · warning · 需要 `--url`
+
+修复：该页面响应很慢。
+
+#### 外链失效 [#external-link-broken]
+
+`BLUME_AUDIT_EXTERNAL_LINK_BROKEN` · error · 需要 `--external`
+
+修复：修好或删掉这个出站链接。
+
+#### 外链发生重定向 [#external-link-redirect]
+
+`BLUME_AUDIT_EXTERNAL_LINK_REDIRECT` · info · 需要 `--external`
+
+修复：直接链到最终目标。

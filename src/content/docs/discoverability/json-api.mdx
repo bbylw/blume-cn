@@ -1,0 +1,59 @@
+---
+title: JSON API
+description: 站点随附的只读 JSON API，供智能体和函数调用框架通过普通 HTTP 读取文档
+source: https://useblume.dev/docs/discoverability/json-api
+---
+
+每个 Blume 站点还会把文档以一个小型只读 **JSON API** 提供出来 —— 它是 [MCP 服务器](/docs/discoverability/mcp)那套工具的 REST 版本，基于同一份页面快照，服务于那些说普通 HTTP 而非 MCP 的智能体和函数调用框架。它默认开启，无需任何配置：
+
+| 端点 | 返回 |
+| --- | --- |
+| `/api/docs/pages.json` | 每个页面及其路由、标题、描述、内容类型、locale、facets，以及渲染版、Markdown 版和 JSON 版的 URL。未翻译页面的 i18n 回退副本会被排除；在服务端输出上，缺失页面的 JSON 会以 `404` 和 `PAGE_NOT_FOUND` 作答。 |
+| `/api/docs/pages/{route}.json` | 单个页面：它的索引条目加上面向智能体的 Markdown（与 `get_page` 返回的内容相同）。`{route}` 是不带前导斜杠的页面路由，首页用 `index`。 |
+| `/api/docs/navigation.json` | 导航树 —— 页眉标签页和侧边栏层级。 |
+| `/api/docs/search?q=` | 全文搜索，作用域参数与 `search_docs` 相同：`limit`、`contentTypes`、`locale`、`version` 和 `filters[key]`。仅服务端输出。 |
+| `/openapi.json` | 整个机器可读界面的 OpenAPI 3.1 描述。 |
+
+页面索引、逐页面文档和导航都是预渲染的，因此静态站点可以从任意托管平台以文件形式提供它们。搜索是一个实时端点，只存在于[服务端输出](/docs/deployment#server-rendering)下，它使用与 `search_docs` 相同的索引。
+
+## 错误
+
+错误采用 [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) 的 problem details（`application/problem+json`），带一个稳定的 `code`、一个 `detail`，以及一个 `resolution` 提示，告诉智能体下一步该去哪 —— 页面缺失、搜索词为空，或者在服务端输出上任何没有端点响应的 `/api/…` URL：
+
+```json
+{
+  "code": "API_ROUTE_NOT_FOUND",
+  "detail": "No API route exists at /api/nope.",
+  "instance": "/api/nope",
+  "links": [
+    {
+      "href": "https://docs.example.com/openapi.json",
+      "label": "OpenAPI description"
+    },
+    {
+      "href": "https://docs.example.com/api/docs/pages.json",
+      "label": "Page index"
+    }
+  ],
+  "resolution": "Discover the available operations through the OpenAPI description at https://docs.example.com/openapi.json, or list every page at https://docs.example.com/api/docs/pages.json.",
+  "status": 404,
+  "title": "API route not found",
+  "type": "about:blank"
+}
+```
+
+## OpenAPI 描述
+
+`/openapi.json` 处的 **OpenAPI 文档**在每次构建时依据你的配置生成，因此它描述的只有已部署站点实际提供的内容：每个 JSON 端点及其唯一的 `operationId`、带类型的参数和响应 schema，此外还有旁边的纯文本入口 —— [`.md` 镜像](/docs/discoverability/markdown)、[`llms.txt`](/docs/discoverability/llms-txt) 和 `llms-full.txt`、[`agent-readability.json`](/docs/discoverability/agent-discovery#agent-readability) —— 以及启用时的 [MCP 端点](/docs/discoverability/mcp)。那些依据 OpenAPI 描述来构建工具的框架，得到的触达能力与 MCP 客户端相同。该文档会被 [API catalog](/docs/discoverability/agent-discovery#api-catalog)、[可读性清单](/docs/discoverability/agent-discovery#agent-readability)、首页的 `Link` 头（`rel="service-desc"`）以及 `llms.txt` 链出。
+
+这一切都不会影响你自己的 [API 参考](/docs/references/openapi)：被记录的规范会被渲染成页面，绝不会在 `/openapi.json` 提供，而 catalog 会同时列出两者。你自己发布的 `public/openapi.json` 会接管该路由（JSON 端点仍然保留）。当某个文档分区从 `/api` 命名空间提供（`content/api/overview.md`），或某个自定义页面在 `/api/` 下拥有自己的 rest 路由时，`/api/…` 这个兜底路由会让位，因此这些页面依然优先。
+
+## 关闭
+
+设置 `agents.api` 为 `false` 就不发布其中任何内容：
+
+```ts blume.config.ts lineNumbers
+agents: {
+  api: false,
+}
+```

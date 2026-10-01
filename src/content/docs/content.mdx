@@ -1,0 +1,138 @@
+---
+title: 内容
+description: 文档就是一个装满 Markdown 和 MDX 文件的文件夹
+source: https://useblume.dev/docs/content
+---
+
+你的文档不过是一个装着 Markdown 和 MDX 文件的文件夹。Blume 会把每个文件变成一个页面 —— 路由、导航和元数据都从文件系统推断，因此没有需要保持同步的清单文件。
+
+内容放在你的**内容根目录**下（默认是 `docs/`；用 [`blume.config.ts`](/docs/configuration) 里的 `content.root` 修改）。
+
+## Markdown 和 MDX
+
+Blume 会渲染两类文件：
+
+- **`.md`** —— 面向纯散文的 Markdown：GFM、frontmatter、智能标点，以及上标和下标。
+- **`.mdx`** —— `.md` 拥有的一切，外加[组件](/docs/content/components)以及 MDX 专有的[指令、包安装和数学公式](/docs/content/syntax)。
+
+页面只是散文时用 `.md`，需要组件或指令时用 `.mdx`。切换只需重命名文件。
+
+## 文件与路由 [#files-and-routes]
+
+每个文件按其在内容根目录下的路径映射到一个路由：
+
+| 文件 | 路由 |
+| --- | --- |
+| `docs/index.mdx` | `/` |
+| `docs/quickstart.mdx` | `/quickstart` |
+| `docs/guides/theming.mdx` | `/guides/theming` |
+| `docs/guides/index.mdx` | `/guides` |
+
+嵌套文件夹会变成嵌套路由，而文件夹里的 `index.mdx` 会成为该文件夹自己的页面。
+
+会破坏页面 URL 的字符 —— `#`、`?`、`%` 和 `:` —— 会从路由中被去掉，所以 `100%.mdx` 会发布在 `/100`。彻底不要在文件名和文件夹名里使用 `#` 和 `?`：Astro 的内容加载器读不了这类文件，Blume 会把它报告为错误并排除在站点之外。把 `sdks/c#.mdx` 改名为 `sdks/c.mdx`，它就会发布在 `/sdks/c` —— 反正这些字符在原本的路由里也会被去掉。
+
+## 用数字前缀排序 [#ordering-with-numeric-prefixes]
+
+给文件或文件夹加上一个数字前缀，再跟一个 `-`、`_` 或 `.`，就能控制它在侧边栏里的顺序。前缀会从 URL 中去掉，所以你可以重排页面而不弄坏链接：
+
+```txt
+01-introduction.mdx  ->  /introduction
+02-installation.mdx  ->  /installation
+```
+
+名称开头的版本号或 ISO 日期是名称的一部分，而不是顺序标记：`1.2.0.mdx` 的路由是 `/1.2.0`，`2024-01-05-launch.mdx` 的路由是 `/2024-01-05-launch`。只有文件和文件夹名会去掉前缀（Obsidian 仓库里的笔记按文件算）。frontmatter 中的 `slug`，以及来自[内容源](/docs/content/sources)（比如某个 CMS 或 GitHub Releases）的页面，则保留它们被赋予的名称。
+
+排序有多层规则 —— 完整的优先级见[导航](/docs/content/navigation)。
+
+## 分组文件夹 [#group-folders]
+
+用括号把文件夹名包起来，可以让它的页面在侧边栏里归为一组，同时**不会**新增 URL 段：
+
+```txt
+docs/(internal)/security.mdx  ->  /security
+```
+
+这些页面共享一个「Internal」侧边栏分组，但 URL 依然是扁平的、不带括号。分组文件夹和普通文件夹一样可以带[数字前缀](#ordering-with-numeric-prefixes)，写在括号内或括号外都可以：`(01-internal)` 和 `01-(internal)` 都会排在最前，路由行为也与 `(internal)` 相同。
+
+## 草稿
+
+把一个页面标记为草稿，可以让它不进入生产构建，同时仍能在 `blume dev` 里预览：
+
+```yaml lineNumbers
+---
+title: 编写中
+draft: true
+---
+```
+
+`blume build` 会跳过草稿；`blume dev` 会渲染它们，方便你公开地边写边看。
+
+## 内容类型
+
+每个页面都有一个**类型**，通过 `type` frontmatter 字段设置（默认 `doc`）。类型让 Blume 能区别对待成组的页面 —— 最重要的是，`blog` 和 `changelog` 页面会被收集进[订阅源](#feeds)。
+
+```yaml lineNumbers
+---
+title: v1.2.0
+type: changelog
+date: 2026-06-20
+changelog:
+  version: 1.2.0
+  category: 新功能
+---
+```
+
+类型与文件所在的位置无关，但按惯例，博客文章放在 `blog/` 下，更新日志条目放在 `changelog/` 下。两者都会自动获得一个 RSS 订阅源，更新日志条目还会被收集进自动生成的 [`/changelog` 时间线](/docs/advanced/changelog)。如何撰写这两类内容，分别见[博客](/docs/advanced/blog)和[更新日志](/docs/advanced/changelog)。
+
+## 订阅源 [#feeds]
+
+Blume 会为 [`seo.rss.types`](/docs/discoverability/rss) 中列出的每一种内容类型自动生成 RSS 订阅源 —— 默认是 `blog` 和 `changelog` —— 只要它至少有一个页面。订阅源提供在 `/<type>/rss.xml`：
+
+| 类型 | 订阅源 |
+| --- | --- |
+| `blog` | `/blog/rss.xml` |
+| `changelog` | `/changelog/rss.xml` |
+
+给每个条目一个 `date`，这样条目会按最新在前排序，并带上 `pubDate`。不加引号的 YAML 日期也没问题 —— Blume 会做归一化：
+
+```yaml lineNumbers
+---
+title: Blume 登场
+type: blog
+date: 2026-06-22
+description: 我们为什么打造一个 markdown 优先的文档框架。
+---
+```
+
+订阅源需要一个绝对的站点 URL，所以请设置 [`deployment.site`](/docs/deployment)。Blume 会给每个页面加上 `<link rel="alternate">` 标签，让浏览器和订阅阅读器自动发现它们。如何撰写这两种内容类型，分别见[博客](/docs/advanced/blog)和[更新日志](/docs/advanced/changelog)。
+
+## 本页导航
+
+每个页面都会自动获得一份目录，由它的标题构建而成。在宽屏上它位于内容旁边的吸顶侧边栏中；在较窄的屏幕上它会折叠成页面上方的一个**本页导航**面板。滚动时，你正在阅读的那一节对应的条目会高亮，因此在长页面里你始终知道自己在哪里。
+
+Blume 会把每个标题转成锚点 slug，因此每个条目都直接链接到它对应的小节 —— 你也可以在 URL 后追加标题的 slug 来深链接到任意标题（`.../my-page#getting-started`）。
+
+默认情况下目录会列出你的 `##` 和 `###` 标题（H2 和 H3）；设置 [`toc`](/docs/configuration#table-of-contents) 可以改变标题范围或关闭目录。某个页面在该范围内没有标题时，它就只是没有目录而已。
+
+## 接下来看什么
+
+**[Frontmatter](/docs/content/frontmatter)**
+
+页面元数据：标题、描述、侧边栏、SEO 和搜索。
+
+**[语法](/docs/content/syntax)**
+
+你能写下的每一项 Markdown 和 MDX 特性。
+
+**[组件](/docs/content/components)**
+
+任意 MDX 页面里可用的 JSX 组件。
+
+**[导航](/docs/content/navigation)**
+
+规划侧边栏、排序和标签页。
+
+**[文件夹 meta](/docs/content/meta)**
+
+用一个 `meta.ts` 文件配置侧边栏分组。

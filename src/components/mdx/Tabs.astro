@@ -1,0 +1,126 @@
+---
+interface Props {
+  class?: string;
+  /** 标签页标题留空时自动从子面板的 title 提取 */
+  titles?: string[];
+}
+
+const { class: className = "", titles } = Astro.props;
+
+const html = await Astro.slots.render("default");
+const detected: string[] = [];
+for (const m of html.matchAll(/data-tab-title="([^"]*)"/g)) {
+  detected.push(m[1] ?? "");
+}
+const labels = titles?.length ? titles : detected;
+---
+
+<div class:list={["tabs", className]} data-tabs>
+  <div class="tabs__bar" role="tablist">
+    {
+      labels.map((label, i) => (
+        <button
+          type="button"
+          class="tabs__tab"
+          role="tab"
+          data-tab-index={i}
+          aria-selected={i === 0 ? "true" : "false"}
+        >
+          {label}
+        </button>
+      ))
+    }
+  </div>
+  <div class="tabs__panels">
+    <slot />
+  </div>
+</div>
+
+<script>
+  function initTabs(root: ParentNode = document) {
+    root.querySelectorAll<HTMLElement>("[data-tabs]:not([data-ready])").forEach((group) => {
+      const tabs = Array.from(group.querySelectorAll<HTMLButtonElement>(".tabs__tab"));
+      const panels = Array.from(group.querySelectorAll<HTMLElement>("[data-tab-panel]"));
+      if (tabs.length === 0 || tabs.length !== panels.length) return;
+
+      const select = (index: number) => {
+        tabs.forEach((tab, i) => {
+          const active = i === index;
+          tab.setAttribute("aria-selected", String(active));
+          tab.dataset.active = String(active);
+        });
+        panels.forEach((panel, i) => {
+          panel.dataset.active = String(i === index);
+          panel.hidden = i !== index;
+        });
+      };
+
+      tabs.forEach((tab, i) => {
+        tab.addEventListener("click", () => select(i));
+      });
+
+      select(0);
+      group.dataset.ready = "true";
+    });
+  }
+
+  initTabs();
+  document.addEventListener("astro:page-load", () => initTabs());
+</script>
+
+<style>
+  .tabs {
+    margin-block: 1.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    background-color: var(--bg-subtle);
+    overflow: hidden;
+  }
+  .tabs__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.125rem;
+    padding: 0.375rem;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--bg-muted);
+  }
+  .tabs__tab {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--fg-subtle);
+    font-family: inherit;
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .tabs__tab:hover {
+    color: var(--fg);
+  }
+  .tabs__tab[data-active="true"] {
+    background-color: var(--bg);
+    color: var(--fg);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+  }
+  .tabs__panels {
+    padding: 0.25rem 0.875rem 0.5rem;
+  }
+  .tabs :global([data-tab-panel] > :first-child) {
+    margin-top: 0.9rem;
+  }
+  .tabs :global([data-tab-panel] > :last-child) {
+    margin-bottom: 0.9rem;
+  }
+  /* 未初始化时只显示第一个，避免闪烁 */
+  .tabs:not([data-ready]) :global([data-tab-panel]) {
+    display: none;
+  }
+  .tabs:not([data-ready]) :global([data-tab-panel]:first-of-type) {
+    display: block;
+  }
+</style>

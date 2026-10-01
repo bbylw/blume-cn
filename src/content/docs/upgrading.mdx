@@ -1,0 +1,332 @@
+---
+title: 升级到 Blume 2
+description: 从 Blume 1 升级到 Blume 2 的完整改动清单
+source: https://useblume.dev/docs/upgrading
+---
+
+Blume 2 改的是配置，不是内容：你的 Markdown 和 MDX 页面无需任何改动（有一个字段现在才真正生效，见 [Frontmatter](#frontmatter)）。过去是具名字符串或带键值块的那些设置 —— 搜索服务、部署目标、内容源、API 参考、分析，以及 assistant 的模型后端 —— 现在都变成了**适配器**，你从 `blume/*` 子路径导入并调用。Ask AI 更名为 assistant，所以 `ai.ask` 变成 `ai.assistant`。面向机器的设置从 `ai` 移到新的 `agents` 键，而 `components.ts` 的覆盖会在构建前就被校验。一个零配置的站点，或者一个没有设置以上任何一项的站点，只需要升一下版本号。
+
+## 一条命令完成升级
+
+在你的项目里，也就是放着 `blume.config.ts` 的那个文件夹中运行升级命令：
+
+```package-install
+npx blume@latest upgrade
+```
+
+它会把 `package.json` 里的 `blume` 升到 2，用项目所用的包管理器安装，然后拿你的配置和 `components.ts` 对照 Blume 2 做检查。每一处仍需改动的内容都会连同所在文件、行号和替换方案一起列出 —— 包括 `package.json` 里仍在传递已被移除的 `blume build` 参数的脚本 —— 并且在还剩下改动时，命令会以非零状态退出。如果在既没有配置也没有 `blume` 依赖的文件夹里运行，它会直接报错停止。请通过 `npx blume@latest` 而不是 `blume` 来运行：这个命令随 Blume 2 一起提供，所以仍停在 1 的项目里还没有它。在 pnpm 12 上，要在 `pnpm dlx` 后面加 `--allow-build=esbuild`，因为 pnpm 12 未经批准不会运行 esbuild 的安装脚本。
+
+如果想把这些改动交给编码 agent 处理，加上 `--codex` 或 `--claude`：
+
+```package-install
+npx blume@latest upgrade --codex
+```
+
+agent 会带着检查结果和本指南交互式打开，逐项应用改动，并反复运行 `blume doctor` 和 `blume build` 直到两者都通过，因此每一次修改都要经过它自己的权限流程来审阅。传 `--no-install` 可以只升级 `package.json` 而不安装。
+
+下面各节会覆盖每一处改动，无论你是想手动升级，还是想核对 agent 做了什么。
+
+## 搜索
+
+`search` 现在接受来自 `blume/search` 的适配器，而不是一个带凭证块的 `provider` 字符串。默认的本地搜索无需改动。
+
+```ts title="Blume 1"
+export default defineConfig({
+  search: {
+    provider: "algolia",
+    algolia: { appId: "APP_ID", indexName: "docs", searchApiKey: "SEARCH_KEY" },
+  },
+});
+```
+
+```ts title="Blume 2"
+import { defineConfig } from "blume";
+import { algolia } from "blume/search";
+
+export default defineConfig({
+  search: algolia({ appId: "APP_ID", indexName: "docs", apiKey: "SEARCH_KEY" }),
+});
+```
+
+- Orama Cloud、Typesense 和 Mixedbread 以同样方式映射为 `oramaCloud()`、`typesense()` 和 `mixedbread()`。在每一个接受搜索密钥的适配器里，它都叫 `apiKey`；`mixedbread()` 接受的是 `storeId` 而不是密钥，因为它的查询运行在文档服务器上；给它的其它任何选项都会透传给 store 的搜索调用，其中 `top_k` 默认为 8。管理密钥仍放在各自的环境变量里（`ALGOLIA_ADMIN_API_KEY`、`ORAMA_PRIVATE_API_KEY`、`TYPESENSE_ADMIN_API_KEY`、`MIXEDBREAD_API_KEY`）。
+- `provider: "pagefind"` 变成 `pagefind()`，`provider: "none"` 变成 `search: false`。
+- 想保留 `popular` 链接或 `indexing` 选项，就用对象包一层适配器：`search: { provider: algolia({ … }), popular: […] }`。
+
+## 部署
+
+`deployment` 现在接受来自 `blume/deploy` 的托管适配器，而不是 `adapter` 和 `output` 字段。`site` 和 `base` 移进适配器的选项里。
+
+```ts title="Blume 1"
+export default defineConfig({
+  deployment: {
+    adapter: "vercel",
+    output: "server",
+    site: "https://docs.example.com",
+  },
+});
+```
+
+```ts title="Blume 2"
+import { defineConfig } from "blume";
+import { vercel } from "blume/deploy";
+
+export default defineConfig({
+  deployment: vercel({ site: "https://docs.example.com" }),
+});
+```
+
+- `netlify()`、`cloudflare()` 和 `node()` 的用法完全一样。指定一个托管适配器会切换到服务端输出；传 `output: "static"` 则可以在该托管平台上保持静态构建并保留它的平台文件。
+- 只设置了 `site` 或 `base` 的配置保持原样：`deployment: { site, base }` 依然是静态形式。
+- `redirects` 中的 `:name` 路径段和结尾的 `*` 现在会按模式读取，并且在每个托管平台上匹配方式一致（见[模式重定向](/docs/deployment#pattern-redirects)）。Blume 1 从不支持模式，只是把它们按书写的样子交给各个托管平台，所以请检查所有含有模式的 `from` 和 `to`。
+- `blume build` 上的 `--adapter`、`--output` 和 `--base` 参数已被移除，传入其中任何一个都会让构建报错停止，并指明取而代之的 `deployment` 设置。请在 `blume.config.ts` 里设置适配器，并且要显式写明：服务端输出不再从平台环境中推断。
+
+每个适配器的选项见[部署](/docs/deployment)。
+
+## 内容源
+
+`content.sources` 的每一项现在都是来自 `blume/sources` 的适配器，而不是 `{ type }` 对象。
+
+```ts title="Blume 1"
+export default defineConfig({
+  content: {
+    sources: [
+      { type: "filesystem", root: "content" },
+      {
+        type: "github-releases",
+        owner: "acme",
+        repo: "sdk",
+        prefix: "changelog",
+      },
+    ],
+  },
+});
+```
+
+```ts title="Blume 2"
+import { defineConfig } from "blume";
+import { filesystem, githubReleases } from "blume/sources";
+
+export default defineConfig({
+  content: {
+    sources: [
+      filesystem({ root: "content" }),
+      githubReleases({ owner: "acme", repo: "sdk", prefix: "changelog" }),
+    ],
+  },
+});
+```
+
+- `mdx-remote`、`sanity`、`notion` 和 `obsidian` 变成 `mdxRemote()`、`sanity()`、`notion()` 和 `obsidian()`，其余字段原封不动地移进调用里。`{ type: "custom", source }` 变成 `custom(source)`。
+- `content.root`、`content.include` 和 `content.exclude` 仍是单个文件夹的简写，但它们不能再与 `sources` 并列。请把它们移进 `filesystem()` 那一项里。
+- 来自 `githubReleases()` 的发布页现在只发布一种语言，因此多语言站点不再把它们复制到其它每个 locale 的 URL（`/de/changelog/…`）上。如果其它站点链接到那些副本，请为默认 locale 的页面添加[重定向](/docs/deployment#redirects)。
+
+## API 参考
+
+顶层的 `openapi`、`asyncapi` 和 `graphql` 块变成一个 `reference` 列表，里面是来自 `blume/reference` 的适配器。`enabled` 取消。
+
+```ts title="Blume 1"
+export default defineConfig({
+  openapi: { enabled: true, spec: "./openapi.yaml" },
+  graphql: {
+    enabled: true,
+    spec: "./schema.graphql",
+    endpoint: "https://api.example.com/graphql",
+  },
+});
+```
+
+```ts title="Blume 2"
+import { defineConfig } from "blume";
+import { graphql, openapi } from "blume/reference";
+
+export default defineConfig({
+  reference: [
+    openapi({ spec: "./openapi.yaml" }),
+    graphql({
+      spec: "./schema.graphql",
+      endpoint: "https://api.example.com/graphql",
+    }),
+  ],
+});
+```
+
+- `asyncapi: { … }` 变成选项相同的 `asyncapi({ … })`。
+- AsyncAPI 1.x 或 2.x 规范仍然会为你转换成 3.0，但转换器现在是一个可选的 peer 依赖：在项目里安装 `@asyncapi/converter`，否则构建会带着安装命令失败。3.x 规范什么都不需要。
+- `renderer: "scalar"` 变成列表中独立的一项 `scalar({ spec, theme, … })`，并保留该块原有的 `route` 和 `sources`。
+- 带 `enabled: false` 的块直接从列表里去掉。
+
+## 分析
+
+`analytics` 对象变成来自 `blume/analytics` 的适配器列表。
+
+```ts title="Blume 1"
+export default defineConfig({
+  analytics: {
+    posthog: { key: "phc_…" },
+    vercel: true,
+  },
+});
+```
+
+```ts title="Blume 2"
+import { defineConfig } from "blume";
+import { posthog, vercel } from "blume/analytics";
+
+export default defineConfig({
+  analytics: [posthog({ key: "phc_…" }), vercel()],
+});
+```
+
+`cloudflare: { token }` 变成 `cloudflare({ token })`，每个 `scripts[]` 条目变成 `script({ … })`。
+
+## Assistant
+
+Ask AI 现在叫 assistant，它的配置也跟着改名：`ai.ask` 变成 `ai.assistant`。它的 `provider` 接受来自 `blume/ai` 的适配器，由它掌管模型以及此前与模型同属一处的那些字段。
+
+```ts title="Blume 1"
+export default defineConfig({
+  ai: {
+    ask: {
+      enabled: true,
+      provider: "openrouter",
+      model: "anthropic/claude-sonnet-4-5",
+      reasoning: "none",
+    },
+  },
+});
+```
+
+```ts title="Blume 2"
+import { defineConfig } from "blume";
+import { openrouter } from "blume/ai";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      provider: openrouter({
+        model: "anthropic/claude-sonnet-4-5",
+        reasoning: "none",
+      }),
+    },
+  },
+});
+```
+
+1.x 的 `provider` 名称会映射到 `gateway()`、`openrouter()`、`llmgateway()` 或 `inkeep()`，`openai-compatible` 则映射到 `openai({ baseUrl, name, model, apiKeyEnv })`；其余的在[适配器列表](/docs/configuration/assistant#adapters)里。`model`、`apiKeyEnv`、`baseUrl`、`headers` 和 `reasoning` 移进适配器；`enabled`、`instructions`、`retrieval`、`suggestions`、`cors` 和 `endpoint` 原封不动地移到 `ai.assistant`。不设置 `provider` 仍然会使用 AI Gateway。
+
+这次改名会波及每一个曾叫 Ask AI 的名称：
+
+- `i18n.ui` 覆盖：`ask` 分组变成 `assistant`，`search.askAi` 和 `search.askAiHint` 变成 `search.assistant` 和 `search.assistantHint`。
+- `blume/hooks` 中的 `useAskAI` 变成 `useAssistant`，相应的 `UseAssistant` 和 `UseAssistantOptions` 类型也一样。
+- `PageLayout`、`RootLayout`、`Header` 以及 `Search` 覆盖上的 `askEnabled` prop 变成 `assistantEnabled`。
+- 在 [`blume:data`](/docs/advanced/custom-pages) 模块中，`config.ask` 变成 `config.assistant`，`ui.ask` 变成 `ui.assistant`，来自 `blume` 的 `UIStrings` 类型也随之更名。
+- 来自 `blume/ai` 的适配器类型把 `Ask` 前缀换成 `Assistant`（`AskAdapter` 变成 `AssistantAdapter`，`AskGatewayOptions` 变成 `AssistantGatewayOptions`），来自 `blume/schema` 的 `askReasoningLevels` 和 `AskReasoning` 变成 `assistantReasoningLevels` 和 `AssistantReasoning`。
+- `blume:open-ask-ai` 窗口事件变成 `blume:open-assistant`，`<body>` 上的 `data-blume-ask` 属性变成 `data-blume-assistant`。
+
+生成的 `/api/ask` 路由以及 `ask`、`ask_answer`、`ask_error` 这些[分析事件](/docs/configuration/assistant#analytics)都保持原名，所以调用方和仪表盘无需改动。`blume upgrade` 和 `blume doctor` 会指出它们发现的每一个旧配置键 —— 包括 `ai.ask` 和那些 `i18n.ui` 键 —— 以及各自的替代方案。
+
+已经升到 Blume 2.0.0 了？它当时仍然读 `ai.ask`，所以照常更新 `blume` 并做同样的改名即可。
+
+## agents 与其它配置迁移
+
+面向机器的设置从 `ai` 移到新的 `agents` 键，另有三个小字段改变了形态。
+
+```ts title="Blume 1"
+export default defineConfig({
+  ai: { mcp: { enabled: true }, skills: "./skills" },
+  lastModified: true,
+  markdown: {
+    codeBlocks: { theme: { light: "github-light", dark: "github-dark" } },
+  },
+  theme: { layout: "sidebar" },
+});
+```
+
+```ts title="Blume 2"
+export default defineConfig({
+  agents: { mcp: { enabled: true }, skills: "./skills" },
+  lastModified: "git",
+  markdown: {
+    code: { theme: { light: "github-light", dark: "github-dark" } },
+  },
+});
+```
+
+- `ai.api`、`ai.catalog`、`ai.llmsTxt`、`ai.markdownComponents`、`ai.mcp`、`ai.skills`、`ai.webBotAuth` 和 `ai.webmcp` 变成 `agents.*`，`seo.agentReadability` 和 `seo.contentSignals` 也一样。`ai` 只保留 `assistant`（原 `ask`）和 `openInChat`。
+- `lastModified` 现在是一个扁平值：`true` 变成 `"git"`，而 `{ type: "git" }` 或 `{ type: "frontmatter" }` 变成裸字符串。
+- `markdown.codeBlocks` 合并进 `markdown.code`。
+- `theme.layout` 已被移除。没有任何东西读它，所以直接删掉。
+
+## Frontmatter [#frontmatter]
+
+页面保留它们的 frontmatter。有一个字段改变了它的作用：`search.boost`。Blume 1 接受这个字段，但搜索从未读取过它，所以有没有它页面的排序都一样。现在它会成倍放大该页面的搜索相关性（见[排序](/docs/configuration/search#ranking)）。请检查所有设置了它的页面：你当初加上之后忘了的某个 boost，现在会把该页面排上去。
+
+## 组件覆盖
+
+Blume 2 会在构建前校验每一项 `components.ts` 条目，而不再在运行时回退。每个 `mdx` 和 `layout` 条目必须是一个导入的组件、一个路径字符串，或一个 `{ component, client, media }` 对象；`islands` 分组已被移除：带 `client` 模式的 `mdx` 条目就是交互岛。
+
+```ts title="Blume 1"
+import { defineComponents } from "blume";
+import Counter from "./islands/Counter.tsx";
+
+export default defineComponents({
+  islands: { Counter },
+});
+```
+
+```ts title="Blume 2"
+import { defineComponents } from "blume";
+import Counter from "./islands/Counter.tsx";
+
+export default defineComponents({
+  mdx: { Counter: { component: Counter, client: "visible" } },
+});
+```
+
+内联函数、在 `components.ts` 自身里声明的组件、展开运算符或计算得出的键，现在都会以 `BLUME_COMPONENTS_INVALID` 失败，并指明是哪一个条目。请把该组件移进独立文件再导入。`islands/` 文件夹约定照旧可用。可接受的形式见[定制](/docs/configuration/customization)。
+
+## 已 eject 的应用
+
+在 Blume 1 上[已 eject](/docs/configuration/customization#eject) 出来的应用不再通过 Blume CLI 运行，但它依然依赖 `blume` 包。它的页面导入 Blume 的组件，`src/generated/` 保存着由 Blume 1 生成器写入的站点快照，而 `astro build` 会再次加载 `blume.config.ts` 来写搜索索引、`llms.txt` 和 sitemap。在它下面把 `blume` 升到 2，会把那份 Blume 1 快照与期待新形态的 Blume 2 组件配到一起，所以请重新 eject 一次：
+
+1. **把项目复制出来**
+
+    把除 `astro.config.mjs`、`src/`、`.blume/`、`dist/` 和
+    `node_modules/` 之外的一切复制到一个空文件夹：你的内容、
+    `blume.config.ts`、`components.ts`、`islands/`、`public/`、你的
+    reference 会读取的任何规范文件，以及 `package.json`。
+    把已 eject 的应用原样留在那里。
+
+2. **升级这份副本**
+
+    在副本里运行 `npx blume@latest upgrade` 并应用它列出的改动，让
+    `blume.config.ts` 和 `components.ts` 成为合法的 Blume 2。然后运行
+    `npx blume build`，在 eject 之前确认站点能够构建。
+
+3. **eject 一份全新的副本**
+
+    在副本里运行 `npx blume eject --yes`，安装它新增的包，然后用
+    `npm run build` 构建。
+
+4. **把你的修改搬过去**
+
+    把全新的 `astro.config.mjs` 和 `src/` 与你已 eject 的应用做 diff，
+    再把你自己的改动移到新文件上。
+
+在新副本准备好之前，请让已 eject 的应用继续留在 Blume 1 上（`"blume": "^1"`），并且不要在里面运行 `blume upgrade`：不升级版本号就什么都不会变。
+
+## 命令行参数
+
+现在每一条 `blume` 命令都会拒绝它不接受的参数，而在 Blume 1 里这些参数会被忽略。传了一个多余或拼错的参数的脚本或 CI 步骤会失败，并报出它不认识的参数以及该命令接受的那几个。`blume upgrade` 只会报告被移除的那三个 `blume build` 参数（`--adapter`、`--output`、`--base`），所以你其它那些 `blume` 脚本也要一并检查。
+
+## 检查你的成果
+
+一旦 `blume upgrade` 报告没有剩余改动，就运行站点自己的检查：
+
+```bash
+npx blume doctor
+npx blume build
+```
+
+每一处改动的完整列表，以及它们背后的理由，都写在[更新日志](/docs/advanced/changelog)里。

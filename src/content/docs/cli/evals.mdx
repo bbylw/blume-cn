@@ -1,0 +1,108 @@
+---
+title: eval
+description: 让一个 AI agent 仅凭你的文档回答真实用户问题，以此测试文档是否真的够用
+source: https://useblume.dev/docs/cli/evals
+---
+
+`blume audit` 告诉你爬虫能否找到你的文档。`blume eval` 告诉你别人是否真的*用得动*它：一个 AI agent 会像陌生人那样读你的文档，并试着从中回答真实用户提出的问题。当文档里没有写明答案时，这次运行会失败，并指出本该写明它的那个页面。
+
+```bash
+blume eval
+```
+
+```
+blume eval  4 question(s) · Codex
+
+  ✔ install-node-version         pass  1.00  14.2s
+  ✔ custom-domain                pass  0.92  21.3s
+  ✖ deploy-vercel                fail  0.40  38.9s
+      missing: deployment: vercel() from blume/deploy
+  ⊘ search-providers             skipped
+
+  fix: content/docs/deployment.mdx  Docs could not answer: "How do I deploy to Vercel?" — missing: deployment: vercel() from blume/deploy
+
+  2 passed · 1 failed · 1 skipped · 1m 42s
+```
+
+## 工作方式
+
+每个问题会经过两轮 agent 会话，使用你已经装好的某个 agent CLI——默认是 [Codex](https://developers.openai.com/codex/cli)，或者用 `--agent claude` 换成 [Claude Code](https://claude.com/claude-code)。Blume 不保存任何 API 密钥，也不自己调用任何模型。使用 Codex 时，两轮会话都不会拿到 Codex 的 shell、命令和图像工具，也不会继承你任何环境变量。
+
+1. **读者**只*依靠*你的文档来回答问题。它在一个空目录中运行，文件、shell 和网络工具都被禁用，连接到一个为你提供文档的私有 [MCP 服务器](/docs/discoverability/mcp)——与真实 agent 对着已部署站点所用的是同一组 `search_docs`/`get_page` 工具。它读不到你的仓库，因此它体验文档的方式与一个全新用户完全相同：没写下来的东西就等于不存在。
+2. **评判者**完全不带任何工具，按你列出的事实给答案打分。换一种说法照样通过；漏掉或与之相悖则不通过——"文档里没写"同样算不通过。
+
+这份 MCP 快照直接由你的内容源构建，因此无需先运行 `blume build`，也不会把任何东西部署或上传到别处。
+
+文档*无法*支撑的答案，即便碰巧与 agent 的先验知识相符也判为失败——这正是重点所在。只有你的文档会随产品一起发布。
+
+## 编写 eval
+
+问题写在项目根目录的 `evals.yaml` 里。让一个 agent 根据你现有的文档起草一份起始文件：
+
+```bash
+blume eval init
+```
+
+或者手写：
+
+```yaml
+questions:
+  - id: install-node-version
+    question: What is the minimum Node.js version required?
+    expected:
+      - Node 22.12 or newer
+    routes: /docs/quickstart
+  - id: deploy-vercel
+    question: How do I deploy to Vercel?
+    expected:
+      - run blume build
+      - "server features need deployment: vercel() from blume/deploy"
+    routes:
+      - /docs/deployment
+  - id: search-providers
+    question: Which search providers are supported?
+    expected:
+      - Orama is the default, with no hosted service
+    severity: warning # 未答中只警告，不让 CI 失败
+    skip: true # 暂时排除，报告为 skipped
+```
+
+- `expected` 列出正确答案必须在实质上说明的事实——评判者接受换一种说法，拒绝相互矛盾。
+- `routes` 指明本该回答该问题的页面。这样一来，失败在报告里就会锚定到那个页面的源文件；某个提示如果已经对不上任何页面，会给出警告，而不是被悄悄丢弃。
+- `severity: warning` 让某个问题仍留在报告里，但不会让 CI 失败；`skip: true` 则把某个问题整个排除在外。
+
+就写你的用户真正会问的问题——来自支持会话、GitHub issue 和上手通话里的那些。最好的 eval 会把文档作出的一项承诺（"零配置部署"）编码成一个问题，当某个 PR 违背这份承诺时它就会失败。
+
+## 让 CI 失败
+
+退出码就是约定：任何一道问题失败都会返回非零，`severity: warning` 的除外——它的缺失只报为警告，永远不计入这道关卡或 `--threshold`。当 agent 运行本身失败时——读者或评判者直接报错、根本没给出评分——报告里会写 `run failed:`，并指向你 eval 文件里的那道问题，而不会指出某个要去修的文档页面，因为文档压根没被评分。当你想从积压的问题里慢慢清理时，可以用 `--threshold` 把关卡放宽为一个通过比例：
+
+```bash
+blume eval                    # 每个问题都必须通过
+blume eval --threshold 0.8    # 至少 80% 必须通过
+blume eval --json             # 在 stdout 上输出机器可读的报告
+```
+
+JSON 报告的结构与 `blume validate --json` 和 `blume audit --json` 相同，都是 `diagnostics` + `summary`，另外还并列给出每道问题的结果（答案、得分、缺失的事实、成本）。
+
+由于每道问题都要两轮模型会话，一次 eval 运行会实实在在地花掉时间和金钱——单道问题的开销会在运行过程中打印出来。合理的 CI 配置是在文档发生变化时运行 `blume eval`，而不是每次 push 都跑一遍。
+
+## 修复发现的问题
+
+每次失败都会指出缺失的事实，以及本该写明它们的页面。想把整份报告交给 agent 处理：
+
+```bash
+blume eval --fix
+```
+
+它会把完整的 JSON 报告写到一个文件，然后交互式打开 agent，并附上一段提示，逐道失败问题引导它：读那个指明的页面，用该页面的语气补上缺失的事实，然后重新运行 `blume eval` 直到全部通过。这个会话是有意设计成交互式的——你通过 agent 自己的权限流程审阅它的修改——而且 agent 会被明确告知：绝不能靠删掉问题或削弱预期事实来把结果刷绿。
+
+## 选项
+
+- `--agent codex|claude` — 由哪个 agent CLI 扮演读者和评判者。默认为 `codex`。
+- `--file <path>` — eval 文件，相对于项目根目录或使用绝对路径。默认为 `evals.yaml`。
+- `--threshold <0..1>` — 通过比例低于该值时，本次运行以非零码退出，其中 `severity: warning` 的缺失算作通过。默认为 `1`。空值属于错误，因此 `--threshold "$EVAL_THRESHOLD"` 在变量未设置时无法把关卡关掉。
+- `--timeout <seconds>` — 每道问题中读者阶段的时间上限。默认为 `180`，最大为 `2147483`（约 24 天），这已是定时器所能等待的最长时间。
+- `--json` — 把报告以 JSON 输出到 stdout。
+- `--fix` — 运行失败后，把报告交给 agent 交互式地修复文档。
+- `--verbose` — 在每条失败下面附上读者的完整回答。

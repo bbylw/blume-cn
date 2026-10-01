@@ -1,0 +1,194 @@
+---
+title: Frontmatter
+description: "逐页面的 frontmatter 字段参考，涵盖布局、侧边栏、SEO、搜索以及自定义键。"
+source: https://useblume.dev/docs/content/frontmatter
+---
+
+每个页面都可以使用以下 frontmatter 字段。所有字段都是可选的。
+
+| 字段 | 类型 | 默认值 | 说明 |
+| - | - | - | - |
+| `title?` | `string` | - | 页面标题。 |
+| `description?` | `string` | - | 页面摘要。 |
+| `type?` | `string` | `doc` | 内容类型。blog/changelog 会驱动订阅源。 |
+| `date?` | `string` | - | blog/changelog 订阅源使用的发布日期（ISO 或 YAML 日期）。 |
+| `authors?` | `string \| string[] \| object[]` | - | blog/changelog 内容的作者——一个名字，或带 name 以及可选的 avatar/url 和任意额外字段的对象。保持原样。 |
+| `slug?` | `string` | - | 设置页面从内容根目录起的完整路由（guides/setup）。它替换的是文件位置给出的整条路径，而不只是最后一段。出现 . 或 .. 段属于错误：浏览器会把它消解掉，任何链接都无法到达该页面。 |
+| `draft?` | `boolean` | `false` | 不纳入生产构建。 |
+| `deprecated?` | `boolean` | `false` | 标记页面已弃用：它的侧边栏行会加上一个弃用标记（可翻译的 UI 文案）。 |
+| `hidden?` | `boolean` | `false` | `sidebar.hidden` 的简写。 |
+| `noindex?` | `boolean` | `false` | `seo.noindex` 的简写。 |
+| `narration?` | `boolean` | `true` | 设为 false 可让该页面在开启朗读时不显示「收听本页」播放器。 |
+| `related?` | `(string \| { [title]: string })[] \| false` | - | 建议在页面底部展示的页面，最多十个：根相对路径、绝对 URL，或用 `{ Title: link }` 为链接命名。参见下文的「相关页面」。 |
+| `pagination?` | `boolean` | `true` | 设为 false 可去掉页面底部的上一页/下一页链接。页面本身仍留在顺序中，因此相邻页面依旧会链接到它。 |
+| `icon?` | `string` | - | 当 `sidebar.icon` 未设置时，用于页面侧边栏行的 Lucide 图标（`sidebar.icon` 优先）。 |
+| `lastModified?` | `string` | - | 固定页面的「最后更新」日期（ISO 或 YAML 日期）；会覆盖从 git 推导出的日期。 |
+| `mode?` | `"default" \| "wide" \| "center" \| "custom" \| "frame"` | `"default"` | 页面在内容之外还显示哪些部分。参见下文的「布局」。 |
+| `api?` | `string` | - | 该页面手动记录的接口，以 HTTP 方法加路径或 URL 表示（POST /v1/users）。参见「手写 API 页面」。 |
+| `authMethod?` | `"bearer" \| "basic" \| "key" \| "none"` | - | api 页面的接口如何认证，作用于站点的 `api.auth`。 |
+| `playground?` | `"interactive" \| "simple" \| "none"` | `"interactive"` | api 页面显示什么：「试一试」面板和示例、仅示例，或都不显示。 |
+
+## 布局
+
+`mode` 决定页面在内容之外还显示什么：
+
+| 模式 | 侧边栏 | 标题与目录 | 页尾链接与页脚 | 内容宽度 |
+| --- | --- | --- | --- | --- |
+| `default` | 显示 | 显示 | 显示 | 正文宽度 |
+| `wide` | 显示 | 仅标题 | 显示 | 整列 |
+| `center` | 不显示 | 仅标题 | 显示 | 居中的更宽一列 |
+| `frame` | 显示 | 不显示 | 不显示 | 整列 |
+| `custom` | 不显示 | 不显示 | 不显示 | 整页 |
+
+`wide` 适合满是宽表格或图示的页面，`center` 适合从头往下读的发行说明或公告。`custom` 只保留页眉，适合用 MDX 编写的落地页；`frame` 还会保留侧边栏，适合嵌在文档导航里的工具或仪表盘。这两种模式都不渲染页面的 title 和 description，所以请自己写标题。所有模式都会参与搜索，并保留 Markdown 副本。
+
+```yaml lineNumbers
+title: Welcome
+mode: custom
+```
+
+这些取值与 Mintlify 一致；它的 `assistant` 模式（整页聊天）在这里没有对应项。
+
+## 相关页面
+
+`related` 列出建议在页面底部展示的页面，以卡片形式显示在 **相关页面** 标题之下：
+
+```yaml lineNumbers
+related:
+  - /guides/deployment
+  - Search setup: /configuration/search
+  - https://astro.build
+```
+
+根相对路径指向另一个页面，卡片会用该页面的标题和描述展示它；在已翻译的页面上，如果存在译文则链接到译文。`Title: link` 形式的条目会自行设定卡片标题，而绝对 URL 则以主机名链接到站外。路径和页面上的其他链接一样会被校验，所以 [`blume validate`](/docs/cli/validate) 会报告匹配不到任何页面的路径。这个键名与 Mintlify 一致，因此迁移过来的页面可以原样保留。
+
+## 侧边栏
+
+```yaml lineNumbers
+sidebar:
+  label: Install
+  order: 2
+  icon: download
+  badge: New
+  hidden: false
+  display: page
+```
+
+`hidden` 会把页面从侧边栏以及上一页/下一页翻页中移除。用在文件夹的 `index` 页面上时，它只移除该页面自己的那一行：分组行仍然链接到该页面，上一页/下一页链接也仍会经过它。
+
+`display` 设定页面所属文件夹分组的渲染模式（[按分组覆盖](/docs/content/navigation#per-group-overrides)），并且只在自动生成的侧边栏中、文件夹的 `index` 页面上才有意义——在其他任何位置（非 index 页面、内容根目录自身的 `index` 页面，或显式 `navigation.sidebar` 下的任何页面）它都没有可配置的分组，Blume 会以 `BLUME_SIDEBAR_DISPLAY_IGNORED` 发出警告。
+
+## SEO
+
+```yaml lineNumbers
+seo:
+  title: Install Blume
+  description: Install Blume and scaffold your first project.
+  image: /og/install.png
+  canonical: https://acme.com/install
+  noindex: false
+  x:
+    creator: "@jane"
+```
+
+`noindex` 会输出 robots `noindex`，把页面从站点地图中移除，并跳过它的结构化数据。`x.creator` 把页面的作者信息指向一个 X 账号（`twitter:creator`）——比如客座文章的作者。全部字段参见[元数据](/docs/discoverability/metadata#per-page-overrides)。
+
+## 搜索
+
+```yaml lineNumbers
+search:
+  exclude: false
+  tags: [api]
+  keywords: [install, setup]
+  boost: 3
+```
+
+`exclude` 让页面不出现在搜索结果中，`tags` 把它归入搜索对话框里的某个筛选项。`keywords` 是除页面正文之外、能命中该页面的额外词。`boost` 会乘上页面的相关度：大于 1 排名更高，小于 1 则更低。参见[排序](/docs/configuration/search#ranking)。
+
+## AI
+
+```yaml lineNumbers
+ai:
+  exclude: true
+```
+
+`ai.exclude` 让页面不出现在 [`llms.txt` 与 `llms-full.txt`](/docs/discoverability/llms-txt#excluding-a-page) 中。页面照常渲染、参与搜索，并在站点地图中保留位置。
+
+## 更新日志 [#changelog]
+
+更新日志条目（`type: changelog`）可以接受一个可选的 `changelog` 对象，用来提供更丰富的订阅源与展示元数据：
+
+```yaml lineNumbers
+type: changelog
+changelog:
+  version: 1.2.0
+  date: 2026-06-20
+  category: Features
+```
+
+`date` 可以写在这里，也可以写在顶层——两者都会用于[更新日志 RSS 订阅](/docs/content#feeds)。自动生成的时间线页面和订阅源参见[更新日志](/docs/advanced/changelog)。
+
+## 自定义键 [#custom-keys]
+
+本表之外的任何键都会导致构建失败，从而尽早发现拼写错误。带有自有元数据的项目可以在 `blume.config.ts` 中通过 [`frontmatter.extend`](/docs/configuration#frontmatter) 开放额外的键，每个键都由项目提供的 schema 校验：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { z } from "zod";
+
+export default defineConfig({
+  frontmatter: {
+    extend: {
+      owner: z.string(),
+      reviewedAt: z.coerce.date().optional(),
+    },
+  },
+});
+```
+
+```yaml page.mdx
+---
+title: Install
+owner: "@sam"
+reviewedAt: 2026-06-20
+---
+```
+
+schema 通过 [Standard Schema](https://standardschema.dev) 接口接入，因此 Zod（无论你的项目安装的是哪个版本）、Valibot 和 ArkType 都能用。每个声明的键都会在每个页面上校验——包括不存在的页面——因此必填 schema 会在全站强制该键；把它标为 `.optional()` 则只在出现时校验。其他所有键仍保持严格校验，内置字段也不能重复声明。
+
+### 按类型区分的键 [#per-type-keys]
+
+如果只想在某一种内容类型上要求某些键——比如 RFC 的 `status`、事故报告的 `severity`——就改在 [`content.types`](/docs/configuration#content) 下按它们适用的 frontmatter `type` 声明：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { z } from "zod";
+
+export default defineConfig({
+  content: {
+    types: {
+      rfc: {
+        frontmatter: {
+          domain: z.string(),
+          status: z.enum(["draft", "review", "enforced"]),
+        },
+      },
+    },
+  },
+});
+```
+
+```yaml rfcs/openapi-request-schemas.mdx
+---
+title: OpenAPI request schemas
+type: rfc
+domain: architecture
+status: enforced
+---
+```
+
+按类型区分的键遵循与 `extend` 相同的校验规则，但只作用于解析出的 `type` 匹配的页面——当声明针对 [`content.defaultType`](/docs/configuration#content) 时，也包括那些没有设置 `type` 的页面。一个键只属于一处声明，要么全站级别，要么按类型级别，不能两者兼有。而只为另一种类型声明的键在其他地方依然属于未知键，所以普通文档页面上多写一个 `status` 仍会导致构建失败。
+
+校验失败的页面会让 `blume build` 失败，并给出指明文件和键名的诊断信息。加上 [`--no-strict`](/docs/cli#common-flags) 后构建仍会成功，但失败的页面会从产物中剔除——构建摘要会报告剔除的数量。
+
+这些 schema 从 `blume/schema` 导出，供编辑器和迁移工具使用。

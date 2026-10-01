@@ -1,0 +1,252 @@
+---
+title: 搜索
+description: 内置本地搜索，无需托管服务和 API key，可在 Orama、Pagefind、Algolia 等适配器间切换
+source: https://useblume.dev/docs/configuration/search
+---
+
+Blume 自带本地搜索，不依赖任何托管基础设施，也不需要 API key。它在浏览器中运行，在 `blume dev` 和 `blume build` 中都能工作，并且只索引你的真实内容 —— 导航外壳和被排除的页面都会被跳过。当它不再够用时，你可以切换到托管或语义后端，而搜索的外观和行为都不变 —— 变的只是传给 `search` 的适配器。
+
+每个后端都是从 `blume/search` import 的一个**适配器**：**Orama**（默认）、**FlexSearch**、**Pagefind**、**Algolia**、**Orama Cloud**、**Typesense** 和 **Mixedbread**。每个适配器自带它的选项、运行时依赖和所需密钥，因此只有被配置的那个适配器的 SDK 会被安装进你的项目 —— 选一个后端绝不会把其他的也拖进来。
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { algolia } from "blume/search";
+
+export default defineConfig({
+  search: algolia({
+    appId: "YOUR_APP_ID",
+    apiKey: "YOUR_SEARCH_ONLY_KEY",
+    indexName: "docs",
+  }),
+});
+```
+
+适配器只是对后端的一份纯描述 —— 不是活动的客户端 —— 因此 Blume 能把它内联到生成的站点里，也能内联到 ejected 项目中。直接传适配器即可；如果你还想在旁边设置[热门链接](#popular-pages)或[索引](#whats-indexed)选项，就用对象形式：
+
+```ts blume.config.ts lineNumbers
+import { pagefind } from "blume/search";
+
+search: {
+  provider: pagefind(),
+  popular: [{ href: "/guides/getting-started", icon: "rocket", label: "Getting started" }],
+  indexing: { includeCodeBlocks: true },
+},
+```
+
+## 使用搜索
+
+用页头的搜索图标、⌘K（或 `Ctrl K`），或者在未处于输入状态时按 `/` 打开搜索。`Esc` 关闭它，`⌘J`（或 `Ctrl J`）切换结果预览面板。
+
+查询会匹配页面的**标题**、**描述**和**正文**文字，标题匹配权重最高，其次是描述，最后是正文。
+
+## 热门页面 [#popular-pages]
+
+在读者输入查询之前，搜索对话框会显示一份 **Popular** 列表。默认是侧边栏的前六个页面 —— 在多标签站点上这往往会把读者带到错误的分区。请改为固定你想要的链接：
+
+```ts blume.config.ts lineNumbers
+search: {
+  popular: [
+    { href: "/guides/getting-started", icon: "rocket", label: "Getting started" },
+    { href: "/guides/install", icon: "download", label: "Install" },
+    { href: "/concepts/overview", label: "Overview" },
+  ],
+},
+```
+
+每个条目接受一个 `href`（站内路由或外部 URL）和一个 `label`，还可以选填 `icon` —— 一个[内置图标](/docs/content/components#icon)名称、图片路径/URL，或内联 SVG（与导航图标相同的_输入_），默认是一个文件字形。省略 `popular` 或留空则保留侧边栏兜底。在对象形式中不写 `provider` 会保留默认的 Orama 适配器。
+
+`href` 要按站点挂载在根路径来写 —— `basePath` 会自动加上，和 `navigation.featured` 一样。外部 URL 则原样透传。
+
+> **警告**
+>
+> 精选列表是所有语言共用的一套链接。在配置了 `i18n` 的站点上，侧边栏兜底会跟随读者的 locale，
+> 但 `popular` 条目只会跳向其 `href` 所指的地方 —— 因此只有当你想让每位读者都被送到
+> 同一种语言时，才固定带 locale 前缀的路由。
+
+## 索引了什么 [#whats-indexed]
+
+对 Orama、FlexSearch、Algolia、Orama Cloud 和 Typesense —— 以及 MCP server 的 `search_docs` 工具 —— Blume 会索引每个页面的标题、描述，以及被简化为纯文本的正文：代码块、图片和标记会被剥离，因此结果保持相关性。这些索引从你的源文件构建，所以在开发环境和生产环境中完全一致。Pagefind 改为索引构建后的 HTML，Mixedbread 则同步你的原始 Markdown，因此这两者始终都能搜到代码。
+
+如果你的文档依靠代码示例来暴露诸如选项、方法或错误名这类可搜索的词，请把围栏代码纳入基于源文件的索引：
+
+```ts blume.config.ts lineNumbers
+search: {
+  indexing: {
+    includeCodeBlocks: true,
+  },
+},
+```
+
+每个围栏的正文和标题（上面那个围栏的标题是 `blume.config.ts`）都会变得可搜索；语言标记和围栏标记本身不会。在 `.mdx` 页面上，索引按组件显示出来的文字来读取它们 —— Card 的标题、Tab 的标签、TypeTable 的描述 —— 使用与 [agent surfaces](/docs/discoverability/markdown)相同的序列化器，因此一个 `agents.markdownComponents` 条目同样能覆盖你自己的组件。该选项对 Pagefind 和 Mixedbread 无效。请预期索引会随你的围栏内容一起增长 —— 客户端索引会分发给每位读者，托管适配器则限制记录大小（当某个页面的记录超过套餐上限时，Algolia 会拒绝这批同步，从而保留上一份可用索引），而命中围栏内部的结果会在摘要中显示扁平化的代码。
+
+在[带版本](/docs/content/versioning)的站点上，结果默认限定在当前查看的版本，对话框页脚有一个 "All versions" 开关（按读者记忆）。跨版本命中的结果会在行内标明其版本。Orama、FlexSearch、Algolia 和 Typesense 都遵循这一限定 —— 托管记录携带一个 `version` 分面，当前文档上传为 `"current"`。Pagefind、Orama Cloud 和 Mixedbread 不按版本限定：它们的结果横跨所有版本，对话框中也不会出现那个开关。
+
+## 标签
+
+在页面 frontmatter 中添加 `search.tags`，把它归入搜索对话框中的一个筛选项 —— 读者一键即可把结果收窄到某个标签。标签在托管适配器上也会成为一个分面。
+
+```yaml
+search:
+  tags: [api, reference]
+```
+
+## 排序权重 [#ranking]
+
+两个 frontmatter 字段决定一个页面的排名。`search.keywords` 列出额外的检索词，即使页面正文里没用到这些词也能被搜到。它适合那些读者会用旧名称、缩写或竞品术语来搜索的页面。`search.boost` 则把页面的相关性乘上一个系数：大于 1 会把它排上来，小于 1 会把它压下去。
+
+```yaml
+search:
+  keywords: [install, setup, getting started]
+  boost: 3
+```
+
+只给读者最常用的少数几个页面加权重，比如快速上手或概览，取值在 2 到 5 之间。对于那些应当排在同等匹配页面之后的页面，比如一份遗留指南，可以使用小于 1 的值，例如 `0.5`。权重不要超过 10：再往上，权重就会淹没页面本身的匹配程度，让它在自己几乎不匹配的搜索里也位居榜首。
+
+权重对页面的移动幅度取决于适配器：
+
+- **Orama**（默认）和 **FlexSearch** 在排序前把每次匹配都乘上该页面的权重，因此权重为 3 就算作三倍。[MCP server](/docs/discoverability/mcp)与 [assistant](/docs/configuration/assistant)的搜索采用同样的排序方式。
+- **Pagefind** 会更重地看待被加权页面的文字。它会抑制重复匹配，因此提升幅度小于乘数：权重为 5 会让该页排名更高，但更接近两倍而不是五倍。Pagefind 把超过 10 的权重按 10 计。
+- **Algolia** 和 **Typesense** 在匹配程度相近的结果之间按权重排序，因此权重只在势均力敌时起决定作用，不会把较弱的匹配抬到强匹配之上。在 Algolia 上，同步会在你设置的任何 ranking 之后，为索引的自定义 ranking 追加 `desc(boost)`。
+- **Orama Cloud** 会取回更大一批结果，再按相关性乘权重重新排序。
+- **Mixedbread** 搜索的是你自己的存储，Blume 并不会把数据上传过去，因此权重和关键词都到不了它那里。
+
+除 Mixedbread 外，所有适配器都会搜索关键词。
+
+## 搜索分析 [#search-analytics]
+
+配置了 [analytics 适配器](/docs/configuration/analytics)之后，搜索会报告读者在找什么。查询在稳定下来之后才被记录 —— 停止输入一秒后，或读者选中某个结果或关闭对话框时 —— 记为一个 `search` 事件，包含 `query`、结果数量 `results`，以及发起搜索的 `path`。没有结果的查询会以 `results: 0` 出现，因此按它筛选就能列出文档尚未覆盖的内容。选中某个结果会发出一个 `search_select` 事件，包含 `query`、该结果的 1 起始 `position` 和它的 `url`，用于统计点击率。
+
+查询按原样发送，最长 100 个字符。你的 analytics 会像看到任何页面的搜索词一样看到它们，因此请把它们当作读者输入来对待。开启 [cookie consent](/docs/configuration/consent)后，只有允许 analytics 的读者才会被计入。
+
+## 适配器
+
+客户端适配器无需密钥、也不需要任何选项 —— 它们的客户端是从 `i18n` 配置的（Pagefind 则从构建后的 HTML 配置），因此一个未知密钥会在配置校验时被拒绝，而不是被悄悄忽略。托管适配器接受**公开**凭据（可以安全地发到浏览器），并在构建时从环境变量读取它们的**密钥**管理密钥 —— 密钥绝不会进入配置或客户端 bundle。你传给托管适配器的每个选项都会被原样保留，并在浏览器中交给它的搜索客户端（或对 Mixedbread 而言，交给搜索端点），因此 Blume 没有命名的选项也能到达 SDK —— Algolia 的 `liteClient`、Typesense 的 `Client` 或 `OramaClient`。这些选项必须是 JSON 值 —— 描述符会作为字面量被内联到生成的项目中，因此函数、`undefined` 或 bigint 会让配置校验失败并报出具体路径，而不是在途中悄悄消失。
+
+### Orama（默认）
+
+Blume 的默认引擎。它构建一个在 `/blume-search.json` 提供的 JSON 索引，并在浏览器中查询它 —— 即时、纯客户端，并且在 `blume dev` 中随着你编辑而实时更新。没有密钥，没有服务。完全省略 `search` 就会选中它；只有在你想显式写出时才写：
+
+```ts blume.config.ts lineNumbers
+import { orama } from "blume/search";
+
+search: orama(),
+```
+
+#### 非拉丁文字
+
+Orama 的标准分词器只保留基本的拉丁字母、数字和少数几个带变音符的元音，因此其他任何文字系统中的文本 —— 日文、中文、韩文和泰文，俄文、希腊文、希伯来文和印地文同样如此 —— 否则会完全匹配不到任何结果。Blume 为你处理好这一点：当 [`i18n.defaultLocale`](/docs/content/i18n)解析为非拉丁文字时，索引会切换到按词切分的分词器（基于浏览器和 Node 原生的 `Intl.Segmenter`）。只需声明你站点的语言：
+
+```ts blume.config.ts lineNumbers
+i18n: {
+  defaultLocale: "ja",
+  locales: [{ code: "ja", label: "日本語" }],
+}
+```
+
+同一个分词器同时服务搜索对话框、MCP server 的 `search_docs` 工具和 assistant 的依据注入。做决定的是文字系统，而不是语言名称 —— `az-Cyrl` 会被切分，而 `sr-Latn` 不会 —— 而且整个索引由 default locale 决定：在多语言站点上，每个页面都共用默认 locale 的分词器。默认 locale 是非拉丁文字时这样做是安全的，因为拉丁单词在切分后依然完整，因此英文页面仍能与默认语言一起被搜到。反过来则不成立：在拉丁默认的站点上，非拉丁语言的译文无法被搜到。大量依赖变音符的拉丁文字语言（越南语，或用拉丁字母书写的塞尔维亚语）在标准分词器下表现也较差，因为它只折叠少数几个带变音符的元音，其余则会在词内切分。
+
+日文和中文则更进一步。仅靠切分会把一个复合词按组成部分索引 —— 資金決済法 被拆成 資金、決済 和 法 —— 这会让某个只是零散提到各部分的页面排在真正讲这个词的页面之前。因此汉字、平假名和片假名会按相互重叠的字符对来索引，查询这些索引时会优先返回同时含有这些字符对的页面，当没有页面包含全部字符对时则放宽为任意配对匹配，因此输入一整句话仍能返回最接近的页面。韩文和泰文保留它们的切分结果。
+
+### FlexSearch
+
+第二个无需密钥的纯客户端选项。它复用 Orama 提供的同一个 `/blume-search.json` 索引，并在浏览器中构建一份 [FlexSearch](https://github.com/nextapps-de/flexsearch)文档索引。在 `blume dev` 和 `blume build` 中都能工作。
+
+FlexSearch 没有对应的切分钩子，因此对于使用非拉丁文字的站点，请优先选择 Orama（默认）或 [Pagefind](#pagefind)，后者的 `pagefind_extended` 二进制能索引广泛的语言集合，并原生切分中文、日文和韩文。
+
+```ts blume.config.ts lineNumbers
+import { flexsearch } from "blume/search";
+
+search: flexsearch(),
+```
+
+### Pagefind [#pagefind]
+
+对于规模极大的文档，可以选用 [Pagefind](https://pagefind.app)。它索引你构建后的 HTML，并按需分片加载索引，因此无论站点多大，初始负载都很小。
+
+```ts blume.config.ts lineNumbers
+import { pagefind } from "blume/search";
+
+search: pagefind(),
+```
+
+Pagefind 只在 `blume build` 期间运行，因此使用该适配器时搜索在 `blume dev` 中不可用。它索引每个文档页面的 article 部分 —— 而不是周围的页头、侧边栏或页脚 —— 因此基于 `PageLayout` 构建的自定义页面、404 页面以及生成的更新日志索引都不会出现在结果中。
+
+### Algolia
+
+浏览器用你的 search-only key 直接查询 [Algolia](https://www.algolia.com)。每次 `blume build` 都会用 `ALGOLIA_ADMIN_API_KEY` 中的管理密钥替换索引（若未设置，构建会警告并跳过上传）。整个索引在每次同步时都被整体替换，因此你删除或重命名的页面不会作为陈旧结果残留。同步还会把 `filterOnly(locale)` 和 `filterOnly(version)` 加入索引的 `attributesForFaceting`，同时保留你自己声明的任何分面 —— 因为对话框会按语言和文档版本限定结果，而在 Algolia 上，对一个未声明用于 faceting 的属性做过滤会匹配不到任何东西。
+
+```ts blume.config.ts lineNumbers
+import { algolia } from "blume/search";
+
+search: algolia({
+  appId: "YOUR_APP_ID",
+  apiKey: "YOUR_SEARCH_ONLY_KEY", // 公开
+  indexName: "docs",
+}),
+```
+
+### Orama Cloud
+
+托管版 Orama。浏览器用公开 API key 查询你的索引端点；`blume build` 则用 `ORAMA_PRIVATE_API_KEY` 把记录推送到索引。设置 `indexId` 以启用同步。
+
+```ts blume.config.ts lineNumbers
+import { oramaCloud } from "blume/search";
+
+search: oramaCloud({
+  endpoint: "https://cloud.orama.run/v1/indexes/your-index",
+  apiKey: "YOUR_PUBLIC_API_KEY",
+  indexId: "your-index-id", // 用于构建时同步
+}),
+```
+
+### Typesense
+
+自托管或云端 [Typesense](https://typesense.org)。浏览器用 search-only key 查询集合；`blume build` 会重建集合并用 `TYPESENSE_ADMIN_API_KEY` 导入文档。每次同步都会丢弃并重建集合，因此删除或重命名的页面不会作为陈旧结果残留 —— 如果你手动调整过集合设置，请在构建后重新应用。
+
+```ts blume.config.ts lineNumbers
+import { typesense } from "blume/search";
+
+search: typesense({
+  host: "xyz.a1.typesense.net",
+  collection: "docs",
+  apiKey: "YOUR_SEARCH_ONLY_KEY", // 公开
+  // port + protocol 默认为 443 / https
+}),
+```
+
+### Mixedbread [#mixedbread]
+
+通过 [Mixedbread](https://www.mixedbread.com) 实现语义搜索。查询会经过生成的 `/api/search` 端点代理，该端点持有你的密钥，因此这个适配器**要求服务端输出**：需要来自 `blume/deploy` 的主机适配器，例如 `deployment: vercel()`（见[服务端渲染](/docs/deployment#server-rendering)）。该端点读取 `MIXEDBREAD_API_KEY`。在构建中用 Mixedbread CLI 把内容同步到存储，例如 `mxbai vs sync <STORE_ID> ./content --ci`。
+
+```ts blume.config.ts lineNumbers
+import { mixedbread } from "blume/search";
+
+search: mixedbread({
+  storeId: "YOUR_STORE_ID",
+}),
+```
+
+### 关闭搜索
+
+```ts blume.config.ts lineNumbers
+search: false,
+```
+
+如果你仍希望 `indexing` 对 MCP server 的索引生效，请在对象形式中改设 `provider: false`。
+
+## 排除页面
+
+只有可索引的页面才会被搜索。当页面在 frontmatter 中设置了 `search.exclude` 时，它会被排除在索引之外：
+
+```yaml
+search:
+  exclude: true
+```
+
+[隐藏页面](/docs/content/navigation#hidden-pages)默认也会被排除。若仍想索引它们，请显式开启：
+
+```ts blume.config.ts lineNumbers
+search: {
+  indexing: { includeHiddenPages: true },
+},
+```

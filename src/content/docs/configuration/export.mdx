@@ -1,0 +1,50 @@
+---
+title: 导出
+description: 在目录下方为读者提供 PDF 与 EPUB 导出能力，完全在客户端完成
+source: https://useblume.dev/docs/configuration/export
+---
+
+Blume 可以在目录下方添加一个 **Export** 操作（见[页面操作](/docs/content/navigation#page-actions)），让读者把当前页面保存为 **PDF** 或 **EPUB**。它默认关闭，且完全在客户端完成 —— 没有服务端，[静态](/docs/deployment)构建依然是静态的。
+
+## 启用
+
+一个开关即可同时启用两种格式：
+
+```ts blume.config.ts
+export: true,
+```
+
+如果只想提供其中一种格式，改为传入一个对象：
+
+```ts blume.config.ts
+export: {
+  pdf: true,
+  epub: false,
+},
+```
+
+你省略掉（或设为 `false`）的格式不会出现在菜单里。两种都关闭时（默认值），**Export** 操作根本不会出现。
+
+## PDF
+
+**Export to PDF** 会打开浏览器的打印对话框，并使用一份打印样式表把站点外壳 —— 页头、侧边栏、导航 —— 剥离掉，只留下正文。选择 **Save as PDF** 即可完成。
+
+由于它打印的是带完整样式的实时页面，导出结果会保留清晰、可选中的文字、真实字体以及带语法高亮的代码。它不依赖任何东西，在开发环境、生产环境和静态托管上都表现一致。
+
+:::note
+PDF 导出走的是浏览器原生的打印对话框，因此 "Save as PDF" 的具体措辞和可选项取决于浏览器。在对话框中开启 **Background graphics**，才能保留代码块和提示框的背景。
+:::
+
+## EPUB
+
+**Export to EPUB** 会在浏览器中生成当前页面的自包含 `.epub` 文件并触发下载 —— 可以直接放进 Apple Books、Calibre 或任何电子阅读器。生成器只在读者点击 Export 时才加载，因此绝不会拖慢你站点的其余部分。
+
+为了让文件在没有样式表、也没有 JavaScript 的设备上依然可读，Blume 会把页面重写为干净的独立 HTML：带语法高亮的代码变为纯等宽文本，装饰性图标和复制按钮被移除，间距、代码块和表格则由内置的电子阅读器样式表负责处理。
+
+## 导出的内容
+
+两种格式导出的都是读者正在查看的**单个页面**，而不是整个站点 —— 这与该操作的位置一致，它就在该页目录的下方。
+
+:::note
+EPUB 里没有 JavaScript 来切换标签页，因此带标签页的内容 —— 例如 [package-install](/docs/content/syntax) 代码块和代码组 —— 会被展开，一次性展示所有面板。客户端渲染的嵌入内容（例如 Mermaid 图）不会包含在内。
+:::

@@ -1,0 +1,189 @@
+---
+title: 常见问题
+description: 关于 Blume 的常见问题解答
+source: https://useblume.dev/docs/faq
+---
+
+这里汇集经常被问到的问题的答案。还没找到你要的？[提一个 issue](https://github.com/haydenbleasel/blume/issues)，或者问问页面内的 assistant。
+
+## Blume 与 Mintlify、Fumadocs 等有什么不同？
+
+大多数文档工具都落在两个极端之一。像 Mintlify 这样的**托管平台**能很快给你一个打磨好的结果，但构建和托管都是他们的服务 —— 你在他们的系统里写作，部署到他们的基础设施上。像 Fumadocs、Nextra 或 Docusaurus 这样的**组件库和 starter** 是开源且灵活的，但他们会塞给你一个应用（一个 Next.js 或 React 项目），你得在写第一个字之前和之后都去脚手架、接线并维护它。
+
+Blume 走第三条路：**框架就是模板。** 你把一个装满 Markdown 的文件夹指给它，它就生成并驱动整个站点 —— 导航、搜索、主题、Open Graph 图片、SEO 和 AI 端点 —— 你不需要拥有任何应用。它完全开源且可自托管，所以既没有托管服务也没有厂商锁定，但同样也没有样板代码要维护。
+
+|  | Blume | Mintlify | Fumadocs / Nextra / Docusaurus |
+| --- | --- | --- | --- |
+| **模式** | 零配置框架；只有内容 | 托管平台 | 库 + 你要搭脚手架的应用 |
+| **源码** | 开源（MIT） | 闭源核心 | 开源 |
+| **托管** | 任意位置 —— 静态或服务器函数 | 他们的托管基础设施 | 任意位置；你自己构建和部署 |
+| **你要维护** | 你的 Markdown | 你的 Markdown + 平台配置 | 你的 Markdown + 围绕它的那个应用 |
+| **渲染** | Astro；核心主题零客户端 JS | 他们的运行时 | React/Next.js 运行时 |
+| **AI 功能** | `llms.txt`、原始 Markdown、页面内 assistant、MCP —— 内置，无托管服务 | 内置（托管） | 自备 |
+
+有几点后果值得单独指出：
+
+- **产物归你所有。** `blume build` 产出的是一个普通站点，你可以把它托管在 Vercel、Netlify、Cloudflare、S3 或你自己的机器上。没有任何数据回传。
+- **没有锁定，两条出路。** 你的内容是可移植的 Markdown，而 `blume eject` 会把项目变成一个独立的 Astro 应用，在你想完全掌控时它依然使用 `blume` 包。
+- **默认就快。** 核心主题不含 React 并渲染静态 HTML，所以页面无需调优就能在 Core Web Vitals 上拿到好成绩。只有在需要时你才会开启服务端功能（assistant、MCP）。
+- **类型安全的配置。** `blume.config.ts` 和每一个 `meta.ts` 都是由 schema 校验的真正 TypeScript —— 而不是弱类型的 YAML。
+
+:::note
+这并不是「比什么都好」—— 当你想要一个托管好的产品，或想要对应用的完全掌控时，托管平台和完整框架才是正确选择。Blume 是给那些既不想要拥有平台、也不想拥有管道设施，却仍需要一个生产级文档站的团队。
+:::
+
+更长的版本见[为什么会有 Blume](/docs)。
+
+## Blume 免费且开源吗？
+
+是的 —— Blume 采用 MIT 许可，免费。你安装 `blume` 包，把内容留在自己的仓库里，并把构建产物托管在任何你喜欢的地方。没有付费档、没有按人计费，也不需要注册账号。源码在 [GitHub](https://github.com/haydenbleasel/blume)。
+
+## 我需要了解 Astro、React 或 Tailwind 吗？
+
+不需要。一个装满 Markdown 的文件夹就是一个完整站点 —— 导航、搜索和主题要么被推断出来，要么用几个 token 设定。只有当你想做定制时才会触及底层技术栈：[交互岛](/docs/content/islands)（React）、[组件覆盖](/docs/configuration/customization) 或[主题 token](/docs/configuration/theming)（Tailwind）。即便如此，[`blume.config.ts`](/docs/configuration) 也是有类型的，所以你的编辑器会引导你。
+
+## 我可以用 React 组件和 MDX 吗？
+
+可以。任意页面都可以是 `.md` 或 `.mdx`，而 MDX 让你[无需 import](/docs/content/components)就能放入内置组件。你还可以添加自己的 `.tsx`/`.jsx` [交互岛](/docs/content/islands)。只有当你的项目用到 React 时，Blume 才会开启它 —— 项目里存在任何 `.tsx` 或 `.jsx` 文件（包括你的交互岛）、一个 React 的 [`<Component>`](/docs/content/components#component) 示例、一处[组件覆盖](/docs/configuration/customization)，或[assistant](/docs/configuration/assistant) —— 所以没有这些的站点不会带上任何框架 JavaScript。
+
+## 我能部署到哪里？
+
+任何地方。`blume build` 默认输出静态 HTML，你可以从任意静态托管或 CDN 提供它 —— Vercel、Netlify、Cloudflare Pages、GitHub Pages、S3 或你自己的服务器。仅服务端的特性（assistant、MCP server、按需渲染）需要服务端输出：把来自 `blume/deploy` 的一个托管适配器 —— `vercel()`、`netlify()`、`cloudflare()` 或 `node()` —— 指定为 `deployment`。见[部署](/docs/deployment)。
+
+## 搜索需要托管服务吗？
+
+不需要。[Orama](/docs/configuration/search) 会构建一份本地索引，在开发和生产环境中都能工作，没有任何东西需要托管或付费。对于非常大的站点，[Pagefind](/docs/configuration/search#pagefind) 只需换一个适配器：`search: pagefind()`。无论用哪一个，索引都会随你的站点一起发布。
+
+## 我该怎么定制外观？
+
+从[主题 token](/docs/configuration/theming) 开始 —— 强调色、字体、圆角，以及一个用于处理 Tailwind 能表达的一切其它样式的 `theme.css`。想更进一步，可以[覆盖内置组件](/docs/configuration/customization)或添加[自定义页面](/docs/configuration/customization#custom-pages)。当你想要 Astro 项目本身时，[`blume eject`](/docs/configuration/customization#eject) 会交给你一个独立应用，且它依然使用 `blume` 包。
+
+## 为什么 oxfmt / Ultracite 会把我的指令压成一行？
+
+如果你用 [Ultracite](https://www.ultracite.ai)（它跑的是 oxlint + [oxfmt](https://oxc.rs)）来格式化 Markdown —— Blume 自己也这么做 —— 你可能会发现容器指令在一次格式化之后被压成了单行：
+
+```md
+:::note
+用 blume dev 重新生成项目。
+:::
+```
+
+变成了
+
+```md
+:::note 用 blume dev 重新生成项目。 :::
+```
+
+一旦开头的 `:::note` 围栏和正文连成了一行，它就不再是指令，于是会作为字面文本渲染，而不是一个[提示框](/docs/content/syntax#callouts)。
+
+### 为什么会这样
+
+这是 oxfmt 的 Markdown 格式化器里的一个 bug（继承自 Prettier 的 Markdown printer —— 见 [prettier/prettier#19040](https://github.com/prettier/prettier/pull/19040)）。当它换行正文时，会把 `:::` 围栏行当成普通文本，并把它们与相邻行连起来，于是指令就坏了。它影响所有类型的容器指令 —— `:::note`、`:::tip`、`:::info`、`:::warning`、`:::danger`、`:::success`。
+
+我们在上游的 [oxc-project/oxc#24096](https://github.com/oxc-project/oxc/issues/24096) 报告了它；在那里修好之前，下面的补丁是变通方案。
+
+### 修复办法
+
+给 oxfmt 打补丁，让它保留紧挨着 `:::` 围栏的那个换行。Blume 在自己的仓库里带了同样的修复，你可以把它应用到任何项目里。
+
+1. 把补丁保存为 `patches/oxfmt@0.67.0.patch`：
+
+   ```diff patches/oxfmt@0.67.0.patch
+   diff --git a/dist/markdown-BMigo7Hm.js b/dist/markdown-BMigo7Hm.js
+   index bc9037f6c0de5516b139d8cdb195b1e25cd33bc0..a02c284e28bb535f9964a8a086ebb6549657e416 100644
+   --- a/dist/markdown-BMigo7Hm.js
+   +++ b/dist/markdown-BMigo7Hm.js
+   @@ -4872,7 +4872,43 @@ function lu(e, t, r) {
+   		case "sentence": return Oh(e, r);
+   		case "word": return t.parser !== "mdx" ? zh(e, t) : Uh(e);
+   		case "whitespace": {
+   -			let { next: a } = e, u = a && /^>|^(?:[*+-]|#{1,6}|\d+[).])$/.test(a.value) && !NE(e) && !(t.proseWrap === "preserve" && RE(e)) ? "never" : t.proseWrap;
+   +			let { next: a, previous: oxfmtFencePrev } = e;
+   +			// Preserve line breaks that sit directly against a `:::` container
+   +			// directive fence, so `proseWrap: "never"` keeps the opening/closing
+   +			// fence on their own lines instead of joining them into the prose (which
+   +			// breaks the directive). Ordinary prose still wraps per proseWrap.
+   +			// See prettier/prettier#19040.
+   +			let oxfmtIsFence = (w) => w != null && typeof w.value === "string" && w.value.startsWith(":::");
+   +			// A titled directive (`:::warning[Heads up]`) parses its `[title]` as a
+   +			// linkReference between two sentence nodes at the paragraph level: the
+   +			// fence word ends the sentence before the reference, and the body's
+   +			// leading newline opens the sentence after it. So when this whitespace
+   +			// starts its sentence, climb to the paragraph and check whether the two
+   +			// preceding siblings are a (link) reference and a sentence ending in a
+   +			// `:::` fence word.
+   +			let oxfmtPrevIsTitledFence = !1;
+   +			if (oxfmtFencePrev == null && e.index === 0 && e.grandparent != null && Array.isArray(e.grandparent.children)) {
+   +				let oxfmtSibs = e.grandparent.children, oxfmtSentIdx = oxfmtSibs.indexOf(e.parent);
+   +				if (oxfmtSentIdx >= 2) {
+   +					let oxfmtLink = oxfmtSibs[oxfmtSentIdx - 1], oxfmtBefore = oxfmtSibs[oxfmtSentIdx - 2];
+   +					let oxfmtLastWord = oxfmtBefore && oxfmtBefore.type === "sentence" && Array.isArray(oxfmtBefore.children) ? oxfmtBefore.children[oxfmtBefore.children.length - 1] : null;
+   +					oxfmtPrevIsTitledFence = oxfmtLink != null && (oxfmtLink.type === "linkReference" || oxfmtLink.type === "link") && oxfmtIsFence(oxfmtLastWord);
+   +				}
+   +			}
+   +			// The plain-markdown parser keeps a titled fence's `[title]` as literal
+   +			// words, so the whole directive is one sentence. For a newline
+   +			// whitespace, walk back to the start of its visual line within the
+   +			// sentence; a line led by a `:::` word is a fence whose break must stay.
+   +			if (!oxfmtPrevIsTitledFence && e.node.value.includes("\n") && e.parent != null && Array.isArray(e.parent.children)) {
+   +				let oxfmtLineFirst = null;
+   +				for (let oxfmtJ = e.index - 1; oxfmtJ >= 0; oxfmtJ--) {
+   +					let oxfmtSib = e.parent.children[oxfmtJ];
+   +					if (oxfmtSib.type === "whitespace" && typeof oxfmtSib.value === "string" && oxfmtSib.value.includes("\n")) break;
+   +					oxfmtLineFirst = oxfmtSib;
+   +				}
+   +				oxfmtPrevIsTitledFence = oxfmtIsFence(oxfmtLineFirst);
+   +			}
+   +			let u = oxfmtIsFence(oxfmtFencePrev) || oxfmtPrevIsTitledFence || oxfmtIsFence(a) ? "preserve" : a && /^>|^(?:[*+-]|#{1,6}|\d+[).])$/.test(a.value) && !NE(e) && !(t.proseWrap === "preserve" && RE(e)) ? "never" : t.proseWrap;
+   			return ou(e, n.value, u, !1, t);
+   		}
+   		case "emphasis": {
+   ```
+
+2. 用包管理器的 `patchedDependencies` 注册它。用 Bun 的话，在 `package.json` 里加上：
+
+   ```json package.json
+   {
+     "patchedDependencies": {
+       "oxfmt@0.67.0": "patches/oxfmt@0.67.0.patch"
+     }
+   }
+   ```
+
+   用 pnpm 的话，加到 `pnpm-workspace.yaml`（pnpm 11 及更新版本不再从 `package.json` 读取设置）：
+
+   ```yaml pnpm-workspace.yaml
+   patchedDependencies:
+     oxfmt@0.67.0: patches/oxfmt@0.67.0.patch
+   ```
+
+3. 重新安装，让补丁被应用：
+
+   ```package-install
+   bun install
+   ```
+
+:::warning[版本已固定]
+该补丁针对某个特定的 oxfmt 构建 —— 它的 diff 引用了一个文件名按版本做哈希的文件（`dist/markdown-*.js`）。当你升级 oxfmt 时，请重新生成补丁（例如 `bun patch oxfmt`），或先确认上游的修复是否已经落地、补丁是否已不再需要。
+:::
+
+## 为什么 Knip 报告我的 `blume.config.ts` 依赖未被使用？
+
+[Knip](https://knip.dev) 只会跟踪它已知入口文件的导入，而它是从内置插件里学到这些入口的。目前还没有 Blume 插件，而 Knip 的 Astro 插件也不会因此打开开关：它在你的 `package.json` 里找 `astro`，但 Blume 项目依赖的是 `blume`，且生成的 `.blume/` Astro 项目被 gitignore 了，所以 Knip 从来看不到它。没有任何地方引用 `blume.config.ts`，于是它导入的每个包都会被报告为未使用。
+
+把 Blume 从你的项目根目录加载的那些文件注册为入口。在 `knip.json` 里：
+
+```json knip.json
+{
+  "entry": [
+    "blume.config.{ts,mjs,js}",
+    "components.{ts,tsx}",
+    "islands/**/*.{ts,tsx}",
+    "pages/**/*"
+  ]
+}
+```
+
+在 monorepo 里，请把同一份 `entry` 列表放到 `workspaces` 中 docs workspace 之下。凡是你不用的约定都把对应那行删掉 —— 用于[组件覆盖](/docs/configuration/customization#component-overrides)的 `components.ts`、用于[交互岛](/docs/configuration/customization#interactive-islands)的 `islands/`，以及用于[自定义页面](/docs/configuration/customization#custom-pages)的 `pages/`（如果你改过 `content.pages`，最后那行要相应调整）。
+
+Knip 只能跟踪真实的导入。一个只出现在字符串里的包 —— 比如一个调用 `injectScript("page", "import('some-package')")` 的 [Astro 集成](/docs/configuration/customization#astro-integrations) —— 仍然需要一条 `ignoreDependencies` 条目。

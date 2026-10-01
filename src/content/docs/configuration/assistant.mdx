@@ -1,0 +1,510 @@
+---
+title: 助手
+description: 页面内聊天助手，由流式服务端端点与 AI SDK 支撑，可切换到 OpenAI、Anthropic、Gemini 等多种模型后端
+source: https://useblume.dev/docs/configuration/assistant
+---
+
+加入一个能在页面内聊天面板中回答读者问题的助手，背后是一条流式服务端端点和 [AI SDK](https://ai-sdk.dev)。它需要手动启用，在打开之前静态文档就完全保持静态：
+
+```ts blume.config.ts lineNumbers
+ai: {
+  assistant: {
+    enabled: true,
+  },
+}
+```
+
+不做任何其它配置时，答案会通过 [Vercel AI Gateway](#adapters)以 `openai/gpt-5.5` 流式返回。想换一个模型或提供方，需要用[适配器](#adapters)。
+
+## 建议问题 [#suggested-questions]
+
+用几条起始提示语填充空状态。每一条都会渲染成一个可点击的建议 —— 点一下就发送 —— 标签旁还可以放一个可选的 [Lucide 图标](/docs/content/components#icon)：
+
+```ts blume.config.ts lineNumbers
+ai: {
+  assistant: {
+    enabled: true,
+    suggestions: [
+      { label: "Blume 是什么？", icon: "rocket" },
+      { label: "如何编写一个文档页面？", icon: "file-text" },
+      { label: "如何配置主题？", icon: "settings" },
+    ],
+  },
+}
+```
+
+`label` 是被提出的问题；`icon` 可选。不设置 `suggestions`（或设为空），面板就会以一个普通输入框打开。
+
+## 询问代码 [#asking-about-code]
+
+启用助手后，每个代码块在复制按钮旁都会多出一个 **提问**按钮。它会带着这段代码打开助手，代码以 chip 的形式显示在输入框上方，读者可以问它是做什么的、为什么会失败，或者该怎么改造。不带问题直接发送时，它会让助手解释这段代码。代码会作为围栏代码块跟在问题之后发给模型，最长 6,000 个字符。
+
+基于 `useAssistant` 自建的聊天界面也能做到同样的事：监听 `window` 上的 `blume:open-assistant` 事件，其 `detail.code` 里放着这段代码块的 `language`、`source` 和 `title`。
+
+## 联系支持 [#contact-support]
+
+当文档答不上来时，把读者交给真人。设置 `support`，一旦有了对话，面板就会在下方显示一个 **联系支持**链接：
+
+```ts blume.config.ts lineNumbers
+ai: {
+  assistant: {
+    enabled: true,
+    support: "mailto:help@example.com", // 或 "https://example.com/support"，或 "/support"
+  },
+},
+```
+
+一个 `mailto:` 地址会打开一封以对话内容为正文的邮件，读者不必再解释一遍（很长的对话只保留最近的几轮）。一个 URL 或你站点上的某个页面会收到作为 `thread` 查询参数的对话 ID。助手的 `ask`、`ask_answer` 和 `ask_error` [分析事件](#analytics)带上同一个 `thread`，因此你的支持团队能在分析数据里找到这次对话。
+
+## 自定义指令 [#custom-instructions]
+
+用 `instructions` 加入你自己的系统提示词 —— 身份、语言、语气，或任何助手应当始终记住的其它设定：
+
+```ts blume.config.ts lineNumbers
+ai: {
+  assistant: {
+    enabled: true,
+    instructions:
+      "你是 Acme 的文档助手 Bloomy。请用提问时使用的语言回答，并把回答控制在三段以内。",
+  },
+}
+```
+
+你的文字是**追加到**内置指令之后，而不是替换它们：内置部分承载着[接地](#grounding)约定 —— 只依据检索到的页面作答，并以 Markdown 链接引用它们 —— 聊天面板的引用功能依赖于此，所以无论你加什么，它都会保持完整。
+
+## 接地 [#grounding]
+
+助手是**以你的文档为依据**的。对每个问题，它会检索出最相关的页面 —— 使用与页面内搜索相同的词法 [Orama](/docs/configuration/search) 索引 —— 并把它们注入模型的系统提示词，因此答案来自你的内容，而不是模型自身的知识。助手会被要求只依据检索到的页面作答、在文档没有覆盖时明说，并引用它所依据的页面。
+
+读者当前所在的页面会先加入上下文，用来把检索范围限定到该页面的语言 —— 在[带版本](/docs/content/versioning)的站点上，还限定到它的文档版本 —— 让答案与读者所处的文档位置保持相关。检索在请求时执行，数据来自烘焙进构建产物的一份快照，因此不论你用哪个[搜索](/docs/configuration/search)提供方都能工作 —— 即使 `search: false` —— 也无需任何配置。
+
+除 **[Inkeep](#inkeep)** 之外，所有适配器都开启接地 —— Inkeep 会对你在其控制台中建立索引的内容执行自己的检索。
+
+## 搜索与阅读页面 [#searching-and-reading-pages]
+
+检索到的页面只是个起点。助手还可以自己查找：它有一个 `search_docs` 工具用来搜索你的文档，还有一个 `read_page` 工具用来读取整个页面，当摘录不足以回答时就会用到。它可以在一个问题之内先搜索、读一两页、再搜索一次，然后才作答。工具调用在你的服务器上针对与接地相同的那份快照执行，遵循读者的语言与文档版本，并且不会传到读者那里；他们只看得到答案。
+
+对于模型支持工具调用的适配器，这些工具默认开启。对于 [OpenAI 兼容端点](#openai-compatible-endpoints)它们默认关闭，因为自托管模型未必支持。设置 `tools` 可以改变其中任何一种默认值：
+
+```ts blume.config.ts lineNumbers
+ai: {
+  assistant: {
+    enabled: true,
+    provider: openai({ baseUrl, model, apiKeyEnv }),
+    tools: true, // 这个模型支持工具调用
+  },
+}
+```
+
+每个问题最多经过五个模型步骤：至多四轮工具调用，然后才是答案。使用 `tools: false` 时，助手只依据检索到的页面作答，就像工具出现之前那样。
+
+## 检索量 [#retrieval-size]
+
+一个问题携带多少文档，是影响读者等待第一个字时长最大的因素：模型会读完每一个被注入的字符，然后才吐出第一个 token。在托管的前沿模型上这几乎察觉不到，但在自托管后端上它就是主要开销。`retrieval` 用来控制这个量：
+
+```ts blume.config.ts lineNumbers
+ai: {
+  assistant: {
+    enabled: true,
+    retrieval: {
+      maxResults: 3, // 每个问题检索到的页面更少
+      excerptChars: 1200, // 每页的摘录更短
+      contextBudget: 3000, // 注入总量更小
+    },
+  },
+}
+```
+
+| 选项 | 默认值 | 说明 |
+| --------------- | ------- | ----------------------------------------------- |
+| `maxResults`    | `6`     | 每个问题检索到的文档数。                       |
+| `excerptChars`  | `2000`  | 从每个检索到的页面保留的字符数。               |
+| `contextBudget` | `10000` | 所有摘录合计注入的字符数。                     |
+
+这三者不能互相替代。`contextBudget` 给整个注入量封顶，`excerptChars` 决定在单个长页面里摘录能深入到多深 —— 当答案全在一个页面里、而摘录把它截断了，就把它调大 —— 而 `maxResults` 给检索加入的页面数量封顶。读者正在看的那个页面会叠加在检索到的页面之上被注入，因此一个答案最多能比 `maxResults` 多引用一页。
+
+默认值适合托管模型。如果你在自己的硬件上提供服务，并且首 token 时间比召回率更重要，就调低它们；无论哪种情况答案都保持有据可依，而且助手会被要求在内容未被覆盖时明说，而不是自行填补。
+
+## 外部端点 [#external-endpoint]
+
+已经有 AI 后端 API 了？把面板指向它，同时让文档构建保持静态：
+
+```ts blume.config.ts lineNumbers
+ai: {
+  assistant: {
+    enabled: true,
+    endpoint: "https://api.example.com/v1/docs/ask",
+  },
+}
+```
+
+Blume 发送的 `POST` 请求体与它内置路由的完全一致：
+
+```json
+{
+  "messages": [{ "role": "user", "content": "How do I deploy?" }],
+  "page": { "path": "/deployment" }
+}
+```
+
+返回一个成功的响应，其响应体是纯 UTF-8 文本流。如果该端点位于另一个源，就用 CORS 放行文档所在的源：接受 `OPTIONS` 和 `POST`，允许 `content-type` 请求头，并且在预检响应和流式响应上都返回 CORS 响应头。设置了 `endpoint` 后，Blume 会生成聊天界面，但不会生成服务端路由、接地快照、提供方依赖或提供方密钥警告；检索、认证、速率限制、模型访问和引用都由你的后端负责。与它同时设置的适配器会被忽略。
+
+## 跨源调用方 [#cross-origin-callers]
+
+生成的端点会在自己的源上响应页面内的助手。若还想从另一个站点调用它 —— 比如一个带提问框的营销页 —— 把那个站点的源列进 `cors`：
+
+```ts blume.config.ts lineNumbers
+ai: {
+  assistant: {
+    enabled: true,
+    cors: ["https://www.example.com"],
+  },
+}
+```
+
+这样该路由会响应浏览器的 `OPTIONS` 预检，并在每个响应上标出列表中的那个源 —— 无论是流式答案还是错误状态，以便调用方能把被拒绝的响应体与提供方故障区分开。不在列表中的源拿不到任何响应头，仍然受浏览器的同源规则约束。每个条目都会被归约为它的源，所以 `https://www.example.com/docs/` 和 `https://www.example.com` 是一回事。若要允许任意页面调用该路由，就列出 `"*"` 而不是具体源。
+
+调用方发送的 `POST` 请求体与[外部端点](#external-endpoint)约定中描述的完全一致，读回的也是同样的文本流。以 JSON 发送，并带上 `content-type: application/json` 头：
+
+```ts
+const response = await fetch("https://docs.example.com/api/ask", {
+  body: JSON.stringify({
+    messages: [{ role: "user", content: "How do I deploy?" }],
+  }),
+  headers: { "content-type": "application/json" },
+  method: "POST",
+});
+```
+
+内容类型很重要：Astro 的跨站请求检查会在路由运行之前，就以 403 拒绝没有内容类型的跨源 `POST`，或 `text/plain` 这类表单式内容类型；而那个响应不带 CORS 响应头，因此浏览器会把它报告为网络错误而不是某个状态码。预检会放行调用方所请求的任何请求头，所以一个会自行添加响应头的 fetch 封装无需额外配置。
+
+`cors` 只影响生成的路由；使用外部 `endpoint` 时，CORS 是那个后端自己的事，两者同时设置属于配置错误。无论哪种情况，该端点都不做认证，因此[速率限制](#rate-limiting)的建议同样适用于跨源流量。
+
+## 需要服务端输出 [#server-output-required]
+
+Blume 内置的助手后端是一条服务端路由（`POST /api/ask`），因此它无法在静态构建上运行。指定一个来自 `blume/deploy` 的宿主适配器，即可切换到服务端输出：
+
+```ts blume.config.ts lineNumbers
+import { vercel } from "blume/deploy";
+
+export default defineConfig({
+  deployment: vercel(),
+});
+```
+
+在启用助手又没有外部 `endpoint` 的情况下做静态构建，构建会立刻失败，并提示你去设置宿主适配器。适配器列表见[部署](/docs/deployment)。
+
+## 适配器 [#adapters]
+
+`provider` 决定由哪个后端作答。它的值是一个**适配器**：一个从 `blume/ai` 导出的函数，接受该后端自己的选项，返回一份普通描述对象，Blume 把它写进生成的路由。每个适配器各自掌管自己的模型、读取密钥的环境变量、如何映射[推理](#reasoning)，以及需要哪个提供方 SDK —— 因此不存在一份需要在各后端之间对齐的公共字段集合：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { anthropic } from "blume/ai";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      provider: anthropic({ model: "claude-sonnet-5" }),
+    },
+  },
+});
+```
+
+| 适配器 | 作答所用 | 密钥环境变量 | 需安装的 SDK |
+| --- | --- | --- | --- |
+| [`openai()`](#openai) | 任意 [OpenAI](https://platform.openai.com) 模型，或任意 [OpenAI 兼容端点](#openai-compatible-endpoints) | `OPENAI_API_KEY` | `@ai-sdk/openai`（配合 `baseUrl` 时用 `@ai-sdk/openai-compatible`） |
+| [`anthropic()`](#anthropic) | 任意 [Claude](https://platform.claude.com) 模型 | `ANTHROPIC_API_KEY` | `@ai-sdk/anthropic` |
+| [`gemini()`](#gemini) | 任意 [Gemini](https://ai.google.dev) 模型 | `GEMINI_API_KEY` | `@ai-sdk/google` |
+| [`grok()`](#grok) | 任意 [xAI](https://x.ai/api) Grok 模型 | `XAI_API_KEY` | `@ai-sdk/xai` |
+| [`gateway()`](#vercel-ai-gateway)（默认） | 通过 Vercel AI Gateway 使用一个 `provider/model` 字符串 | `AI_GATEWAY_API_KEY` | 无需安装 —— Blume 自带 |
+| [`openrouter()`](#openrouter) | 任意 [OpenRouter](https://openrouter.ai) 模型 | `OPENROUTER_API_KEY` | `@openrouter/ai-sdk-provider` |
+| [`llmgateway()`](#llmgateway) | 任意 [LLMGateway](https://llmgateway.io) 模型 | `LLMGATEWAY_API_KEY` | `@ai-sdk/openai-compatible` |
+| [`inkeep()`](#inkeep) | 任意 [Inkeep](https://inkeep.com) QA 模型 | `INKEEP_API_KEY` | `@ai-sdk/openai-compatible` |
+
+`openai()`、`anthropic()`、`gemini()` 和 `grok()` 直接用你的密钥调用提供方自己的 API —— 中间没有任何东西。这些 SDK 是可选的 peer 依赖，因此把适配器需要的那一个加入你的项目即可（比如 `npm install @ai-sdk/anthropic`）。如果缺少它，`blume build` 会在 Vite 运行之前停下，指出缺哪个包以及安装它的命令，[`blume doctor`](/docs/cli/doctor) 也会报告这一项。
+
+适配器返回的描述对象是纯数据 —— 它的种类、选项、读取的环境变量以及所需的 SDK —— 因此生成的路由（以及[抽离](/docs/configuration/customization#eject)出来的那条路由）会把它作为字面量内联进去，并按名字导入提供方的 SDK。请求时没有任何东西去读 `blume.config.ts`，路由里也永远不会写入密钥：适配器只接收保存密钥的环境变量的**名字**，由路由通过 Astro 的 [`getSecret()`](https://docs.astro.build/en/guides/environment-variables/#retrieving-secrets-programmatically) 读取它的值，因此每个部署适配器都以自己的方式提供它 —— Node、Vercel 和 Netlify 上用环境变量，Cloudflare 上用 Worker 的 [bindings](https://docs.astro.build/en/guides/integrations-guide/cloudflare/#environment-variables-and-secrets)。
+
+### OpenAI [#openai]
+
+任意 [OpenAI](https://platform.openai.com) 模型，通过 OpenAI 自家的 AI SDK 提供方直接调用：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { openai } from "blume/ai";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      provider: openai({ model: "gpt-5.5" }),
+    },
+  },
+});
+```
+
+#### OpenAI 兼容端点 [#openai-compatible-endpoints]
+
+任何讲 OpenAI API 的端点 —— 自托管模型、内部网关 —— 同样可以通过 `openai()` 使用：加上它的 `baseUrl`，通常再加上 `apiKeyEnv` 指定保存其密钥的环境变量（默认是 `OPENAI_API_KEY`）。`name` 是 AI SDK 报告的提供方名字，也是该端点读取 [`providerOptions`](#options-every-adapter-takes) 时使用的键；默认是 `openai-compatible`：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { openai } from "blume/ai";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      provider: openai({
+        baseUrl: "https://my-gateway.example.com/v1",
+        apiKeyEnv: "MY_GATEWAY_API_KEY",
+        model: "gpt-4o",
+        name: "my-gateway",
+      }),
+    },
+  },
+});
+```
+
+带 `baseUrl` 时，路由会通过 `@ai-sdk/openai-compatible` 调用该端点的 Chat Completions API，所以请安装这个包而不是 `@ai-sdk/openai`：大多数兼容端点并不提供 OpenAI 的 Responses API。[文档工具](#searching-and-reading-pages)默认关闭，因为自托管模型未必支持工具调用。
+
+:::note
+早期 Blume 版本里的 `openaiCompatible()` 仍然可用：它就是带 `baseUrl` 的 `openai()`，是同一个适配器。
+:::
+
+### Anthropic [#anthropic]
+
+任意 [Claude](https://platform.claude.com) 模型，通过 Anthropic 自家的 AI SDK 提供方直接调用：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { anthropic } from "blume/ai";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      provider: anthropic({ model: "claude-sonnet-5" }),
+    },
+  },
+});
+```
+
+### Gemini [#gemini]
+
+任意 [Gemini](https://ai.google.dev) 模型，通过 Google 自家的 AI SDK 提供方直接调用。密钥是来自 Google AI Studio 的 API key：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { gemini } from "blume/ai";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      provider: gemini({ model: "gemini-3.5-flash" }),
+    },
+  },
+});
+```
+
+### Grok [#grok]
+
+任意 [xAI](https://x.ai/api) Grok 模型，通过 xAI 自家的 AI SDK 提供方直接调用：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { grok } from "blume/ai";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      provider: grok({ model: "grok-4.7" }),
+    },
+  },
+});
+```
+
+### Vercel AI Gateway [#vercel-ai-gateway]
+
+默认选项。`model` 是一个 `provider/model` 字符串，所以换模型只需改这个值（`openai/gpt-5.5`、`anthropic/claude-sonnet-4-5` 等），无需安装任何提供方 SDK。gateway 从你的环境变量中读取 `AI_GATEWAY_API_KEY`，在部署到 Vercel 时会自动接好，在那里它还可以用该部署的 OIDC token 完成认证：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { gateway } from "blume/ai";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      provider: gateway({ model: "anthropic/claude-sonnet-4-5" }),
+    },
+  },
+});
+```
+
+不设置 `provider` 等同于 `gateway({ model: "openai/gpt-5.5" })`。
+
+### OpenRouter [#openrouter]
+
+[OpenRouter](https://openrouter.ai) 上的任意模型，通过它专用的 AI SDK 提供方调用：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { openrouter } from "blume/ai";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      provider: openrouter({
+        model: "anthropic/claude-sonnet-4-5",
+        reasoning: "none",
+      }),
+    },
+  },
+});
+```
+
+### LLMGateway [#llmgateway]
+
+[LLMGateway](https://llmgateway.io) 上的任意模型，通过它 OpenAI 兼容的端点调用：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { llmgateway } from "blume/ai";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      provider: llmgateway({ model: "openai/gpt-5.5" }),
+    },
+  },
+});
+```
+
+当你自己运行 LLMGateway 时，`baseUrl` 会覆盖预设端点（`https://api.llmgateway.io/v1`）。
+
+### Inkeep [#inkeep]
+
+[Inkeep](https://inkeep.com) 会依据你在 Inkeep 控制台中建立索引的内容作答 —— 它执行自己的检索 —— 因此 Blume 让它保持**无接地**：不会注入本站页面的快照，[检索量](#retrieval-size)相关的选项也不适用。它同样没有推理控制，所以该适配器不接受 `reasoning`：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { inkeep } from "blume/ai";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      provider: inkeep({ model: "inkeep-qa-expert" }),
+    },
+  },
+});
+```
+
+`baseUrl` 会覆盖预设端点（`https://api.inkeep.com/v1`）。
+
+### 每个适配器都接受的选项 [#options-every-adapter-takes]
+
+**`apiKeyEnv`** 让适配器改用与默认不同的环境变量 —— `gateway({ apiKeyEnv: "DOCS_GATEWAY_KEY" })` 会读取那个变量而不是 `AI_GATEWAY_API_KEY`，`blume dev`/`build` 中缺少密钥的警告也会检查它。在密钥设置好之前，已部署的路由会以 `503` 应答，并给出指明该变量名的消息。路由最多只读取 64 KB 的请求体，更大的请求一律以 `413` 应答。
+
+**`headers`** 让每次调用都带上静态请求头 —— 比如给共享后端加一个标识调用方的头，让它自己的可观测性或速率限制能把你的文档流量与其他流量区分开：
+
+```ts blume.config.ts lineNumbers
+provider: openai({
+  baseUrl: "https://llm.internal.example.com/v1",
+  apiKeyEnv: "INTERNAL_LLM_API_KEY",
+  model: "gpt-4o",
+  headers: { "X-Caller-Id": "docs" },
+}),
+```
+
+这些值会原样写入生成的路由，因此请把密钥放在 `apiKeyEnv` 里，而不是放在 `headers` 里。API key 的 `Authorization` 头会先被应用，自定义头无法把它挤掉。
+
+**`providerOptions`** 会把其余任何内容按 SDK 自己的结构直接传给 AI SDK 的 [`providerOptions`](https://ai-sdk.dev/docs/foundations/prompts#provider-options) —— 先按提供方、再按选项分层 —— 因此新增的模型控制项永远不需要 Blume 为它单开一个字段：
+
+```ts blume.config.ts lineNumbers
+provider: gateway({
+  model: "openai/gpt-5.5",
+  providerOptions: { openai: { textVerbosity: "low" } },
+}),
+```
+
+Blume 只映射自己具名列出的选项（`model`、`reasoning`、`apiKeyEnv`、`headers`），而 `providerOptions` 原样透传，因此它必须是 JSON —— 它会被内联进路由 —— 并且必须使用底层提供方所期待的键（`openai()` 或 gateway 后面的 OpenAI 模型用 `openai`，`anthropic()` 用 `anthropic`，`gemini()` 用 `google`，`grok()` 用 `xai`，OpenRouter 上用 `openrouter`，OpenAI 兼容端点上则用该适配器的 `name`）。启用助手还会为页面内的交互岛开启 React —— 见[定制](/docs/configuration/customization#interactive-islands)。
+
+## 推理 [#reasoning]
+
+推理模型会先思考再作答，而它们默认思考多少因模型而异。对有接地的文档问答来说，检索到的摘录已经带着答案，因此那大部分思考只是读者在等待的延迟。适配器的 `reasoning` 选项设定模型思考多少：`"none"`、`"minimal"`、`"low"`、`"medium"`、`"high"` 或 `"xhigh"`：
+
+```ts blume.config.ts lineNumbers
+provider: gateway({ model: "openai/gpt-5.5", reasoning: "none" }),
+```
+
+每个适配器都把这个级别作为自己后端的推理控制发送出去，这也是它挂在适配器上而不是挂在 `assistant` 上的原因：
+
+| 适配器 | 该级别最终变成 |
+| --- | --- |
+| `openai()` | OpenAI 的 `reasoning_effort`。带 `baseUrl` 时，它会作为请求中的 `reasoning_effort` 发送，因此该端点必须接受这个参数。 |
+| `anthropic()` | Claude 的思考：在支持自适应思考的模型上是努力程度，在较旧的模型上是思考预算，而 `"none"` 则完全关闭思考。 |
+| `gemini()` | Gemini 的思考级别，或在支持该设置的模型上是思考预算。 |
+| `grok()` | xAI 的推理努力程度，仅在提供该设置的模型上可用。 |
+| `gateway()` | AI SDK 的 [`reasoning`](https://ai-sdk.dev/docs/ai-sdk-core/reasoning) 调用选项，gateway 会把它映射到模型自己的设置 —— 例如 OpenAI 的 `reasoning_effort`。 |
+| `openrouter()` | OpenRouter 的 `reasoning.effort`，设置在模型上。它的提供方会忽略 AI SDK 的调用选项，所以这个级别要放在 OpenRouter 读取它的位置。 |
+| `llmgateway()` | 通过 AI SDK 的调用选项，作为请求中的 `reasoning_effort` 发送。 |
+| `inkeep()` | 不支持。Inkeep 运行自己的 QA 流程，没有推理控制，所以该适配器没有 `reasoning` 选项，设置它属于配置错误。 |
+
+模型必须支持你选的那个级别：OpenAI 会拒绝模型没有提供的级别（`"none"` 和 `"xhigh"` 只存在于部分模型上），所以设置前请先查模型的文档。不设置则保持模型默认值。和[检索量](#retrieval-size)一样，它是在详尽程度与首 token 时间之间做取舍，无论如何答案都保持有据可依。
+
+## 分析 [#analytics]
+
+配置了[分析提供方](/docs/configuration/analytics)之后，助手会通过页面反馈小组件所用的同一个 `track()` 上报使用情况，因此提问会与你的页面浏览量并排出现：
+
+| 事件 | 何时触发 | 属性 |
+| --- | --- | --- |
+| `ask` | 发出一个提问时 | `path`、`questionChars`、`thread` |
+| `ask_answer` | 答案流式输出结束时 | `path`、`questionChars`、`thread`、`ms`、`chars` |
+| `ask_error` | 请求失败、中断或返回空时 | `path`、`questionChars`、`thread`、`ms`、`status` |
+
+`path` 是读者提问时所在的页面（已服务的 pathname，因此在设置了 `base` 时它与反馈小组件和你的页面浏览量一致），`questionChars` 是问题的长度，`thread` 是对话的 ID（读者清空对话时即为新 ID），`ms` 是从发出问题到最后一个数据块的时间，`chars` 是答案的长度。`status` 是 HTTP 状态码：完全没有收到响应时为 `0`（离线、DNS、CORS）；响应本身正常、但数据流在答案中途断开时为 `200` —— 提供方或凭证错误正是这样暴露出来的，因为后端已经发出了响应头 —— 或者什么都没送达时。在答案中途清空对话不会上报其中任何一种结果。
+
+问题的文本永远不会到达提供方：它是读者自由输入的内容（粘贴的密钥、错误日志、姓名），会违反大多数提供方的服务条款和单值大小限制。它只通过 `blume:track` 这个 DOM 事件传递，作为 `detail.props` 里的 `question`，因此你写的监听器可以自行决定把它转发到哪里。基于 `blume/hooks` 中 `useAssistant` 自建的聊天界面上报同样的事件。没有配置提供方时，内置的提供方调用都是空操作，但 `blume:track` 事件仍会触发，因此监听它的自定义集成照样能收到。
+
+## 速率限制 [#rate-limiting]
+
+`POST /api/ask` 端点**不做认证** —— 必须如此，页面内的助手才能调用它。Blume 会校验每个请求 —— 拒绝格式错误的请求体、把它限制在 1–40 条消息、只接受 `user`/`assistant` 角色，以免调用方注入自己的系统提示词、把这条路由挪用成通用 LLM 代理 —— 以限制单次调用能在你的模型上花掉多少。[速率限制](/docs/configuration/rate-limiting)默认开启，它进一步限制单个读者能提多少个问题：超出之后，面板会提示他们几分钟后再试。
+
+## Bot 防护 [#bot-protection]
+
+速率限制按 IP 地址计数，因此一个把问题分散到大量地址上的脚本能绕过它。要拦住脚本，就加入一个来自 `blume/captcha` 的 bot 检查：每次提问之前，面板先从检查中取到一个 token，路由在模型运行之前向提供方验证它。大多数读者根本不会看到挑战；只有在检查没有把握时才会要求点一下。
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { turnstile } from "blume/captcha";
+
+export default defineConfig({
+  ai: {
+    assistant: {
+      enabled: true,
+      captcha: turnstile({ siteKey: "0x4AAAAAAA…" }),
+    },
+  },
+});
+```
+
+| 适配器 | 提供方 | 密钥环境变量 |
+| --- | --- | --- |
+| `turnstile()` | [Cloudflare Turnstile](https://developers.cloudflare.com/turnstile/) | `TURNSTILE_SECRET_KEY` |
+| `hcaptcha()` | [hCaptcha](https://www.hcaptcha.com)，以无感方式运行 | `HCAPTCHA_SECRET_KEY` |
+
+site key 会下发到浏览器，可以安全提交；密钥留在服务器上。对 Turnstile，请在 Cloudflare 控制台里创建一个组件，并选择 **Managed** 或 **Invisible** 模式。在密钥设置好之前，助手会回答「尚未配置」，`blume build` 也会发出警告。提供方的脚本会在读者的第一个问题到来时加载，而不是随页面一起加载。
+
+检查失败时，会给读者显示一条已翻译的「我们无法确认你是真人」提示，路由以 `403` 应答。两家提供方都公开了始终通过的测试密钥，方便在本地试验：Turnstile 的 `1x00000000000000000000BB` 搭配密钥 `1x0000000000000000000000000000000AA`，hCaptcha 的 `10000000-ffff-ffff-ffff-000000000001` 搭配 `0x0000000000000000000000000000000000000000`。
+
+使用[外部端点](#external-endpoint)时，面板仍会发送那个 token，放在请求体的 `captcha` 字段里，由你的后端验证。
+
+该端点会与站点其余的机器可读输出面一起，写进 [agent 可读性清单](/docs/discoverability/agent-discovery#agent-readability)。

@@ -1,0 +1,66 @@
+---
+title: llms.txt
+description: 为编码智能体和聊天助手生成 llms.txt 与 llms-full.txt 两份机器可读文档
+source: https://useblume.dev/docs/discoverability/llms-txt
+---
+
+Blume 会输出机器可读版本的文档，供编码智能体和聊天助手消费。它默认开启；设置 `llmsTxt: false` 即可关闭：
+
+```ts blume.config.ts lineNumbers
+agents: {
+  llmsTxt: false,
+}
+```
+
+启用期间，`blume build` 会向站点根目录写出两个文件：
+
+- **`/llms.txt`** —— 一份紧凑索引：先是站点标题和描述，然后是每个页面的带链接列表并附上摘要，按与侧边栏对应的分区组织 —— 文件夹和分组会变成标题，因此智能体看到的是文档的结构，而不是一整块平铺的内容。
+- **`/llms-full.txt`** —— 全部内容合集：每个页面的完整 Markdown 正文，连同它的源 URL，集中在单个文件里。
+
+草稿、在侧边栏中隐藏的页面（`sidebar.hidden`，或顶层的 `hidden` 简写）以及 `noindex` 页面都会被排除 —— 唯独生成的 API 参考页例外，它们在这两个文件中的去留由下面的 `openapi` 决定，而不是由 `noindex` 决定。设置 [`deployment.site`](/docs/deployment)，让链接和源 URL 解析为绝对地址。
+
+## 选项
+
+`llmsTxt` 也可以写成对象形式，用各个开关控制文件包含什么。如果你的 [API 参考](/docs/references/openapi)记录的是一份占位或示例用的规范，设置 `openapi: false` 让它生成的页面不进这两个文件：
+
+```ts blume.config.ts lineNumbers
+agents: {
+  llmsTxt: {
+    enabled: true, // 默认值
+    openapi: false, // 排除生成的 API 参考页
+  },
+}
+```
+
+对象形式还接受 `details`：放在 `llms.txt` 中标题和摘要之后、页面分区之前的 Markdown —— 即 [llms.txt 规范](https://llmstxt.org)中那个自由格式的 “details” 块。这里正是告诉智能体_何时_该用你的产品、以及怎么调用它的地方，就绪度扫描工具会显式查找这些内容；安装命令和包名也该写在这里。规范允许在那里放任意 Markdown，唯独不允许标题（标题要留给后面的链接分区），所以请写成段落或列表：
+
+```ts blume.config.ts lineNumbers
+agents: {
+  llmsTxt: {
+    details:
+      "Reach for Acme when a project needs hosted feature flags. Install the CLI with `npm install -g acme`; the API reference below covers every endpoint.",
+  },
+}
+```
+
+## 自动生成的分区 [#generated-sections]
+
+`llms.txt` 以两个自动生成、无需任何配置的分区收尾。**Agent skills** 列出[站点自己的 skill](/docs/discoverability/agent-discovery#your-sites-skill)，以及每个通过 [`agents.skills`](/docs/discoverability/agent-discovery#skills-discovery) 发布的 skill 及其描述（skill 会在描述里说明何时该用）。**Agent resources** 链出构建输出的每一件机器可读产物 —— `llms-full.txt`、逐页面的[原始 Markdown](/docs/discoverability/markdown)镜像、[MCP 服务器](/docs/discoverability/mcp)及其发现文档、skills 索引、[API catalog](/docs/discoverability/agent-discovery#api-catalog)、[AI catalog](/docs/discoverability/agent-discovery#ai-catalog)、[`agent-readability.json`](/docs/discoverability/agent-discovery#agent-readability) 以及 [sitemap](/docs/discoverability/sitemap-and-robots#sitemap) —— 每一项都只在它存在时才出现，因此只读 `llms.txt` 的智能体依然能找到整个界面。
+
+## 排除某个页面 [#excluding-a-page]
+
+要把某个页面排除在这两个文件之外，在它的 frontmatter 里设置 `ai.exclude`：
+
+```mdx
+---
+title: Internal notes
+ai:
+  exclude: true
+---
+```
+
+该页面照常渲染、照常被搜索收录，也照常留在 sitemap 里 —— 只有 `llms.txt` 系列文件会跳过它。
+
+## 自带文件
+
+想完全掌控其中某个文件，就把你自己的 `llms.txt` 或 `llms-full.txt` 放进 `public/` 目录。就像自定义 favicon 一样，它会被自动识别并代替生成的文件发布 —— 覆盖其中一个，Blume 仍会生成另一个。

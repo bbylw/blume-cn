@@ -1,0 +1,86 @@
+---
+title: 快速上手
+description: 用几条命令，从空文件夹到一个跑起来的文档站
+source: https://useblume.dev/docs/quickstart
+---
+
+用几条命令，从一个空文件夹走到一个跑起来的文档站。Blume 需要 **Node.js 22.12 或更新版本**，以及一个至少包含一个 `.md` 或 `.mdx` 文件的 `docs/` 文件夹 —— 除此之外没有任何需要配置的东西。
+
+## 安装并运行
+
+1. **创建项目**
+
+    `blume init` 会问几个问题 —— 项目建在哪里、你的文档站叫什么、用哪个模板、内容放在哪里 —— 然后生成最小的一套东西：一个内容文件夹、一个配置文件，以及一个带 `dev` 和 `build` 脚本的 `package.json`。它会用运行它的那个包管理器来安装依赖。传 `--yes` 可以跳过交互、直接采用默认值，或传 `--no-install` 只写文件不安装。
+
+    ```package-install
+    npx blume init
+    ```
+
+    在 pnpm 12 上，要在 `pnpm dlx` 后面加 `--allow-build=esbuild`（`pnpm dlx --allow-build=esbuild blume init`）：pnpm 12 拒绝运行 esbuild 的安装脚本，而 Astro 依赖它。如果在一个已有的 pnpm workspace 内部，新文件夹必须列在 workspace 的 `packages` 下（pnpm 不会安装其他任何东西，所以在列进去之前 `init` 会跳过安装），并且还需要在 workspace 的 `pnpm-workspace.yaml` 里为 esbuild 加上 `allowBuilds: { esbuild: true }`；`init` 会提醒你这两件事。用 Yarn 2 或更新版本时，`init` 会写一个 `.yarnrc.yml`，把 Yarn 切换到 `node_modules` 安装方式，这是 Blume 需要的；在 Yarn 1 上，请运行 `npx blume init`。
+
+    ```txt
+    docs/
+      index.mdx
+    .gitignore
+    blume.config.ts
+    package.json
+    ```
+
+2. **启动开发服务器**
+
+    在项目目录里，Blume 会生成运行时，并以热重载的方式提供你的文档。
+
+    ```package-install
+    npm run dev
+    ```
+
+3. **构建生产版本**
+
+    静态 HTML 会写入 `dist/`，并在它之上构建一份本地搜索索引。
+
+    ```package-install
+    npm run build
+    ```
+
+想在已有 `package.json` 的项目里加上 Blume？`blume init` 不会改动已有文件，也会跳过安装，所以请自行安装 Blume（`npm install blume`），然后在 scripts 里加上 `"dev": "blume dev"` 和 `"build": "blume build"`，或者直接运行 `npx blume dev`。`init` 最后打印的后续步骤里，对你的包管理器来说这两条命令都有。
+
+:::tip
+Blume 可以配合任意包管理器使用，绝不需要你自己去配置 Astro 或 Tailwind。
+:::
+
+## 写你的第一个页面
+
+每个页面都是带一点 frontmatter 的 Markdown 或 MDX —— `title` 和 `description` 会自动渲染成页面标题和引言。把下面这段放进 `docs/index.mdx`：
+
+```mdx docs/index.mdx lineNumbers
+---
+title: 引言
+description: 欢迎来到我的文档。
+---
+
+欢迎！使用 **Markdown** 和内置组件 —— 无需任何 import：
+
+:::note
+Blume 自带提示框、卡片、标签页、步骤等等。
+:::
+```
+
+保存后，开发服务器会立刻重载。随着你不断添加文件，导航、搜索和页面元数据都会从中推断出来 —— 继续写，站点就跟得上。
+
+## 下一步
+
+**[配置](/docs/configuration)**
+
+调整标题、主题、搜索和部署。
+
+**[组件](/docs/content/components)**
+
+探索内置组件库。
+
+**[可发现性](/docs/discoverability)**
+
+发布 `llms.txt`、社交卡片和一个 MCP server。
+
+**[部署](/docs/deployment)**
+
+部署到任意静态托管平台。

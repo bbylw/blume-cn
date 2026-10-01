@@ -1,0 +1,86 @@
+---
+title: Meta 配置
+description: "用 meta.ts 控制每个内容文件夹在侧边栏中的分组外观与子项顺序。"
+source: https://useblume.dev/docs/content/meta
+---
+
+内容目录中的每个文件夹都会成为一个侧边栏分组。在它同级页面的位置放一个 `meta.ts`，就能控制这个分组的外观以及子项的顺序。这一步完全可选：没有它时，分组标签就是「人性化」的文件夹名，其页面按[索引、数字前缀，然后字母序](/docs/content/navigation#ordering)排序。
+
+## 定义 Meta
+
+导出一个 `defineMeta` 对象，即可获得类型完备的配置。把文件放在它所配置文件夹的根目录下——`guides/meta.ts` 配置的是 **Guides** 分组：
+
+```ts meta.ts lineNumbers
+import { defineMeta } from "blume";
+
+export default defineMeta({
+  title: "Guides",
+  icon: "book-open",
+  order: 2,
+  collapsed: false,
+  pages: ["configuration", "theming", "deployment"],
+});
+```
+
+每个字段都是可选的——只写你想覆盖的部分。
+
+Blume 只会读取内容所覆盖文件夹中的 `meta.ts`：位于被内容 `exclude` 通配模式跳过的文件夹下、或在所有 `include` 通配模式之外的文件，永远不会被导入。当 `root: "."` 且 `exclude: ["**/_*", "**/.*", "src/**"]` 时，一个无关的 `src/lib/meta.ts` 不会被碰。`exclude` 是替换默认的 `["**/_*", "**/.*"]` 而不是追加，所以要保持 `_` 前缀的局部片段和点号文件不发布，就要把这两条也一并列出。
+
+## 字段
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `title` | `string` | 分组标签。默认为「人性化」的文件夹名。 |
+| `icon` | `string` | 显示在标签旁的图标。 |
+| `order` | `number` | 在同级分组和页面中的位置。数字越小越靠前。 |
+| `collapsed` | `boolean` | 在 [`group` 显示模式](/docs/content/navigation#display-modes)下，该分组是否默认折叠。 |
+| `display` | `"flat" \| "group" \| "page"` | 该分组的渲染模式；覆盖全局的 [`navigation.sidebar.display`](/docs/content/navigation#display-modes)。 |
+| `directory` | `"card" \| "accordion" \| "none"` | 把分组的页面列在它 `index` 页面的内容下方。嵌套文件夹会继承它。参见[目录列表](/docs/content/navigation#directory-listings)。 |
+| `pages` | `string[]` | 按 slug 显式指定分组的子项顺序。 |
+
+`pages` 数组按 slug 列出子项——即去掉数字前缀和括号的文件夹名或文件名（所以 `01-quickstart.mdx` 对应 `"quickstart"`）。列出的每个子项以它在数组中的位置作为顺序（`0`、`1`、`2`……）。没有列出的子项同样会出现，按各自的规则排序：`index` 页面始终排在最前；带有 `sidebar.order`、数字前缀，或带有自己 `meta.ts` 里 `order` 的子项，按该数字在已列出的子项之间排序；这些都没有的子项则排在它们之后。如果这个数组要代表完整顺序，就把每个子项都列出来。
+
+该数组在页面之间排序页面、在分组之间排序分组，但不会在这两类之间交错：在侧边栏顶部（以及每个[标签页](/docs/content/navigation#tabs)区域的顶部），以及任何含有 [`flat`](/docs/content/navigation#display-modes) 子分组的分组里——否则那个子分组的标题看起来就像「拥有」了它后面的页面。在这些位置，`pages: ["advanced", "intro"]` 仍然会把 `intro` 页面列在 `advanced` 分组上方。
+
+分组的渲染方式——平铺标题、可折叠展开区，还是可下钻的面板——默认取自整个侧边栏的 `navigation.sidebar.display`；在这里设置 `display` 只会覆盖这一个分组。文件夹的 `index` 页面也能在 frontmatter 里设置它，且优先级高于 `meta.ts`——参见[按分组覆盖](/docs/content/navigation#per-group-overrides)。
+
+## 计算式 Meta
+
+由于 `meta.ts` 是一个真正的模块，你可以计算 meta——传入一个函数（同步或 `async`）而不是对象，在扫描时构建它。从外部来源读取页面顺序时，这很方便：
+
+```ts meta.ts
+import { defineMeta } from "blume";
+
+export default defineMeta(async () => ({
+  title: "Guides",
+  pages: await orderFromCms(),
+}));
+```
+
+## 分组内的顺序
+
+`pages` 数组决定分组子项的顺序，并且优先于已列出页面自身的 `sidebar.order`，也优先于已列出子文件夹自身的 `order`。数组没有涵盖的部分会依次回退到各页面的 frontmatter `sidebar.order`，然后是文件系统（`index` 页面优先，然后数字前缀，然后字母序）。完整的侧边栏优先级规则——包括显式配置的侧边栏——参见[导航 › 排序](/docs/content/navigation#ordering)。
+
+如果想给页面分组却_不_增加 URL 层级，其实完全不需要 `meta.ts`：用带括号的文件夹名即可——参见[页面 › 分组文件夹](/docs/content#group-folders)。
+
+## 国际化
+
+在 [i18n](/docs/content/i18n) 下，文件夹 meta 按语言环境分别解析：把 `meta.ts` 放在 `fr/guides/` 下即可单独排序法语分组。如果没有（或者使用下文的共享 `meta.$.ts`），法语分组会沿用回退语言环境的 `meta.ts`。
+
+如果文件夹 meta 在所有语言里都相同，加上 `$` 标记就能让一个文件服务所有语言环境，无需重复：
+
+```txt
+docs/guides/meta.$.ts   （应用于所有语言环境的文件夹 meta）
+```
+
+针对特定语言环境的 `meta.ts` 仍会为该语言覆盖共享的 `meta.$.ts`。
+
+## 接下来看什么
+
+**[导航](/docs/content/navigation)**
+
+侧边栏、面包屑和标签页是怎么构建出来的。
+
+**[Frontmatter](/docs/content/frontmatter)**
+
+逐页面的元数据，包括 `sidebar` 覆盖项。

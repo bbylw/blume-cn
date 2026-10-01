@@ -1,0 +1,69 @@
+---
+title: MCP 服务器
+description: 托管一个 Model Context Protocol 服务器，让编码智能体直接检索并阅读你的文档
+source: https://useblume.dev/docs/discoverability/mcp
+---
+
+托管一个 [Model Context Protocol](https://modelcontextprotocol.io) 服务器，让编码智能体（Claude Code、Cursor、VS Code、claude.ai 连接器）能直接检索和阅读你的文档 —— 无需抓取解析。它需要手动开启：
+
+```ts blume.config.ts lineNumbers
+agents: {
+  mcp: {
+    enabled: true,
+    route: "/mcp", // 服务器挂载的位置
+  },
+}
+```
+
+| 选项 | 默认值 | 说明 |
+| -------------- | ------- | ------------------------------------------------- |
+| `enabled`      | `false` | 生成并托管 MCP 服务器。                 |
+| `route`        | `/mcp`  | Streamable-HTTP 端点挂载的路径。  |
+| `name`         | title   | 展示给客户端的服务器名称（默认为 title）。 |
+| `instructions` | —       | 传给连接方智能体的可选系统提示。 |
+
+如果该路由已被某个内容页或自定义页面占用，服务器就不会被生成：构建会给出警告，`llms.txt` 和其它[发现文档](/docs/discoverability/agent-discovery)也会把它排除。
+
+## 工具与资源
+
+服务器暴露一组只读工具 —— `search_docs`、`get_page`、`list_pages` 和 `get_navigation` —— 并把每个页面作为一个 MCP resource 暴露（`resources/list` 按页面实际提供的 URL 枚举它们，类型为 `text/markdown`，未翻译页面的 i18n 回退副本与 `list_pages` 一样被排除；`resources/read` 返回页面的[面向智能体的 Markdown](/docs/discoverability/markdown)，与 `get_page` 的输出相同），因此那些按 URI 附加上下文的客户端无需调用任何工具就能浏览文档。它在 `/.well-known/mcp.json` 和 `/.well-known/mcp/server-card.json` 发布发现文档。这份服务器卡片遵循 [SEP-2127](https://github.com/modelcontextprotocol/modelcontextprotocol/pull/2127) 的 Server Card 扩展 schema（反向 DNS 形式的 `name`、`remotes` 传输端点），并带有 initialize 形状的兼容字段（`serverInfo`、`capabilities`、`transports`），供按该提案早期版本构建的扫描器使用。每个页面的**连接到 MCP**菜单都提供面向 Claude Code、Cursor、VS Code 和 Codex 的“复制即用”安装方式（当 [`deployment.site`](/docs/deployment) 已设置后出现）。
+
+`search_docs` 使用自己的全文索引，因此无论你的[搜索](/docs/configuration/search)提供方是什么它都能工作 —— 即使设了 `search: false` 也可以。MCP 服务器与页面内搜索是两个彼此独立的功能。
+
+同一套工具也以普通 HTTP 的形式作为 [JSON API](/docs/discoverability/json-api) 提供，服务于那些不会说 MCP 的框架。
+
+该端点最多只读取 64 KB 的请求体，更大的请求一律以 `413` 应答。调用不存在的工具，或 `arguments` 不是对象的调用，会得到 JSON-RPC 的 Invalid params 错误（`-32602`）。
+
+## 按内容类型和 facets 限定范围
+
+`search_docs` 和 `list_pages` 都接受可选的 `contentTypes` 过滤器，把结果收窄到 frontmatter 中 [`type`](/docs/content/frontmatter) 为指定值的页面 —— `["rfc"]`、`["blog", "changelog"]` —— 因此面对一个把文档与 RFC、运行手册或规范混在一起的站点的智能体，可以把检索限定在它需要的那类页面上。每条结果都会标出它的内容类型，`list_pages` 的输出也会显示正在使用的类型。
+
+两个工具还都接受一个 `filters` 对象，用于匹配站点按内容类型声明的 facets（[`content.types.<type>.facets`](/docs/configuration#frontmatter)）—— 也就是那些值会变成可过滤元数据的自定义 frontmatter 键：
+
+```json
+{
+  "query": "OpenAPI request schemas",
+  "contentTypes": ["rfc"],
+  "filters": { "domain": "architecture", "status": "enforced" }
+}
+```
+
+`filters` 中的每一项都必须匹配（结果会带上自己的 facet 值，`list_pages` 也会显示每个页面的值），因此知识库无需自建服务器，就能驱动渐进披露式的智能体工作流 —— 先列出强制标准，再只在其中检索。
+
+## 需要服务端输出
+
+MCP 服务器是一个实时端点（`/mcp`），因此无法运行在静态构建上。指定一个来自 `blume/deploy` 的宿主适配器即可切换到服务端输出：
+
+```ts blume.config.ts lineNumbers
+import { node } from "blume/deploy"; // 也可以是 vercel、netlify、cloudflare
+
+export default defineConfig({
+  deployment: node({ site: "https://docs.example.com" }),
+});
+```
+
+在开启 `agents.mcp.enabled` 的情况下做静态构建会立刻失败，并提示你设置一个宿主适配器。可用适配器参见[部署](/docs/deployment)。部署完成后，在 Claude Code 中这样连接：
+
+```bash
+claude mcp add --transport http my-docs https://docs.example.com/mcp
+```

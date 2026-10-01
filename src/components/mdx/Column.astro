@@ -1,0 +1,37 @@
+---
+interface Props {
+  title?: string;
+  class?: string;
+}
+
+const { title, class: className = "" } = Astro.props;
+---
+
+<div class:list={["column", className]}>
+  {title && <div class="column__title">{title}</div>}
+  <div class="column__body">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .column {
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    background-color: var(--bg-subtle);
+    padding: 1rem 1.125rem;
+  }
+  .column__title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    color: var(--fg-subtle);
+    margin-bottom: 0.5rem;
+  }
+  .column__body :global(> :first-child) {
+    margin-top: 0;
+  }
+  .column__body :global(> :last-child) {
+    margin-bottom: 0;
+  }
+</style>

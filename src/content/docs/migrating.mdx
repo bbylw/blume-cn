@@ -1,0 +1,56 @@
+---
+title: 迁移到 Blume
+description: 用一条命令把现有文档站迁移到 Blume
+source: https://useblume.dev/docs/migrating
+---
+
+把一个文档站迁移到地道的 Blume，需要 codemod 无法替代的判断力：哪些已声明的导航应该变成文件夹，哪些组件应该变成指令，以及哪些东西在 Blume 里没有对应物。所以 `blume migrate` 把这件事交给一个编码 agent，它依据 Blume 的迁移手册来完成，你只需逐处审阅它的修改。
+
+## 一条命令完成迁移
+
+在你要迁移的文档项目根目录里运行：
+
+```package-install
+npx blume migrate fumadocs --codex
+```
+
+把 `fumadocs` 换成你自己的框架，把 `--codex` 换成 `--claude` 即可使用 Claude Code。在 pnpm 12 上，要在 `pnpm dlx` 后面加 `--allow-build=esbuild`，因为 pnpm 12 未经批准不会运行 esbuild 的安装脚本。agent 会在你的终端里交互式打开，因此每一次修改都走它自己的权限流程。它就地工作，所以请从干净的工作区开始，并把整次迁移当作一个 diff 来审阅。
+
+## 迁移来源
+
+写明你要从哪个框架迁移，或者留空、由 Blume 从项目自身的文件里检测。当你写明了某个来源、而项目看起来像另一个时，Blume 会给出警告，并继续使用你写明的那个：
+
+| 来源 | 检测依据 |
+| --- | --- |
+| `mintlify` | `docs.json` 或 `mint.json` |
+| `fumadocs` | `source.config.ts`，或 `package.json` 里的 `fumadocs-core`、`fumadocs-ui`、`fumadocs-mdx` |
+| `docusaurus` | `docusaurus.config.*` |
+| `starlight` | `package.json` 里的 `@astrojs/starlight` |
+| `nextra` | `package.json` 里的 `nextra` |
+
+每个来源在手册里都有各自的映射参考。用别的东西构建的站点同样能迁移：不写来源地运行该命令，agent 会先给整个仓库做一份清单，然后依据手册里的通用规则动手。
+
+## agent 会做什么
+
+agent 会按手册的工作流，从来源的配置一路走到一次通过的构建：
+
+1. 写入 `blume.config.ts`，只映射你来源里声明过的部分，其余交给 Blume 的默认值覆盖。
+2. 把内容重组为[文件系统导航](/docs/content/navigation)，把按文件夹排序的文件（Fumadocs 的 `meta.json`、Nextra 的 `_meta`）转成 `meta.ts`。
+3. 重写页面：frontmatter 转成 Blume 的 schema，callout 提示框转成[指令](/docs/content/syntax)，图标换成 Lucide，代码片段改为内联。
+4. 为每一个改动的 URL 添加一个[重定向](/docs/deployment#redirects)，这样不会有任何链接失效。
+5. 把 `package.json` 的脚本指向 `blume dev` 和 `blume build`，并用 `blume` 替换掉旧框架的依赖。
+6. 反复运行 `blume build` 和 `blume validate`，直到两者都通过。
+
+最后它会给出一份总结，说明哪些内容被迁移了、被丢弃了，或只是做了近似处理 —— 比如页脚链接或导航栏按钮在 Blume 里没有对应物 —— 这样你可以逐项决定怎么处理。
+
+## 其它 agent
+
+不加 `--codex` 或 `--claude` 时，该命令会报告它检测到的来源，打印手册的路径 —— 即随包一起分发的 `blume-migrate` [skill](/docs/advanced/skills) —— 然后不做任何修改就退出。把那个 `SKILL.md` 指向任意其它 agent，或者用它打印出来的命令把该 skill 安装到你的 agent 查找 skill 的位置：
+
+```bash
+npx skills add haydenbleasel/blume --skill blume-migrate
+```
+
+## 先做对比
+
+[常见问题](/docs/faq)里把 Blume 与 Mintlify、Fumadocs 等工具逐项对比，并说明了迁移到 Blume 时每个框架的映射关系。

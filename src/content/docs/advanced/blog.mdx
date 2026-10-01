@@ -1,0 +1,112 @@
+---
+title: 博客
+description: 给页面标记为博客类型，Blume 就会自动为它加上 RSS 订阅源和更完整的文章元数据，落地页则由你自己编排
+source: https://useblume.dev/docs/advanced/blog
+---
+
+在 Blume 里，博客不过是带了一个类型的内容。把某个页面标记为 `type: blog`，Blume 就会自动为它生成 RSS 订阅源和更完整的文章元数据。与[更新日志](/docs/advanced/changelog)不同，这里没有自动生成的索引页 —— 落地页由你自己编排，设计完全握在你手里。
+
+## 写一篇文章
+
+一篇文章就是一个 frontmatter 里带 `type: blog` 的普通 `.md` 或 `.mdx` 页面。按惯例文章放在 `blog/` 下，但真正起作用的是类型，而不是文件夹：
+
+```mdx blog/introducing-blume.mdx lineNumbers
+---
+title: Introducing Blume
+type: blog
+date: 2026-06-22
+description: Why we built a markdown-first docs framework.
+---
+
+Documentation should be fast, AI-ready, and zero-config — down to not needing a starter template at all. Here's the thinking behind Blume.
+```
+
+每篇文章都给一个 `date`，这样订阅源条目才能按最新在前排序并带上 `pubDate`；再给一个 `description` —— 它同时用于订阅源摘要和 SEO。
+
+## RSS 订阅源
+
+Blume 会在 **`/blog/rss.xml`** 处构建博客订阅源，按 `date` 以最新在前排序。订阅源需要一个绝对的站点 URL，所以请设置 [`deployment.site`](/docs/deployment)；随后 Blume 会在每个页面上注入一个 `<link rel="alternate">` 标签，让读者自动发现它。
+
+订阅源默认开启。可在 [`seo.rss`](/docs/discoverability/rss) 下调整：
+
+```ts blume.config.ts lineNumbers
+seo: {
+  rss: {
+    enabled: true,
+    types: ["blog", "changelog"],
+    limit: 50,
+  },
+}
+```
+
+从 `rss.types` 中去掉 `"blog"` 即可不生成该订阅源。
+
+## 结构化数据
+
+开启[结构化数据](/docs/discoverability/structured-data)后，每篇文章都会以 schema.org **`BlogPosting`** 的形式输出，带上它的描述和发布日期 —— 这是搜索引擎对博客内容所期待的那种更丰富的文章类型。
+
+## 搭建索引
+
+Blume 不会生成 `/blog` 落地页，所以要自己搭一个。最简单的做法是一个内容页面，手工链到每篇文章：
+
+```mdx blog/index.mdx lineNumbers
+---
+title: Blog
+description: News and writing from the team.
+---
+
+<CardGroup cols={2}>
+  <Card title="Introducing Blume" href="/blog/introducing-blume">
+    Why we built a markdown-first docs framework.
+  </Card>
+</CardGroup>
+```
+
+若想自动列出文章，则在 `pages/blog/index.astro` 添加一个[自定义页面](/docs/advanced/custom-pages)，它从 Astro 的 `docs` 内容集合读取数据，并按路由的 `entryId` 把每个条目与它在 `blume:data` 中的路由配对：
+
+```astro pages/blog/index.astro lineNumbers
+---
+import { getCollection } from "astro:content";
+import data from "blume:data";
+import { getBlumeCollection } from "blume/runtime";
+
+// 自定义页面只在它自己的路径上渲染，因此这里只列出默认语言下的文章。
+// getBlumeCollection 会排除草稿、隐藏页面，以及 i18n 为未翻译页面提供的副本，
+// 所以每篇文章只会被列出一次。
+const routes = getBlumeCollection(data, {
+  locale: data.config.i18n?.defaultLocale,
+});
+const routeByEntry = new Map(routes.map((route) => [route.entryId, route.path]));
+
+const posts = (await getCollection("docs"))
+  .filter((entry) => entry.data.type === "blog" && routeByEntry.has(entry.id))
+  .map((entry) => ({
+    date: entry.data.date,
+    description: entry.data.description,
+    href: routeByEntry.get(entry.id),
+    title: entry.data.title,
+  }))
+  .toSorted((a, b) => Number(new Date(b.date)) - Number(new Date(a.date)));
+---
+
+<ul>
+  {
+    posts.map((post) => (
+      <li>
+        <a href={post.href}>{post.title}</a>
+        <p>{post.description}</p>
+      </li>
+    ))
+  }
+</ul>
+```
+
+要把它包进完整的站点布局，参见[自定义页面](/docs/advanced/custom-pages#using-the-site-layout)。
+
+**[自定义页面](/docs/advanced/custom-pages)**
+
+挂载博客索引，并从 `blume:data` 读取数据。
+
+**[可发现性](/docs/discoverability)**
+
+订阅源、Open Graph 图片和结构化数据。

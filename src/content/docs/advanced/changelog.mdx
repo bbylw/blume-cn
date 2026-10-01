@@ -1,0 +1,101 @@
+---
+title: 更新日志
+description: 把每次发布写成一个标记为 changelog 类型的内容文件，Blume 就会把它汇入自动生成的索引页和 RSS 订阅源
+source: https://useblume.dev/docs/advanced/changelog
+---
+
+Blume 开箱即带更新日志。把每次发布写成一个普通内容文件、标记为 `type: changelog`，Blume 就会把每一条都汇入一个自动生成的索引页和一个 RSS 订阅源 —— 不用搭布局、不用维护列表。或者干脆不写这些文件，直接[从 GitHub Releases 引入更新日志](#from-github-releases)。
+
+## 写一条记录
+
+一条更新日志记录就是一个 frontmatter 里带 `type: changelog` 的普通 `.md` 或 `.mdx` 页面。按惯例它们放在 `changelog/` 下，但真正起作用的是类型，而不是文件夹：
+
+```mdx changelog/v1-2-0.mdx lineNumbers
+---
+title: v1.2.0
+type: changelog
+date: 2026-06-20
+changelog:
+  version: 1.2.0
+  category: Features
+---
+
+A big batch of components landed this release — columns, frames, trees, and tooltips, plus code groups that render as proper language tabs.
+
+- New `Accordion`, `Expandable`, and `Tooltip` components
+- `CodeGroup` tabs with flush code blocks
+```
+
+每条记录都给一个 `date`，这样索引和订阅源才能以最新在前排序。YAML 日期不加引号也没关系 —— Blume 会做归一化。
+
+### `changelog` 对象
+
+可选的 `changelog` 对象为索引和订阅源补充更丰富的元数据：
+
+| 属性 | 类型 | 默认值 | 说明 |
+| - | - | - | - |
+| `changelog.version?` | `string` | - | 发布版本。没有 title 时回退为一个带 v 前缀的标签。 |
+| `changelog.category?` | `string` | - | 显示在记录旁的标签，例如 Release、Features、Fixes。 |
+| `changelog.date?` | `string` | - | 发布日期。可以写在这里，也可以写在顶层 —— 两者都会进入索引和 RSS 订阅源。 |
+
+## 索引页
+
+一旦有了至少一条 `type: changelog` 记录，Blume 就会自动生成一个 **`/changelog`** 页面。那是一个专注的全宽索引 —— 没有侧边栏，也没有目录 —— 它把每次发布列成一行，最新在前并按年份分组，于是一段很长的历史仍然只是一个很短的页面（远小于 agent 能在单个上下文窗口内读完的体量）：
+
+- 该条记录的 **title** 就是这一行的标签 —— 没有 title 时则用 `v{version}`。它链到该记录自己的页面，更新说明全文就在那里渲染。
+- `category` 会作为标签渲染在 title 旁边，读者一眼就能分清正式版与预发布版，或者功能与修复。
+- 日期遵循配置的 [`dateFormat`](/docs/configuration#date-format)，但会去掉这一行所属分组里已经显示过的年份。
+- 草稿以及标记了 `sidebar.hidden` 的条目会被跳过。
+
+只有当 `/changelog` 路由上还没有别的东西占据时，这个页面才会出现。要用自己的设计替换它，在 `pages/changelog.astro` 添加一个[自定义页面](/docs/advanced/custom-pages) —— 它会接管该路由，Blume 也就停止生成默认索引。旧时间线所基于的 `<Update>` 组件仍然随包提供，供想在自定义页面里内联渲染更新说明时使用。它不是 MDX 组件之一，所以要在 `.astro` 页面里自行导入：`import Update from "blume/components/content/Update.astro";`。指向 `/changelog` 的头部[标签页](/docs/content/navigation#tabs)会打开这个索引 —— 不需要 `href`。
+
+## 从 GitHub Releases 引入 [#from-github-releases]
+
+与其手写记录，不如把内置的 [`githubReleases()` 源](/docs/content/sources/github-releases)指向一个仓库，于是每次发布都会变成一条 `type: changelog` 记录 —— 同样的时间线和订阅源，内容直接来自你已经在发布的那些 release。Blume 自己的[更新日志](/docs/advanced/changelog)就是这么搭起来的：
+
+```ts blume.config.ts
+import { filesystem, githubReleases } from "blume/sources";
+
+content: {
+  sources: [
+    filesystem({ root: "content" }),
+    githubReleases({
+      prefix: "changelog",
+      owner: "acme",
+      repo: "sdk",
+    }),
+  ],
+}
+```
+
+release 的名字成为 title，它的 tag 成为 `changelog.version`，发布日期则决定时间线的排序。每个发布页还会得到一段独特的 meta description，由它的更新说明概括而来 —— 去掉 markdown、去掉小节标题和 changeset 的提交哈希前缀、裁剪到 [`blume audit`](/docs/cli/audit) 检查的搜索摘要长度 —— 而不是回退到站点描述。私有仓库通过 `GITHUB_TOKEN` 环境变量认证。全部选项见 [GitHub Releases](/docs/content/sources/github-releases)。
+
+## RSS 订阅源
+
+Blume 还会在 **`/changelog/rss.xml`** 处构建更新日志订阅源，按 `date` 以最新在前排序。订阅源需要一个绝对的站点 URL，所以请设置 [`deployment.site`](/docs/deployment)；随后 Blume 会在每个页面上注入一个 `<link rel="alternate">` 标签，让读者自动发现它。
+
+订阅源默认开启。可在 [`seo.rss`](/docs/discoverability/rss) 下调整：
+
+```ts blume.config.ts lineNumbers
+seo: {
+  rss: {
+    enabled: true,
+    types: ["blog", "changelog"],
+    limit: 50,
+  },
+}
+```
+
+从 `rss.types` 中去掉 `"changelog"` 即可不生成该订阅源，同时保留时间线。
+
+## 结构化数据
+
+开启[结构化数据](/docs/discoverability/structured-data)后，每条更新日志记录都会以 schema.org **`TechArticle`** 的形式输出，带上它的描述和发布日期，于是搜索引擎可以把各个发布当作带日期的文章来索引。
+
+**[Frontmatter](/docs/content/frontmatter#changelog)**
+
+完整的更新日志 frontmatter schema。
+
+**[自定义页面](/docs/advanced/custom-pages)**
+
+用你自己的布局替换生成的时间线。

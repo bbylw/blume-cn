@@ -1,0 +1,33 @@
+---
+title: Notion
+description: 导入 Notion 数据库，行变页面、属性变 frontmatter、块树变 MDX。
+source: https://useblume.dev/docs/content/sources/notion
+---
+
+内建的 `notion()` 适配器把一个 Notion 数据库变成一组页面：每一行变成一个页面，它的属性变成 frontmatter，它的块树变成 MDX。标注框、折叠块、分栏和代码块会映射到对应的 Blume 组件，而你在 Notion 里输入的文本会按原样渲染：页面里的 `{`、`<` 或 Markdown 字符会被转义，而不会被当作 MDX、JSX 或格式语法来解析。当视频块里放的是 YouTube 链接时，它会变成一个 `<YouTube>` 嵌入，否则变成一个 `<video>` 播放器；两种情况都以该块的说明文字作为 `<Frame>` 的 caption。指向视频页面而非媒体文件的链接（比如一个 Vimeo 或 Loom URL）会被报告为构建警告，而它的 `<video>` 播放器仍会指向那个无法播放的页面 —— 请改为从正文中链接到那个视频。适配器把 `@notionhq/client`（v5 或更高版本）声明为运行时依赖 —— 一个可选的 peer；Blume 通过它的第一个数据源读取数据库。
+
+```ts blume.config.ts
+import { defineConfig } from "blume";
+import { filesystem, notion } from "blume/sources";
+
+export default defineConfig({
+  content: {
+    sources: [
+      filesystem({ root: "docs" }),
+      notion({
+        prefix: "handbook",
+        database: "8f2c1e0a4b7d4f3c9e6a5d2b1c0f9e8d", // 数据库 URL 里的 id
+        // 属性名默认为 title 类型的属性 / Description / Slug / Order / Status
+        // Status 不等于 publishedValue（默认 "Published"）的页面会导入为草稿
+        publishedValue: "Done",
+      }),
+    ],
+  },
+});
+```
+
+集成 token 来自 `NOTION_TOKEN` 环境变量（把数据库共享给你的集成）；适配器声明了它，所以缺少它的构建会发出警告。
+
+`Status` 属性默认是一个发布闸门。Status（状态或单选属性）的取值不等于 `publishedValue`（默认为 `Published`）时，页面会以 `draft: true` 导入，而生产构建会丢弃草稿。Status 没有取值的页面属于已发布，而缺少该属性的数据库会发布所有页面。Notion 的默认状态选项是 Not started、In progress 和 Done，所以一个使用这些选项的数据库没有 `Published` 取值，也就什么都不发布，直到你设置 `publishedValue: "Done"`（或任何代表已发布的那个选项）。`properties.status` 用来指定一个名字不同的属性；想让所有页面无论状态如何都导入，就把它指向一个数据库里并不存在的属性。
+
+**Notion 的图片和视频 URL 带签名且会过期**，所以适配器会在构建时把它们下载到站点的资源目录并改写引用 —— CMS 的资源永远不会拖垮静态构建。只有服务器报告为图片或视频的文件会被保存（或者当响应没有说明时，URL 指向图片或视频扩展名的文件）；其它一切都会保留原始 URL 并给出构建警告，所以除了媒体之外，不会有任何东西从你的站点源上提供。API 调用通过一个小型请求池限流（每次 3 个，与 Notion 每个集成的速率限制一致），这样有几百个页面的数据库也能导入而不触发 `429` 响应；在来源上设置 `concurrency` 可以调整它。

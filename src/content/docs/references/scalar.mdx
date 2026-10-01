@@ -1,0 +1,67 @@
+---
+title: Scalar
+description: 用 scalar() 适配器把 Scalar 自带的完整 API 参考界面嵌入单个路由，并可透传它的配置
+source: https://useblume.dev/docs/references/scalar
+---
+
+[`openapi()`](/docs/references/openapi)、[`asyncapi()`](/docs/references/asyncapi) 和 [`graphql()`](/docs/references/graphql) 给你的是 Blume 自己的渲染器：每个接口一个真实页面，出现在你的侧边栏、搜索和 `llms.txt` 中，并带一个 [Try it 演练场](/docs/references/openapi#try-it-playground)。若你更想嵌入 [Scalar](https://scalar.com) 那套自带的 API 参考界面 —— 它自己的侧边栏、搜索、主题和请求客户端，全都集中在单个路由上 —— 就改为列出一个来自 `blume/reference` 的 `scalar()` 适配器。它接受一份 OpenAPI 或 AsyncAPI 文档，Scalar 会自行识别是哪一种：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { scalar } from "blume/reference";
+
+export default defineConfig({
+  reference: [
+    scalar({
+      spec: "./openapi.yaml",
+      theme: "purple", // 一个 Scalar 主题名
+    }),
+  ],
+});
+```
+
+它把嵌入页挂在 `/reference`。`spec` 要么是一个 `http(s)` URL —— 页面会在浏览器中直接加载 —— 要么是一个本地文件路径 —— 在构建时读取并内联，使页面保持自包含。`route` 可以把它挪到别处，`sources` 则发布多份文档，每份各占一个路由 —— 与原生适配器遵循的是同一套 [`label`/`route` 规则](/docs/references/openapi#multiple-specs)：
+
+```ts blume.config.ts lineNumbers
+reference: [
+  scalar({
+    route: "/api",
+    sources: [
+      { label: "Public API", spec: "./public.json" },   // → /api/public-api
+      { label: "Legacy API", route: "/legacy", spec: "./legacy.json", noindex: true },
+    ],
+  }),
+],
+```
+
+[Overlays](/docs/references/openapi#overlays) 在这里同样可用：把 `overlays` 写在 `spec` 旁边，或写在每个来源上。嵌入页随后会内联应用了 overlays 的规范，因此带 overlays 的远程规范会在构建时被抓取，而不是由浏览器去取。若某个 overlay 无法生效，构建会发出警告并跳过该页面，而不是在没有它的情况下照样把规范嵌进去。
+
+Scalar 嵌入页与原生页面可以在同一个列表里并存 —— 比如为当前 API 用一个 `openapi()` 适配器，为某个遗留 API 用一个 `scalar()` 适配器 —— 只要它们的路由互不相同。和所有参考一样，这个嵌入页不会自己添加页眉标签页；把一个[导航标签页](/docs/content/navigation#tabs)指向它的路由即可让它露出来。
+
+## 嵌入页不做什么 [#what-the-embed-doesnt-do]
+
+由 Scalar 渲染的参考是一个自包含的页面，占自己的路由。它不会织入 Blume 的侧边栏、搜索或 `llms.txt`，因此原生适配器那些按来源的控制项里，只有 `noindex` 在这里适用（它会添加爬虫 noindex 元数据，并把页面挡在 sitemap 之外）；没有 `codeSamples`、`expandSchemas` 或 `playground` 可设。Scalar 自带请求客户端，它会**直接从浏览器**调用你的**目标 API**（Blume 的 [`playground.proxy`](/docs/references/openapi#cors-and-the-proxy) 路由在这里不可用），因此 API 必须允许来自文档站点的跨域请求（`Access-Control-Allow-Origin`）。
+
+嵌入页确实会跟随 Blume 的明暗切换：它挂载时绑定到页面的主题，并随之切换，因此 Scalar 自带的主题开关被隐藏了（传入 `forceDarkModeState` 或 `darkMode` 可把配色模式的控制权交还给 Scalar）。不设 `theme` 时，Blume 会把自己的强调色和圆角叠加到 Scalar 的默认主题上；指定了 `theme` 名称则会整体替换掉它。该适配器把 `@scalar/astro` 声明为运行时依赖，因此只有配置了 `scalar()` 适配器时，生成的项目里才会列出它。
+
+## 透传 Scalar 选项 [#passing-scalar-options]
+
+`theme` 是大多数人第一时间想到的选项，但 Scalar 支持的远不止这些。你传给 `scalar()` 的每个键 —— 超出 `spec`、`overlays`、`sources`、`route` 和 `theme` 的那些 —— 都会原样作为 [Scalar 配置](https://github.com/scalar/scalar/blob/main/documentation/configuration.md)透传给嵌入的参考 —— Blume 不做键名把关，因此 Scalar 接受的任何内容都会流过去（只支持 JSON 值，因为配置会被内联进生成的页面）：
+
+```ts blume.config.ts lineNumbers
+reference: [
+  scalar({
+    spec: "./openapi.yaml",
+    localization: { locale: "es" },   // 翻译 Scalar 自己的界面
+    agent: { disabled: true },         // 禁用 Scalar Agent
+    hideTestRequestButton: true,
+    orderSchemaPropertiesBy: "preserve",
+  }),
+],
+```
+
+Blume 自己的 [`i18n`](/docs/content/i18n) 翻译的是文档界面，而 Scalar 有一套独立的本地化系统 —— 设置 `localization.locale` 就能把嵌入的参考一并翻译。透传的选项优先于 Blume 推导出的配置，因此在这里设置的任何内容（包括 `customCss` 或规范的 `content`/`url`）都会覆盖 Blume 的默认值。唯一无法透传的键是 Scalar 自己的多文档 `sources`：这个名字属于 Blume，而 Blume 的每个来源都会成为独立的页面。
+
+## AsyncAPI 文档 [#asyncapi-documents]
+
+把 `spec` 指向一份 AsyncAPI 文档，嵌入页就会渲染 channel、操作、消息和一个 Models 小节。Scalar 自己没有 AsyncAPI 演练场，因此在 [`asyncapi()`](/docs/references/asyncapi) 之外选择嵌入页，等于拿 Blume 的[事件编辑器](/docs/references/asyncapi#try-it-for-events)去换。GraphQL schema 则根本没有 Scalar 嵌入版 —— [`graphql()`](/docs/references/graphql) 参考始终以原生方式渲染。

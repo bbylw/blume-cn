@@ -1,0 +1,42 @@
+---
+title: 变量
+description: "在配置中定义一次值，即可在所有页面中通过 {{name}} 引用。"
+source: https://useblume.dev/docs/content/variables
+---
+
+只需定义一次值，即可在每个页面中使用。版本号、API 主机或产品名写在 `blume.config.ts` 里，页面中的 `{{name}}` 会读取它的值：
+
+```ts blume.config.ts lineNumbers
+export default defineConfig({
+  variables: {
+    version: "2.1.0",
+    "api-url": "https://api.example.com",
+  },
+});
+```
+
+```mdx docs/quickstart.mdx
+Install version {{version}}, then call {{api-url}}.
+
+## What's new in {{version}}
+
+<Card title="Release {{version}}" href="{{api-url}}/changelog" />
+```
+
+引用在散文中、标题里、链接中、代码块中、行内代码里以及组件属性里都有效，`.md` 和 `.mdx` 页面以及它们 [include](/docs/content/includes) 的文件都不例外。花括号里加空格也没问题（`{{ version }}`）。在配置中改掉这个值，下一次构建时每个页面都会取到新值。
+
+名称可包含字母、数字、`_` 和 `-`。值是单行的纯文本。
+
+## 生效范围
+
+变量会在任何内容读取页面之前完成替换，因此渲染出的 HTML、[搜索](/docs/configuration/search)、页面的 [`.md` 镜像](/docs/discoverability/markdown) 和 `llms-full.txt` 里显示的都会是替换后的值。
+
+frontmatter 保持原样：其中含 `{{version}}` 的 `title` 或 `description` 会原样显示花括号。
+
+## 未定义的名称
+
+散文中出现未定义的 `{{name}}` 会导致构建错误 `BLUME_UNDEFINED_VARIABLE`，并在其所在行报告，这样拼写错误不会传到读者手里。在代码块或行内代码中，未定义的名称会保持原样，因为那里常有 Handlebars `{{title}}` 这类模板示例。
+
+想在散文中展示一个引用但不定义它，就把它放进行内代码：`` `{{name}}` ``。
+
+没有定义任何变量的站点不受影响：其页面中的 `{{…}}` 会保持原样。

@@ -1,0 +1,107 @@
+---
+interface Props {
+  code: string;
+}
+
+const { code } = Astro.props;
+const lines = code.trim().split("\n");
+---
+
+<div class="pkg-install">
+  <div class="pkg-install__head">
+    <span class="pkg-install__badge">
+      <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M8 2v8m0 0 3-3m-3 3L5 7M3 12.5h10"></path>
+      </svg>
+      安装
+    </span>
+    <button type="button" class="pkg-install__copy" data-copy={code.trim()} aria-label="复制命令">
+      <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="5.5" y="5.5" width="8" height="8" rx="1.5"></rect>
+        <path d="M10.5 5.5v-1a1.5 1.5 0 0 0-1.5-1.5H4a1.5 1.5 0 0 0-1.5 1.5V9A1.5 1.5 0 0 0 4 10.5h1"></path>
+      </svg>
+    </button>
+  </div>
+  <pre class="pkg-install__code"><code>{lines.join("\n")}</code></pre>
+</div>
+
+<script>
+  document.addEventListener("click", async (event) => {
+    const target = event.target as HTMLElement | null;
+    const btn = target?.closest<HTMLElement>("[data-copy]");
+    if (!btn) return;
+    const value = btn.dataset.copy ?? "";
+    try {
+      await navigator.clipboard.writeText(value);
+      const prev = btn.dataset.label;
+      btn.dataset.label = "已复制";
+      btn.classList.add("is-copied");
+      setTimeout(() => {
+        btn.classList.remove("is-copied");
+        if (prev) btn.dataset.label = prev;
+      }, 1600);
+    } catch {
+      /* 剪贴板不可用时静默失败 */
+    }
+  });
+</script>
+
+<style>
+  .pkg-install {
+    margin-block: 1.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    overflow: hidden;
+    background-color: var(--bg-subtle);
+  }
+  .pkg-install__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.4rem 0.5rem 0.4rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--bg-muted);
+  }
+  .pkg-install__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--fg-subtle);
+  }
+  .pkg-install__copy {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    padding: 0.25rem 0.4rem;
+    border-radius: 0.375rem;
+    color: var(--fg-subtle);
+    display: grid;
+    place-items: center;
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .pkg-install__copy:hover {
+    color: var(--fg);
+    background-color: var(--bg);
+  }
+  .pkg-install__copy.is-copied {
+    color: #16a34a;
+  }
+  .dark .pkg-install__copy.is-copied {
+    color: #4ade80;
+  }
+  .pkg-install__code {
+    margin: 0;
+    padding: 0.875rem 1rem;
+    overflow-x: auto;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    color: var(--fg);
+  }
+</style>

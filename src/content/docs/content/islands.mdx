@@ -1,0 +1,158 @@
+---
+title: 交互岛
+description: 用 islands 目录或 defineComponents 添加只为自身、按需加载 JavaScript 的交互组件
+source: https://useblume.dev/docs/content/islands
+---
+
+默认情况下，Blume 会把你的文档渲染成**零 JavaScript**的静态 HTML。当你需要交互能力时——一个可实时运行的示例、一张图表、一个 playground——就加上一个**交互岛**：一个只为自身、且只在用到它的页面上加载 JS 的框架组件。
+
+## `islands/` 约定
+
+把组件放进项目根目录下的 `islands/` 文件夹里。它的文件名会成为你可以在**任意** `.mdx` 页面中使用、无需 import 的组件：
+
+```tsx islands/Counter.tsx lineNumbers
+import { useState } from "react";
+
+export default function Counter() {
+  const [count, setCount] = useState(0);
+  return <button onClick={() => setCount(count + 1)}>Clicked {count}</button>;
+}
+```
+
+```mdx page.mdx
+Here's a live counter: <Counter />
+```
+
+文件名就是组件名，因此它**必须是帕斯卡命名的标识符**——只能包含字母、数字和下划线（`Counter.tsx` → `<Counter />`）。小写文件名，以及带连字符、点或空格的名字（比如 `Time-Picker.tsx`）会被跳过，并给出构建警告。当两个交互岛解析出同一个名字时——`Counter.tsx` 与 `Counter.vue`，或者不同子文件夹下的两个 `Counter.tsx`——Blume 会按文件路径保留第一个、忽略另一个，并给出构建警告。
+
+:::note
+交互岛用于**交互式** UI。若只是想跨页面复用一个静态组件（一个带样式的提示框、一张价格表），请改用 [MDX 覆盖](/docs/configuration/customization)——它不加载任何 JavaScript。
+:::
+
+## 在 `components.ts` 中注册交互岛 [#registering-islands-in-componentsts]
+
+如果你更愿意把交互岛放在其余组件旁边——或者想给它们一个与文件名不同的名字——就用 `defineComponents` 把它们注册为带 `client` 模式的 `mdx` 条目。交互岛无非就是一个会水合的 MDX 组件。每个条目在每个 MDX 页面里都可用，而与某个 `islands/` 文件同名的条目会取代它。
+
+```ts components.ts
+import { defineComponents } from "blume";
+import Counter from "./widgets/Counter.tsx";
+
+export default defineComponents({
+  mdx: {
+    Counter: { component: Counter, client: "visible" }, // 在任意 MDX 页面中使用 <Counter />，并水合
+  },
+});
+```
+
+你可以通过 import 或路径字符串来引用组件，并为每个交互岛选择水合模式（`"media"` 需要同时提供一个 `media` 查询）：
+
+```ts components.ts
+export default defineComponents({
+  mdx: {
+    Chart: { component: "./widgets/Chart.tsx", client: "only" },
+  },
+});
+```
+
+与文件夹方式不同，这里没有默认值：不带 `client` 的 `mdx` 条目会渲染成静态 HTML，若该条目是 React、Vue 或 Svelte 组件，Blume 会给出警告。Blume 会静态解析 `components.ts`，因此一个条目必须是导入进来的组件、路径字符串，或一个 `{ component, client, media }` 对象字面量——可接受的形式以及其它写法会得到的报错，见[自定义](/docs/configuration/customization#reference-form)。
+
+## 水合
+
+默认情况下交互岛使用 `client:visible`：当读者把它滚动到视野中时才水合，因此即使满页都是交互岛也能瞬间加载。要换用别的策略，就在交互岛文件里写 `export const client`：
+
+```tsx islands/Chart.tsx lineNumbers
+// 完全跳过服务端渲染——适用于会访问 DOM/window 的组件
+export const client = "only";
+
+export default function Chart() {
+  /* ... */
+}
+```
+
+| `client` 取值 | 何时水合 | 适用场景 |
+| --- | --- | --- |
+| `"visible"` _(默认)_ | 滚动到视野中时 | 大多数交互岛 |
+| `"load"` | 页面加载时立即 | 首屏、必须瞬时呈现的 UI |
+| `"idle"` | 主线程空闲时 | 不紧急的交互 |
+| `"only"` | 仅客户端，永不服务端渲染 | 需要 `window`/`document` 的库（图表、编辑器） |
+| `"media"` _(`components.ts` 仅支持)_ | 某个 CSS 媒体查询匹配时 | 只在特定尺寸下运行的 UI，比如仅移动端的菜单 |
+
+`"media"` 需要配套的查询，因此它只对 [`components.ts` 条目](#registering-islands-in-componentsts)可用——`{ component: Menu, client: "media", media: "(max-width: 50em)" }`。在 `islands/` 文件里声明它会退回到 `"visible"` 并给出警告。
+
+## 框架 [#frameworks]
+
+**React 开箱即用**——一旦你的项目里出现 `.tsx`/`.jsx` 交互岛，Blume 就会自动启用它。
+
+只要启用了 React，[React Compiler](https://react.dev/learn/react-compiler) 就默认开启，因此你的交互岛会被自动 memo 化——不需要手写 `useMemo`/`useCallback`。它随 Blume 一起提供，无需安装任何东西。要关掉它，在 `blume.config.ts` 中：
+
+```ts blume.config.ts
+export default defineConfig({
+  react: { compiler: false },
+});
+```
+
+**Vue 和 Svelte** 同样受支持；安装对应的 Astro 集成，Blume 会在看到 `.vue` 或 `.svelte` 交互岛时接好渲染器：
+
+```bash
+# Vue
+npm install @astrojs/vue vue
+
+# Svelte
+npm install @astrojs/svelte svelte
+```
+
+```vue islands/Toggle.vue lineNumbers
+<script setup>
+import { ref } from "vue";
+const on = ref(false);
+</script>
+
+<template>
+  <button @click="on = !on">{{ on ? "On" : "Off" }}</button>
+</template>
+```
+
+你在 MDX 里传入的属性（`<Counter start={5} />`）会转发给组件，子节点（`<Counter>label</Counter>`）则作为默认插槽传入。
+
+:::tip
+交互岛在客户端水合，因此作为属性传入的一切都必须是可序列化的——字符串、数字、纯对象，不能是函数。
+:::
+
+## Hooks
+
+交互岛各自独立水合，因此没有 React context 可以用来层层传递项目数据。取而代之，`blume/hooks` 会读取一小份由布局序列化进页面的快照——不需要逐层传属性：
+
+```tsx islands/PageInfo.tsx lineNumbers
+import { useBlume, usePage } from "blume/hooks";
+
+export default function PageInfo() {
+  const blume = useBlume();
+  const page = usePage();
+  if (!(blume && page)) {
+    return null;
+  }
+  return (
+    <p>
+      You're reading <strong>{page.title}</strong> on {blume.config.title}.
+    </p>
+  );
+}
+```
+
+| Hook | 返回值 |
+| --- | --- |
+| `useBlume()` | 站点的 `{ config, navigation }`，挂载前为 `null` |
+| `usePage()` | 当前页面的 `{ route, title }`，挂载前为 `null` |
+| `useSearch()` | `{ search, results, loading }`——查询已配置的搜索服务 |
+| `useAssistant()` | `{ ask, messages, loading, reset }`——从 assistant 接口流式输出 |
+
+`useBlume()` 和 `usePage()` 在交互岛挂载前会返回 `null`（这样服务端与客户端渲染出的首帧一致）——请为此做判断。快照只在携带 React 的页面上输出，因此全静态站点不为此付出任何代价。
+
+在用 `PageLayout` 构建的[自定义页面](/docs/advanced/custom-pages)上，传入 `clientData`，好让那里的交互岛能读取它：
+
+```astro
+<PageLayout
+  clientData={{ config: data.config, navigation: data.navigation, page: { route: "/", title: "Home" } }}
+  {/* …other props… */}
+/>
+```

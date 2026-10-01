@@ -1,0 +1,32 @@
+---
+title: Strapi
+description: 通过 Strapi REST API 读取 Strapi 4 与 Strapi 5 的内容类型。
+source: https://useblume.dev/docs/content/sources/strapi
+---
+
+内建的 `strapi()` 适配器通过 Strapi REST API（`/api/<pluralApiId>`）读取一个内容类型，并把每个条目的 Blocks 正文降级为 Markdown：段落、标题、列表、引用、代码块、图片和链接。Markdown 富文本字段会按原样透传，只有一点例外：不是网页、邮件、电话或相对地址的链接只保留它的文字。Strapi 5 的响应会按原样读取，而 Strapi 4 的 `attributes` 外层结构会被摊平，这样同样的字段路径依然适用。无需安装任何东西。
+
+```ts blume.config.ts
+import { defineConfig } from "blume";
+import { filesystem, strapi } from "blume/sources";
+
+export default defineConfig({
+  content: {
+    sources: [
+      filesystem({ root: "docs" }),
+      strapi({
+        prefix: "guides",
+        url: "https://cms.example.com",
+        contentType: "guides",
+        // locale: "en"
+        // 字段路径默认为 title / description / slug / content / updatedAt
+        fields: { body: "body" },
+        // 额外的查询参数：filters[...], sort
+        params: { "filters[section][$eq]": "sdk" },
+      }),
+    ],
+  },
+});
+```
+
+API token 来自 `STRAPI_API_TOKEN` 环境变量，并以 bearer token 的形式发送。条目以 `populate=*` 抓取，因此图片会带上自己的 URL（设置 `populate` 可以收窄它），而相对的上传路径（`/uploads/x.png`）会相对于 `url` 解析。只有已发布的条目会被导入 —— `--preview` 会请求草稿（Strapi 5 上是 `status=draft`，Strapi 4 上是 `publicationState=preview`），并把每个从未发布过的文档以 `draft: true` 暂存；已发布的文档则预览其最新的草稿。

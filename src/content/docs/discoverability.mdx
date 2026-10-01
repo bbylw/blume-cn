@@ -1,0 +1,50 @@
+---
+title: 可发现性
+description: 让搜索引擎与 AI agent 都能读懂你的文档 —— 元数据、社交卡片、订阅源、结构化数据、llms.txt、Markdown、JSON API 与 MCP
+source: https://useblume.dev/docs/discoverability
+---
+
+搜索引擎和 AI agent 对你的文档期待的是同一样东西：一份干净、机器可读的说明，讲清每个页面说了什么、页面之间如何关联、以及是谁发布的。Blume 把两者视为同一层可发现性。元数据、社交卡片、订阅源和结构化数据服务于给你排名的爬虫；`llms.txt`、原始 Markdown、一个 JSON API、一个 MCP server 和各种发现清单服务于那些回答关于你的问题的 agent —— 而介于其间的那些文件（`robots.txt`、sitemap、JSON-LD）则两者都会读。
+
+其中几乎全部默认开启，无需任何配置。开关位于 `blume.config.ts` 的两个键下：`seo` 决定搜索引擎和社交平台看到什么，`agents` 决定 agent 看到什么。
+
+```ts blume.config.ts lineNumbers
+seo: {
+  og: { enabled: true },
+  rss: { enabled: true, types: ["blog", "changelog"] },
+  sitemap: true,
+  robots: true,
+  structuredData: true,
+  x: { handle: "@acme" },
+},
+agents: {
+  llmsTxt: true,
+  mcp: { enabled: false },
+},
+```
+
+其中大部分在拿到绝对站点 URL 后才更完整 —— 设置 [`deployment.site`](/docs/deployment)，订阅源、OG 图片、canonical 来源地址、sitemap、JSON-LD 以及每一份 agent 清单就能输出完整 URL。有几个输出面 —— Open Graph 图片、sitemap、RSS 订阅源和 AI 目录 —— 在设置之前保持关闭。
+
+## 构建产出什么 [#what-the-build-emits]
+
+| 输出面 | 位置 | 默认 | 说明 |
+| --- | --- | --- | --- |
+| `<head>` 元数据、canonical 来源地址、X 卡片 | 每个页面 | 开启 | [元数据](/docs/discoverability/metadata) |
+| 社交分享图片 | `/og/<route>.png` | 有站点 URL 时开启 | [Open Graph 图片](/docs/discoverability/open-graph) |
+| schema.org JSON-LD | 每个页面 | 开启 | [结构化数据](/docs/discoverability/structured-data) |
+| RSS 订阅源 | `/<type>/rss.xml` | 有站点 URL 时开启 | [RSS 订阅源](/docs/discoverability/rss) |
+| `sitemap.xml`、`robots.txt`、内容信号 | 站点根目录 | 开启 | [Sitemap 与 robots](/docs/discoverability/sitemap-and-robots) |
+| `llms.txt`、`llms-full.txt` | 站点根目录 | 开启 | [`llms.txt`](/docs/discoverability/llms-txt) |
+| 原始 Markdown 镜像、内容协商、Copy as Markdown、Open in chat | `/<route>.md` | 开启 | [面向代理的 Markdown](/docs/discoverability/markdown) |
+| JSON API 及其 OpenAPI 描述 | `/api/docs/…`、`/openapi.json` | 开启 | [JSON API](/docs/discoverability/json-api) |
+| MCP server | `/mcp` | 需手动开启，且需要服务端输出 | [MCP server](/docs/discoverability/mcp) |
+| `agent-readability.json`、`Link` 响应头、API 目录、AI 目录（ARD）、WebMCP | 站点根目录、`/.well-known/…` | 开启 | [Agent 可发现性](/docs/discoverability/agent-discovery) |
+| Agent skills、Web Bot Auth 密钥 | `/.well-known/…` | 需手动开启 | [Agent 可发现性](/docs/discoverability/agent-discovery#skills-discovery) |
+
+每一个生成的文件都会让位于你自己提供的版本：把 `robots.txt`、`sitemap.xml`、`llms.txt`、`openapi.json` 或 `agent-readability.json` 放进 `public/`，Blume 就会用你的文件代替它生成的那一份。
+
+页面内的 **assistant** 是唯一一个在别处记录的 AI 功能：它是面向读者的产品特性，而不是一种发现输出面，因此在 `ai` 下配置，文档位于[助手](/docs/configuration/assistant)。
+
+## 检查你的成果 [#checking-your-work]
+
+[`blume audit`](/docs/cli/audit) 会抓取构建好的站点，报告标题、描述、canonical 来源地址、Open Graph 与 X 卡片、hreflang、sitemap、`robots.txt` 和结构化数据的情况。用 `--url` 指向某个部署，还可以一并检查响应头和[基于 DNS 的 agent 可发现性](/docs/discoverability/agent-discovery#dns-based-discovery-dns-aid)。

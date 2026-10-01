@@ -1,0 +1,17 @@
+---
+import ParamField from "./ParamField.astro";
+
+interface Props {
+  name: string;
+  type?: string;
+  required?: boolean;
+  deprecated?: boolean;
+  default?: string;
+}
+
+const { name, type, required, deprecated, default: def } = Astro.props;
+---
+
+<ParamField name={name} type={type} required={required} deprecated={deprecated} default={def}>
+  <slot />
+</ParamField>

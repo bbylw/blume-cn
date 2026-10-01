@@ -1,0 +1,104 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className = "" } = Astro.props;
+
+const html = await Astro.slots.render("default");
+const langs: string[] = [];
+for (const m of html.matchAll(/data-language="([^"]*)"/g)) langs.push(m[1] ?? "");
+const titles: string[] = [];
+for (const m of html.matchAll(/data-code-title="([^"]*)"/g)) titles.push(m[1] ?? "");
+---
+
+<div class:list={["code-group", className]} data-code-group>
+  {
+    titles.length > 0 && (
+      <div class="code-group__bar" role="tablist">
+        {titles.map((title, i) => (
+          <button type="button" class="code-group__tab" data-code-index={i} aria-selected={i === 0 ? "true" : "false"}>
+            {title || langs[i] || `示例 ${i + 1}`}
+          </button>
+        ))}
+      </div>
+    )
+  }
+  <div class="code-group__panels">
+    <slot />
+  </div>
+</div>
+
+<script>
+  function initCodeGroups(root: ParentNode = document) {
+    root.querySelectorAll<HTMLElement>("[data-code-group]:not([data-ready])").forEach((group) => {
+      const tabs = Array.from(group.querySelectorAll<HTMLButtonElement>(".code-group__tab"));
+      const blocks = Array.from(group.querySelectorAll<HTMLElement>(":scope > .code-group__panels > *"));
+      if (tabs.length === 0 || tabs.length !== blocks.length) return;
+
+      const select = (index: number) => {
+        tabs.forEach((tab, i) => {
+          tab.setAttribute("aria-selected", String(i === index));
+          tab.dataset.active = String(i === index);
+        });
+        blocks.forEach((block, i) => {
+          block.dataset.active = String(i === index);
+          block.hidden = i !== index;
+        });
+      };
+
+      tabs.forEach((tab, i) => tab.addEventListener("click", () => select(i)));
+      select(0);
+      group.dataset.ready = "true";
+    });
+  }
+
+  initCodeGroups();
+  document.addEventListener("astro:page-load", () => initCodeGroups());
+</script>
+
+<style>
+  .code-group {
+    margin-block: 1.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    background-color: var(--bg-subtle);
+    overflow: hidden;
+  }
+  .code-group__bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.125rem;
+    padding: 0.375rem;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--bg-muted);
+  }
+  .code-group__tab {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    padding: 0.3rem 0.7rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--fg-subtle);
+    font-family: var(--font-mono);
+    transition:
+      color 0.15s ease,
+      background-color 0.15s ease;
+  }
+  .code-group__tab[data-active="true"] {
+    background-color: var(--bg);
+    color: var(--fg);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.06);
+  }
+  .code-group__panels :global(> *) {
+    border-radius: 0;
+    border-inline: 0 !important;
+    border-bottom: 0 !important;
+  }
+  .code-group__panels :global(> *:last-child) {
+    border-bottom: 1px solid var(--border) !important;
+  }
+</style>

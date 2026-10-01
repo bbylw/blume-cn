@@ -1,0 +1,79 @@
+---
+import "katex/dist/katex.min.css";
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description: string;
+  canonical?: URL | string;
+  /** 是否允许搜索引擎收录 */
+  noindex?: boolean;
+  ogImage?: string;
+  type?: "website" | "article";
+  jsonLd?: Record<string, unknown> | Record<string, unknown>[];
+  class?: string;
+}
+
+const {
+  title,
+  description,
+  canonical,
+  noindex = false,
+  ogImage = "/og-default.svg",
+  type = "website",
+  jsonLd,
+  class: className = "",
+} = Astro.props;
+
+const site = Astro.site ?? new URL("https://blume.ndjp.net");
+const canonicalUrl = canonical ? new URL(canonical, site).href : new URL(Astro.url.pathname, site).href;
+const fullTitle = title.includes("Blume") ? title : `${title} · Blume 中文文档`;
+---
+
+<!doctype html>
+<html lang="zh-CN" class="scroll-smooth">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+    <meta name="generator" content={Astro.generator} />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title="Blume 中文文档" href="/rss.xml" />
+    <meta name="theme-color" content="#ff570a" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0f" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content={type} />
+    <meta property="og:site_name" content="Blume 中文文档" />
+    <meta property="og:locale" content="zh_CN" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={new URL(ogImage, site).href} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={fullTitle} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={new URL(ogImage, site).href} />
+
+    <link rel="alternate" type="text/markdown" href={`${canonicalUrl.replace(/\/$/, "")}.md`} />
+
+    <script is:inline>
+      (() => {
+        const stored = localStorage.getItem("theme");
+        const dark = stored ? stored === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+        document.documentElement.classList.toggle("dark", dark);
+      })();
+    </script>
+
+    {jsonLd && (
+      <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} is:inline />
+    )}
+    <slot name="head" />
+  </head>
+  <body class:list={["min-h-screen bg-bg text-fg antialiased", className]}>
+    <slot />
+  </body>
+</html>

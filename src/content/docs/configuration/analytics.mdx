@@ -1,0 +1,435 @@
+---
+title: 分析
+description: 通过适配器接入 PostHog、Mixpanel、Amplitude、Segment 等二十多种分析服务，也可用 script() 接入任意脚本
+source: https://useblume.dev/docs/configuration/analytics
+---
+
+Blume 会通过 `blume.config.ts` 里的 `analytics` 列表为你注入分析脚本。每一项都是一个从 `blume/analytics` 导入的适配器：每个提供方一个，再加上供任何没有适配器的服务使用的 `script()`。
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { googleAnalytics, plausible, posthog, vercel } from "blume/analytics";
+
+export default defineConfig({
+  analytics: [
+    posthog({ key: "phc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" }),
+    vercel(),
+    googleAnalytics({ id: "G-XXXXXXXXXX" }),
+    plausible({ domain: "docs.example.com" }),
+  ],
+});
+```
+
+适配器按你列出的顺序注入 `<head>`，你想组合多少个都可以。每个适配器都是纯数据：它返回的内容会与其余配置一并校验，然后内联进构建好的站点，因此它可以携带任何 JSON 值，但绝不能是函数。某个透传选项若无法用 JSON 表达（函数、`undefined`、bigint），校验会带着它的路径报错，而不是让它悄悄从构建中消失。
+
+分析脚本**只在生产构建中加载**。它们由 `blume build` 输出，`blume dev` 永远不会输出，因此本地流量不会进入你的仪表盘，你也不需要单独准备一个「development」项目。
+
+:::note
+分析是可选启用的。没有 `analytics` 列表（或列表为空）时，Blume 不会注入任何东西。
+:::
+
+若想先征求读者同意，请设置 [`consent`](/docs/configuration/consent)：这里的每个适配器都会一直等待，直到读者允许分析。
+
+下面出现的每一个标识符 —— 项目密钥、衡量 ID、站点 token —— 都是提供方安装代码片段里那个公开的、浏览器侧的标识。每个适配器都会渲染那段代码片段，因此可以安全地提交到你的文档仓库；Blume 从不要求你提供密钥。
+
+## 适配器 [#adapters]
+
+| 适配器 | 提供方 | 必填 |
+| --- | --- | --- |
+| `adobe()` | [Adobe Analytics](#adobe-analytics) | `url` |
+| `amplitude()` | [Amplitude](#amplitude) | `key` |
+| `clarity()` | [Microsoft Clarity](#microsoft-clarity) | `id` |
+| `clearbit()` | [Clearbit](#clearbit) | `key` |
+| `cloudflare()` | [Cloudflare Web Analytics](#cloudflare-web-analytics) | `token` |
+| `databuddy()` | [Databuddy](#databuddy) | `clientId` |
+| `fathom()` | [Fathom](#fathom) | `site` |
+| `googleAnalytics()` | [Google Analytics 4](#google-analytics-4) | `id` |
+| `googleTagManager()` | [Google Tag Manager](#google-tag-manager) | `id` |
+| `heap()` | [Heap](#heap) | `id` |
+| `hightouch()` | [Hightouch](#hightouch) | `key` |
+| `hotjar()` | [Hotjar](#hotjar) | `id` |
+| `logrocket()` | [LogRocket](#logrocket) | `id` |
+| `mixpanel()` | [Mixpanel](#mixpanel) | `token` |
+| `oneDollarStats()` | [OneDollarStats](#onedollarstats) | — |
+| `pirsch()` | [Pirsch](#pirsch) | `code` |
+| `plausible()` | [Plausible](#plausible) | `domain` |
+| `posthog()` | [PostHog](#posthog) | `key` |
+| `segment()` | [Segment](#segment) | `key` |
+| `vercel()` | [Vercel Web Analytics](#vercel-web-analytics) | — |
+| `script()` | [其它任何服务](#custom-scripts) | `src` 或 `content` |
+
+Blume 文档使用客户端路由器，因此大多数导航都是页内替换，而不是整页加载。每个适配器都把这些计为页面浏览：脚本自身会跟随历史变化的提供方无需额外处理，而只统计真实加载的那几个（PostHog、Segment、Hightouch）由 Blume 自己发送页面浏览事件。两个例外是标签管理器 —— [Google Tag Manager](#google-tag-manager) 和 [Adobe](#adobe-analytics) 会加载一个容器，由容器自己的规则决定触发什么，因此要给它们配一个历史变化触发器。
+
+## PostHog [#posthog]
+
+把**项目 API 密钥**传给 `posthog()` 即可接入 [PostHog](https://posthog.com)。主机默认是 PostHog Cloud US；要使用 EU Cloud（`https://eu.i.posthog.com`）或自托管实例，请设置 `host`。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  posthog({
+    key: "phc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    host: "https://us.i.posthog.com", // 可选，这就是默认值
+  }),
+],
+```
+
+`key` 和 `host` 是 Blume 映射的两个选项（`host` 会变成 `api_host`）。你传入的其它内容 —— `persistence`、`capture_pageview`、`autocapture`、`disable_session_recording` 以及 `posthog.init` 的所有其它选项 —— 都会原样传给 `posthog.init`。
+
+只有当 PostHog 仅靠捕获页面加载来统计时（也就是你既没设 `capture_pageview` 也没设 `defaults` 时的行为），Blume 才会在每次客户端路由导航时发送 `$pageview`。若设了 `capture_pageview: "history_change"`，或设了 PostHog 当前代码片段里那种 `defaults` 日期（例如 `"2025-05-24"`），导航就由 PostHog 自己统计，Blume 不再额外发送任何东西。若设了 `capture_pageview: false`，则完全不会发送页面浏览。
+
+## Vercel Web Analytics [#vercel-web-analytics]
+
+加上 `vercel()` 即可接入 [Vercel Web Analytics](https://vercel.com/docs/analytics)。Blume 会渲染 Vercel 官方的 Astro 组件；在 Vercel 控制台为该项目启用 Web Analytics 之后，该组件会注入由你自己域名提供的第一方脚本。
+
+```ts blume.config.ts lineNumbers
+analytics: [vercel()],
+```
+
+不需要任何密钥 —— 脚本会把它上报到所属部署的那个项目。它只在 Vercel 部署上采集数据，因为那里存在 `/_vercel/insights` 端点。你传入的任何选项都会作为 prop 传给该组件（`mode`、`debug`、`endpoint`、`scriptSrc` 等）；`beforeSend` 是函数，没法通过配置传递，因此请改为在一个 `script()` 适配器里给 `window.webAnalyticsBeforeSend` 赋值。
+
+## Cloudflare Web Analytics [#cloudflare-web-analytics]
+
+[Cloudflare Web Analytics](https://developers.cloudflare.com/web-analytics/) 有两种接入方式，其中只有一种需要适配器。
+
+**已开启代理的域名（自动接入）。** 如果你的站点由 Cloudflare 提供服务 —— 带自定义域名的 Worker、Pages，或任何开启了橙色云朵的域名 —— 在 Cloudflare 控制台里为该域名启用 Web Analytics 就可以了。Cloudflare 会在边缘注入 beacon，因此不要写 `cloudflare()`；再列一份会让每次页面浏览都被统计两次。
+
+**其它任何托管（手动接入）。** 对于 Cloudflare 未做代理的站点，在控制台的 Web Analytics 下添加该站点，从它给出的 JS 代码片段中复制 token（即 `data-cf-beacon` 里的 `token`），然后传到这里。Blume 渲染的 beacon 标签与那段代码片段完全相同。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  cloudflare({
+    token: "0123456789abcdef0123456789abcdef",
+  }),
+],
+```
+
+整个选项对象会变成 beacon 的 `data-cf-beacon` JSON，因此任何其它 beacon 设置（`spa` 等）都会直接透传。
+
+## Google Analytics 4 [#google-analytics-4]
+
+把 GA4 网页数据流的**衡量 ID**（`G-…`，在属性「管理 → 数据流」下该数据流的详情中）传给 `googleAnalytics()`。Blume 渲染的 Google 标签与数据流的安装说明完全一致：异步的 `gtag.js` 加载器，加上 `dataLayer` 引导和 `config` 调用。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  googleAnalytics({
+    id: "G-XXXXXXXXXX",
+    anonymize_ip: true, // 可选：任意其它 `config` 参数
+  }),
+],
+```
+
+`id` 是 Blume 唯一映射的选项。你传入的其它内容会原样搭在 `gtag('config', …)` 调用上（`send_page_view`、`cookie_domain`、`debug_mode` 等）。GA4 的增强型衡量默认就把历史变化计为页面浏览，因此客户端导航无需任何额外设置就会被追踪。Google Analytics 需要一两天才会显示新数据；[Google Analytics Debugger](https://chrome.google.com/webstore/detail/google-analytics-debugger/jnkmfdileelhofjcijamephohjechhna) 扩展可以实时看到这些请求。
+
+## Google Tag Manager [#google-tag-manager]
+
+把**容器 ID**（`GTM-…`，显示在工作区头部）传给 `googleTagManager()`。Blume 渲染容器代码片段中属于 `<head>` 的那一半；`<noscript>` 里的 iframe 是给没有 JavaScript 的浏览器用的，而那些浏览器本来也不会运行分析脚本。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  googleTagManager({
+    id: "GTM-XXXXXXX",
+    dataLayer: "dataLayer", // 可选，这就是默认值
+  }),
+],
+```
+
+哪些标签触发、在什么条件下触发，都由容器的配置决定。客户端导航会以历史变化的形式抵达容器，所以要用 **History Change** 触发器来触发页面浏览标签，而不是页面加载触发器。Cookie 同意横幅同样要你在容器里自行配置。
+
+## Plausible [#plausible]
+
+把你在 [Plausible](https://plausible.io) 中添加的**域名**传给 `plausible()`。对于自托管或经过代理的实例，把 `host` 设为它的源；默认是 Plausible Cloud。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  plausible({
+    domain: "docs.example.com",
+    host: "https://plausible.example.com", // 可选，默认为 https://plausible.io
+  }),
+],
+```
+
+`domain` 会变成 `data-domain`，`host` 决定 `/js/script.js` 从哪里加载。其它任何选项都会变成标签上对应的 `data-` 属性（`api: "/api/event"` → `data-api`）。把额外行为编进文件名的脚本变体（`script.outbound-links.js` 等）是另一个标签；要加载它们请用 [`script()`](#custom-scripts)。
+
+## Fathom [#fathom]
+
+把**站点 ID**（取自 [Fathom](https://usefathom.com) 中该站点的脚本设置）传给 `fathom()`。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  fathom({
+    site: "ABCDEFGH",
+    "honor-dnt": "true", // 可选：任意其它 `data-` 设置
+  }),
+],
+```
+
+`site` 会变成 `data-site`。其它任何选项都会变成标签上对应的 `data-` 属性（`honor-dnt`、`excluded-domains`、`canonical` 等），且都是字符串。`spa` 默认为 `"auto"`，这样 Fathom 会统计客户端路由器的导航；传入你自己的 `spa` 值即可覆盖它。
+
+## Pirsch [#pirsch]
+
+把**识别代码**（[Pirsch](https://pirsch.io) 中的 Settings → Developer → Identification Code）传给 `pirsch()`。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  pirsch({
+    code: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  }),
+],
+```
+
+`code` 会变成 `data-code`，而 Blume 会给标签填上 Pirsch 脚本用来定位自身的 `pianjs` id。其它任何选项都会变成对应的 `data-` 属性（`dev`、`exclude`、`include`、`domain`、`endpoint` 等）。
+
+## Databuddy [#databuddy]
+
+把**客户端 ID**（取自 [Databuddy](https://databuddy.cc) 中该网站的设置）传给 `databuddy()`。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  databuddy({
+    clientId: "xxxxxxxxxxxxxxxxxxxxx",
+    "track-web-vitals": "true", // 可选：任意其它 `data-` 设置
+    "skip-patterns": '["/admin/*"]',
+  }),
+],
+```
+
+`clientId` 会变成 `data-client-id`。其它任何选项都会变成标签上对应的 `data-` 属性，所以要按属性的写法用 kebab-case 命名（`track-web-vitals`、`track-errors`、`track-outgoing-links`、`api-url` 等）。Databuddy 会忽略 `trackWebVitals` 这类 camelCase 名字。取值都是字符串：开关用 `"true"` 或 `"false"`，`skip-patterns` 和 `mask-patterns` 用一个 JSON 数组。其它列表形式的取值会被 Databuddy 当作空值。
+
+## OneDollarStats [#onedollarstats]
+
+先在 [OneDollarStats](https://onedollarstats.com) 中添加站点域名，然后列出 `oneDollarStats()`。它不需要密钥，因为 OneDollarStats 靠事件来源的域名来匹配站点。
+
+```ts blume.config.ts lineNumbers
+analytics: [oneDollarStats()],
+```
+
+每个选项都会变成标签上对应的 `data-` 属性，取值都是字符串：
+
+- `hostname` 会让所有主机上的每一个事件都以该主机名上报（`docs.example.com`，不带 `https://`，也不带路径），而不只是 `localhost`，因此预览部署和预发布环境也会算作该站点的流量。除非每次构建都应以这个名字上报，否则不要设置它。
+- 把 `devmode: "true"` 与 `hostname` 一起设置，本地的 `blume preview` 才能发送事件。在 `localhost` 上缺少其中任何一个时，跟踪器都不会发送任何东西，所以不要把它们写进提交的配置里。
+- `url` 是事件被 POST 到的收集端点（默认为 `https://collector.onedollarstats.com/events`），而不是站点的 URL。
+- `autocollect: "false"` 关闭自动页面浏览统计。
+- `"hash-routing": "true"` 会在每次导航时都发送页面浏览，哪怕只有 `#fragment` 发生了变化，比如点击目录中的某个条目。取 `"false"` 时 Blume 不会写出该属性，因为只要它在，跟踪器就会打开 hash 路由。
+
+## Mixpanel [#mixpanel]
+
+把**项目 token**（[Mixpanel](https://mixpanel.com) 中的 project settings → Access Keys）传给 `mixpanel()`。如果项目使用 EU 或印度的数据驻留，请把 `region` 设为对应值，否则 Mixpanel 会丢弃这些事件。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  mixpanel({
+    token: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    region: "eu", // 可选："us"（默认）、"eu" 或 "in"
+  }),
+],
+```
+
+`token` 和 `region` 是 Blume 映射的选项（`region` 会变成 `api_host`）。Blume 还会把 `track_pageview` 设为 `"url-with-path-and-query-string"`，因此这个库会自行追踪每次导航。你传入的其它内容 —— 包括 `track_pageview` 本身 —— 都会原样传给 `mixpanel.init`（`persistence`、`autocapture`、`record_sessions_percent` 等）。
+
+## Amplitude [#amplitude]
+
+把**项目 API 密钥**（[Amplitude](https://amplitude.com) 中的 project settings）传给 `amplitude()`。Blume 渲染的是 Browser SDK 的脚本加载片段：带密钥的 SDK 包加上 `init` 调用。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  amplitude({
+    key: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    serverZone: "EU", // 可选：任意其它 `init` 选项
+  }),
+],
+```
+
+`key` 是 Blume 唯一映射的选项。`init` 选项以控制台代码片段所带的设置为起点 —— `autocapture: true` 和 `fetchRemoteConfig: true` —— 你传入的其它内容会原样合并到它们之上。自动捕获涵盖页面浏览和历史变化，因此客户端导航也会被计入。
+
+## Segment [#segment]
+
+把 [Segment](https://segment.com) 中 JavaScript 数据源的**写入密钥**传给 `segment()`。如果你用[自定义域名](https://segment.com/docs/connections/sources/custom-domain/)提供 analytics.js 来绕开广告拦截器，请把 `cdn` 设为那个源。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  segment({
+    key: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    cdn: "https://cdn.example.com", // 可选，默认为 https://cdn.segment.com
+  }),
+],
+```
+
+`key` 和 `cdn` 是 Blume 映射的选项：代码片段从 `cdn` 加载这个库，并告诉它各个 integration 也从那里获取。你传入的其它内容会原样作为 `analytics.load` 的选项传下去（`integrations` 等）。
+
+## Hightouch [#hightouch]
+
+把 [Hightouch](https://hightouch.com) 中事件数据源的**写入密钥**传给 `hightouch()`。事件 API 主机默认是美国东部区域；如果你的工作区用的是别的区域，请设置 `host`（不带协议）。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  hightouch({
+    key: "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+    host: "us-east-1.hightouch-events.com", // 可选，这就是默认值
+  }),
+],
+```
+
+`key` 和 `host` 是 Blume 映射的选项（`host` 会变成 `apiHost`）。你传入的其它内容会原样作为 `htevents.load` 的选项传下去。
+
+## Heap [#heap]
+
+把 **app ID**（[Heap](https://heap.io) 中该项目安装设置下的环境 ID）传给 `heap()`。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  heap({
+    id: "1234567890",
+    disableTextCapture: true, // 可选：任意其它 `heap.load` 选项
+  }),
+],
+```
+
+`id` 是 Blume 唯一映射的选项。你传入的其它内容会原样成为 `heap.load` 的配置对象。
+
+## Hotjar [#hotjar]
+
+把**站点 ID**（[Hotjar](https://hotjar.com) 中该站点跟踪代码里的数字）传给 `hotjar()`。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  hotjar({
+    id: 1234567,
+    version: 6, // 可选，这就是默认值
+  }),
+],
+```
+
+在 Hotjar 的跟踪代码中，`id` 对应 `hjid`，`version` 对应 `hjsv`；该适配器不接受其它选项。
+
+## Microsoft Clarity [#microsoft-clarity]
+
+把**项目 ID**（取自 [Clarity](https://clarity.microsoft.com) 中该项目的跟踪代码）传给 `clarity()`。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  clarity({
+    id: "xxxxxxxxxx",
+  }),
+],
+```
+
+该适配器不接受其它选项；Clarity 的设置都在它自己的控制台里。
+
+## LogRocket [#logrocket]
+
+把 **app ID**（`org/app` 形式，取自 [LogRocket](https://logrocket.com) 中的项目设置）传给 `logrocket()`。Blume 渲染的是安装代码片段：SDK 加上带保护的 `LogRocket.init` 调用。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  logrocket({
+    id: "your-org/your-app",
+    release: "1.2.0", // 可选：任意其它 `init` 选项
+  }),
+],
+```
+
+`id` 是 Blume 唯一映射的选项。你传入的其它内容会原样传给 `LogRocket.init`（`release`、`console`、`network`、`dom` 等）。请求或响应的 sanitizer 是函数，没法通过配置传递；需要这类函数时，请去掉适配器，改在一个 [`script()`](#custom-scripts)适配器里自己调用 `LogRocket.init`。
+
+## Clearbit [#clearbit]
+
+把**可公开的 API 密钥**（`pk_…`）传给 `clearbit()`。Blume 渲染的是 Clearbit 标签，它会加载你在 Clearbit 中管理的各种标签 —— Reveal、表单等等。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  clearbit({
+    key: "pk_xxxxxxxxxxxxxxxx",
+  }),
+],
+```
+
+该适配器不接受其它选项。
+
+## Adobe Analytics [#adobe-analytics]
+
+把你的 Launch（Adobe Experience Platform Tags）环境的**嵌入脚本 URL** 传给 `adobe()`。它位于 Data Collection 下 Environments 中该环境的安装说明里；生产环境的那个长得像 `https://assets.adobedtm.com/…/launch-….min.js`。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  adobe({
+    url: "https://assets.adobedtm.com/xxxxxxxx/launch-xxxxxxxx.min.js",
+  }),
+],
+```
+
+Blume 会异步加载该脚本；它追踪什么由属性的规则决定。客户端导航不会重新加载页面，因此要给属性配一条针对历史变化的规则（或者在一个 [`script()`](#custom-scripts)适配器里调用 `_satellite.track`）。
+
+## 自定义脚本 [#custom-scripts]
+
+用 `script()` 加载任何没有适配器的提供方，或以它的适配器无法渲染的形态加载某个提供方的标签。每一项都会渲染一个 `<script>` 标签，并且必须在 `src`（外部）与 `content`（内联）中**恰好设置一个**。
+
+```ts blume.config.ts lineNumbers
+analytics: [
+  // Umami
+  script({
+    src: "https://cloud.umami.is/script.js",
+    strategy: "defer",
+    attributes: { "data-website-id": "xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" },
+  }),
+  // 一段内联代码
+  script({
+    content: "console.log('analytics ready')",
+  }),
+],
+```
+
+`attributes` 是一组要展开到标签上的额外 HTML 属性（`data-*`、`id` 等），而 `strategy` 会为外部脚本加上 `async` 或 `defer`。
+
+## 选项 [#options]
+
+| 适配器 | 选项 | 默认值 | 说明 |
+| --- | --- | --- | --- |
+| `adobe()` | `url` | — | Launch 环境的嵌入脚本 URL。必填。 |
+| `amplitude()` | `key` | — | Amplitude 项目 API 密钥。必填。 |
+| `amplitude()` | 其它任意选项 | `autocapture: true`、`fetchRemoteConfig: true` | 原样合并进 `amplitude.init` 的选项。 |
+| `clarity()` | `id` | — | Clarity 项目 ID。必填。 |
+| `clearbit()` | `key` | — | Clearbit 可公开的 API 密钥。必填。 |
+| `cloudflare()` | `token` | — | Cloudflare Web Analytics 站点 token（手动接入）。必填。 |
+| `cloudflare()` | 其它任意选项 | — | 原样写进 beacon 的 `data-cf-beacon` JSON。 |
+| `databuddy()` | `clientId` | — | Databuddy 客户端 ID。必填。 |
+| `databuddy()` | 其它任意选项 | — | 渲染为标签上的 `data-` 属性。 |
+| `fathom()` | `site` | — | Fathom 站点 ID。必填。 |
+| `fathom()` | `spa` | `"auto"` | Fathom 的历史变化追踪（`data-spa`）。 |
+| `fathom()` | 其它任意选项 | — | 渲染为标签上的 `data-` 属性。 |
+| `googleAnalytics()` | `id` | — | GA4 衡量 ID。必填。 |
+| `googleAnalytics()` | 其它任意选项 | — | 原样搭在 `gtag('config', …)` 调用上。 |
+| `googleTagManager()` | `id` | — | Tag Manager 容器 ID。必填。 |
+| `googleTagManager()` | `dataLayer` | `dataLayer` | 容器所读取的数据层全局变量名。 |
+| `heap()` | `id` | — | Heap app ID。必填。 |
+| `heap()` | 其它任意选项 | — | 原样作为 `heap.load` 的配置传下去。 |
+| `hightouch()` | `key` | — | Hightouch 事件数据源写入密钥。必填。 |
+| `hightouch()` | `host` | `us-east-1.hightouch-events.com` | 事件 API 主机，不带协议。 |
+| `hightouch()` | 其它任意选项 | — | 原样作为 `htevents.load` 的选项传下去。 |
+| `hotjar()` | `id` | — | Hotjar 站点 ID（`hjid`）。必填。 |
+| `hotjar()` | `version` | `6` | 跟踪代码版本（`hjsv`）。 |
+| `logrocket()` | `id` | — | LogRocket app ID（`org/app`）。必填。 |
+| `logrocket()` | 其它任意选项 | — | 原样传给 `LogRocket.init`。 |
+| `mixpanel()` | `token` | — | Mixpanel 项目 token。必填。 |
+| `mixpanel()` | `region` | `us` | 数据驻留区域：`us`、`eu` 或 `in`。 |
+| `mixpanel()` | 其它任意选项 | `track_pageview: "url-with-path-and-query-string"` | 原样合并进 `mixpanel.init` 的选项。 |
+| `oneDollarStats()` | `hostname` | — | 所有主机上每个事件都以此主机名上报。 |
+| `oneDollarStats()` | 其它任意选项 | — | 渲染为标签上的 `data-` 属性（`"hash-routing": "false"` 不会写出）。 |
+| `pirsch()` | `code` | — | Pirsch 识别代码。必填。 |
+| `pirsch()` | 其它任意选项 | — | 渲染为标签上的 `data-` 属性。 |
+| `plausible()` | `domain` | — | 在 Plausible 中登记的站点域名。必填。 |
+| `plausible()` | `host` | `https://plausible.io` | 自托管或经过代理实例的源。 |
+| `plausible()` | 其它任意选项 | — | 渲染为标签上的 `data-` 属性。 |
+| `posthog()` | `key` | — | PostHog 项目 API 密钥。必填。 |
+| `posthog()` | `host` | `https://us.i.posthog.com` | PostHog 数据接入主机（EU Cloud 或自托管）。 |
+| `posthog()` | 其它任意选项 | — | 原样传给 `posthog.init`。 |
+| `segment()` | `key` | — | Segment 数据源写入密钥。必填。 |
+| `segment()` | `cdn` | `https://cdn.segment.com` | 代理 Segment CDN 的自定义域名的源。 |
+| `segment()` | 其它任意选项 | — | 原样作为 `analytics.load` 的选项传下去。 |
+| `vercel()` | `mode`、`debug` 等 | — | 作为 props 传给官方 Astro 组件。 |
+| `script()` | `src` | — | 外部脚本 URL。与 `content` 互斥。 |
+| `script()` | `content` | — | 内联脚本正文。与 `src` 互斥。 |
+| `script()` | `strategy` | — | 外部脚本用 `async` 或 `defer`。 |
+| `script()` | `attributes` | — | 展开到 `<script>` 标签上的额外 HTML 属性。 |
+
+## 自定义事件 [#custom-events]
+
+Blume 的页面反馈（`feedback`，以及开启[书面反馈](/docs/configuration#written-feedback)时的 `feedback_comment`）、[搜索](/docs/configuration/search#search-analytics)（`search`、`search_select`）和[朗读](/docs/configuration/narration#analytics)播放器（`narration_play`、`narration_complete`），会通过每个已配置且带客户端 API 的适配器发送自定义事件 —— PostHog、Mixpanel、Heap、Segment、Hightouch、Amplitude、LogRocket、Adobe、Google Analytics、Google Tag Manager（作为 `window.dataLayer` 上的一次 `{ event }` push）、Plausible、Databuddy、Fathom、OneDollarStats（每个属性值都作为字符串）、Pirsch、Clarity、Hotjar 和 Vercel。Cloudflare 和 Clearbit 没有事件 API。每个事件还会作为 `blume:track` CustomEvent 在 `window` 上触发，其 `detail` 里带有 `{ event, props }`，因此一个 `script()` 适配器可以把它转发到别处。关于部署构建好的站点，见[部署](/docs/deployment)。

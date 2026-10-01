@@ -1,0 +1,114 @@
+---
+title: 版本管理
+description: 用 versions 配置为文档站启用版本快照、版本切换器、SEO 与搜索范围控制
+source: https://useblume.dev/docs/content/versioning
+---
+
+Blume 按照发布本身的运作方式来管理文档版本：最新文档位于内容根目录，使用干净、无前缀的 URL；每个历史版本都是各自文件夹中的一份冻结快照。发布时切出一份快照，Blume 就会为你接好版本切换器、“旧版本”提示、搜索范围、SEO 以及面向 agent 的接口。它是可选的：没有 `versions` 块，一切保持原样。
+
+## 启用
+
+添加一个 `versions` 块，声明当前文档以及任何已归档的快照：
+
+```ts blume.config.ts lineNumbers
+versions: {
+  current: { label: "v2.0", badge: "Latest" },
+  archived: [
+    { id: "v1.0" },
+    { id: "v0.9", label: "0.9 (legacy)" },
+  ],
+}
+```
+
+`current` 用来在切换器中标注那棵无前缀的目录树（可搭配一个可选的 `badge`）。每个归档条目的 `id` 既是快照的目录名，也是它的 URL 片段——id 必须以字母开头（`v1.0`，而不是 `1.0`），这样才永远不会与[数字排序前缀](/docs/content/navigation#ordering)冲突。归档版本按从新到旧排列；这个顺序就是切换器里的顺序。
+
+## 切出一个版本
+
+发布时，用一条命令冻结当前文档：
+
+```bash
+blume version v1.0
+```
+
+它会把你的内容目录复制到 `docs/v1.0/`（已有的快照不参与复制），重写副本内部以根路径开头的链接，让它们留在该快照之内（`/guides/x` 变成 `/v1.0/guides/x`，围栏代码和行内代码不受影响），并在 `blume.config.ts` 中注册这个 id——首次切出版本时会自行补上 `versions` 块，并把线上文档标记为 "Latest"——如果你的配置写法它不会改动，则改为给出警告并打印出可供粘贴的条目。指向不属于被复制目录树的页面链接——生成的 API 参考、像更新日志这样的远程源——仍会指向线上页面，因为快照里并没有它们的副本。不带 id 运行 `blume version` 可列出已配置的版本。
+
+像对待其他内容一样审阅并提交这个新目录。重启 `blume dev` 即可识别它。
+
+```txt
+docs/
+  index.mdx               ->  /              (最新)
+  guides/quickstart.mdx   ->  /guides/quickstart
+  v1.0/
+    index.mdx             ->  /v1.0          (冻结)
+    guides/quickstart.mdx ->  /v1.0/guides/quickstart
+```
+
+**归档意味着冻结。** 后续的修改属于线上目录树；快照就是当时的文档。Blume 正是依赖这一点：快照保留各自的文件夹元数据和翻译，[`blume translate`](/docs/cli/translate) 永远不会重新翻译它们，而配置中的显式侧边栏只对当前文档生效——快照的侧边栏永远来自它自己的文件。
+
+## 切换器与提示条
+
+配置了版本后，头部会自动长出一个版本下拉菜单。切换时，若目标版本中存在同一页面就落到它，否则落到该版本的根（设置 `switcher.redirect: "root"` 可始终落到根）。如果你在 [`navigation.selectors`](/docs/content/navigation#selectors) 中声明了自己的 `kind: "version"` 选择器，它会取代自动生成的那个。
+
+每个归档页面还会显示一条不可关闭的提示，带有指向该页线上对应页面的“Go to latest”链接。可以按版本定制或关闭它：
+
+```ts blume.config.ts
+versions: {
+  current: { label: "v2.0" },
+  archived: [
+    { id: "v1.0", banner: "These docs cover the 1.x SDK." },
+    { id: "v0.9", banner: false },
+  ],
+}
+```
+
+## SEO
+
+旧文档是搜索引擎最爱踩的坑：过时的页面排在现行的前面，或者两者互相争位。Blume 默认采用 SEO 指南推荐、而其它文档框架都不自动做的方案——归档页面仍可被索引，但会把**最新对应页面声明为自己的 canonical**，于是线上页面是权威版本，而仅存在于某个版本中的内容（在最新文档里已不存在的页面）则用自身 canonical 保持可被找到。
+
+你可以按版本选择不同的处理方式：
+
+```ts blume.config.ts
+versions: {
+  current: { label: "v2.0" },
+  archived: [
+    { id: "v1.0" }, // canonical → 最新（默认）
+    { id: "v0.9", canonical: "self" }, // 每个页面都是权威
+    { id: "v0.8", noindex: true }, // 完全不收录
+  ],
+}
+```
+
+站点地图与此保持一致：canonical 指向线上对应页面的归档页面会被排除，`noindex` 版本被整体排除，仅存在于某个版本的页面则继续列出。页面自身的 `seo.canonical` frontmatter 始终优先。
+
+## 搜索
+
+搜索对话框会把结果限定在当前浏览的版本上，语言切换器旁边还有一个“All versions”开关（按读者记住）。跨版本命中的结果会在结果行里标出它所属的版本。Orama（默认）、FlexSearch、Algolia 和 Typesense 都遵守这一范围限定——托管记录带有 `version` 分面，当前文档以 `"current"` 上传。Pagefind、Orama Cloud 和 Mixedbread 不按版本限定：它们的结果横跨所有版本，对话框也不会显示那个开关。
+
+## Agent 接口
+
+面向 agent 的接口是感知版本的——这是其它文档框架都做不到的：
+
+- MCP 的 `search_docs` 和 `list_pages` 工具默认检索当前文档，并接受 `version`：一个归档 id（`"v1.0"`）或 `"all"`。按需调用 `get_navigation` 可返回某个归档快照的目录树。
+- `llms.txt` 会把归档版本排在当前文档之后，用该版本的 `label` 或 `id` 加上 `(archived)` 作为标注——上面那个 `{ id: "v1.0" }` 对应 `v1.0 (archived)`——这样读取索引的 agent 就知道哪些文档已冻结。
+- `llms-full.txt` 只包含当前版本——这份平铺的转储不会把同一页面的冻结副本交叉混排进来。
+- [助手](/docs/configuration/assistant)会以读者正在浏览的版本为依据来作答——当前文档，除非读者停在归档页面上——这样页面的冻结副本不会把正在读的那一份挤掉。
+- 原始 Markdown 镜像（`.md` URL）与其它路由一样，为每个版本的页面都存在。
+
+## 与 i18n 一起使用
+
+版本管理可以与[国际化](/docs/content/i18n)组合使用。在磁盘上版本文件夹位于最外层——快照自然包含它自己的语言文件夹；而在 URL 里语言仍位于最外层，与站点其余部分保持一致：
+
+```txt
+docs/
+  guides/x.mdx            ->  /guides/x
+  fr/guides/x.mdx         ->  /fr/guides/x
+  v1.0/
+    guides/x.mdx          ->  /v1.0/guides/x
+    fr/guides/x.mdx       ->  /fr/v1.0/guides/x
+```
+
+语言回退在每个版本内部各自生效：未翻译的快照页面会在本地化 URL 上渲染回退语言的内容，`hreflang` 备选链接也按版本分组。版本 id 不能与已配置的语言代码冲突——Blume 会直接拒绝这种配置。
+
+## 不参与版本管理的内容
+
+版本管理覆盖的是文档内容目录树。博客、更新日志、从 OpenAPI 规范生成的 API 参考以及自定义页面始终是当前版本。还有两点行为值得知道：头部标签页是针对当前文档定义的，因此在归档目录树内部侧边栏渲染时不受标签页限定；而大型站点要注意每个快照都是一份完整副本——内容、搜索索引条目和导航数据都会随版本增长。

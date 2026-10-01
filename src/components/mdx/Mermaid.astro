@@ -1,0 +1,11 @@
+---
+import MermaidIsland from "../react/Mermaid";
+
+interface Props {
+  chart: string;
+}
+
+const { chart } = Astro.props;
+---
+
+<MermaidIsland chart={chart} client:visible />

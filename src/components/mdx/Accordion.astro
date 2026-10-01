@@ -1,0 +1,30 @@
+---
+interface Props {
+  title?: string;
+  class?: string;
+}
+
+const { title, class: className = "" } = Astro.props;
+---
+
+<div class:list={["accordion", className]}>
+  {title && <div class="accordion__title">{title}</div>}
+  <slot />
+</div>
+
+<style>
+  .accordion {
+    margin-block: 1.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    background-color: var(--bg-subtle);
+    padding: 0.25rem 0.875rem;
+  }
+  .accordion__title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--fg-subtle);
+    padding: 0.875rem 0.25rem 0.25rem;
+  }
+</style>

@@ -1,0 +1,101 @@
+---
+title: Cookie 同意
+description: 在分析脚本运行前先询问读者，支持 Blume 自带横幅、Osano 与 Ethyca 三种同意管理器
+source: https://useblume.dev/docs/configuration/consent
+---
+
+在 `blume.config.ts` 中设置 `consent`，就能在[分析](/docs/configuration/analytics)脚本运行前先询问读者。它接受一个来自 `blume/consent` 的适配器：Blume 自带的横幅，或者你已经在用的托管同意管理器。
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { googleAnalytics, posthog } from "blume/analytics";
+import { native } from "blume/consent";
+
+export default defineConfig({
+  analytics: [
+    googleAnalytics({ id: "G-XXXXXXXXXX" }),
+    posthog({ key: "phc_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx" }),
+  ],
+  consent: native({ policy: "/privacy" }),
+});
+```
+
+设置 `consent` 后，每个分析适配器都会等待。它的标签已经在页面里，但要到读者允许分析之后才会运行，并且按你列出的顺序运行。拒绝的读者永远不会加载它们，也看不到[页面评分](/docs/configuration#page-feedback)及其评论框，因为他们的回答无处可去。Vercel Web Analytics 无论如何都会加载，因为它的组件不是 Blume 能拦下的标签，但在读者允许分析之前它不会发送任何数据。
+
+:::note
+同意管理是可选启用的。没有 `consent` 时，分析会像往常一样在页面加载时运行。
+:::
+
+## 适配器 [#adapters]
+
+| 适配器 | 同意管理器 | 必填 |
+| ---------- | ------------------------------------ | ------------------------ |
+| `native()` | [Blume 自带的横幅](#blumes-banner) | —                        |
+| `osano()`  | [Osano](#osano)                      | `customerId`、`configId` |
+| `ethyca()` | [Ethyca](#ethyca)                    | `privacyCenter`          |
+
+## Blume 自带的横幅 [#blumes-banner]
+
+`native()` 会在读者做出选择之前，在页面底部显示一张小卡片，**接受**与**拒绝**并排摆放，让拒绝和接受一样容易。这个选择保存在读者的浏览器里，一旦给出，横幅就不会再出现。
+
+```ts blume.config.ts lineNumbers
+consent: native({
+  policy: "/privacy", // 可选：把横幅链接到你的隐私政策
+}),
+```
+
+`policy` 接受一个页面路由或完整 URL。横幅文案在每个内置语言中都已翻译。要修改措辞，用 `i18n.ui` 覆盖 `consent` 的 [UI 字符串](/docs/content/i18n#translated-ui)（`message`、`accept`、`decline`、`policy`、`settings`）。
+
+横幅在 `blume dev` 中同样有效，所以你写作时就能看到它。分析脚本本身只在生产构建中加载。
+
+## Osano [#osano]
+
+`osano()` 会加载 [Osano Cookie Consent](https://www.osano.com)，展示你在 Osano 控制台中设置好的横幅和抽屉。等 Osano 报告读者已同意分析时，Blume 就运行你的分析脚本；之后每当读者更改选择时再运行一次。两个 ID 都来自 Osano 提供给你的脚本标签：`https://cmp.osano.com/<customerId>/<configId>/osano.js`。
+
+```ts blume.config.ts lineNumbers
+import { osano } from "blume/consent";
+
+consent: osano({ customerId: "AzZdRbSIoEzZU2", configId: "7b9e2f4a-…" }),
+```
+
+Osano 按你在其控制台中选择的合规模式，决定各个地区什么才算同意。
+
+## Ethyca [#ethyca]
+
+`ethyca()` 从你的隐私中心加载 [Ethyca 的 Fides](https://www.ethyca.com) 同意管理器，展示你在 Fides 中设置好的横幅和弹窗。等读者的分析通知处于开启状态时 —— 已选择加入、未选择退出，或只是一个要求他们确认知悉的通知 —— Blume 就运行你的分析脚本。
+
+```ts blume.config.ts lineNumbers
+import { ethyca } from "blume/consent";
+
+consent: ethyca({
+  privacyCenter: "https://privacy.example.com",
+  propertyId: "FDS-XXXXXX", // 可选：要加载哪个 Fides 属性
+  notice: "analytics", // 可选：涵盖分析的通知键
+}),
+```
+
+`notice` 默认为 `analytics`。当你在 Fides 中针对分析的通知用的是另一个键时，才需要设置它。
+
+与分析一样，Osano 和 Fides 也只在生产构建中加载，所以在 `blume dev` 中测试不会产生任何同意记录。用 `blume build` 和 `blume preview` 来预览它们。
+
+## 更改选择 [#changing-an-answer]
+
+设置 `consent` 后，站点页脚会显示一个 **Cookie 设置**链接。它会重新打开 Blume 的横幅，或托管同意管理器的偏好设置面板。如果你用自己的 [`Footer`](/docs/configuration/customization#layout-slots) 替换了页脚，给任意元素加上 `data-blume-consent-open` 属性，就能让它成为这个链接：
+
+```html
+<button data-blume-consent-open type="button">Cookie settings</button>
+```
+
+读者如果先允许分析、之后又收回同意，页面会重新加载 —— 这是唯一能停下已经启动的脚本的办法。从那以后分析就一直保持关闭。
+
+## 你自己的脚本 [#your-own-scripts]
+
+你自己的任何脚本也用同样的方式拦下：给它 `type="text/plain"` 和 `data-blume-consent="analytics"`，它就会在读者允许分析之后运行。若想自己响应对话结果，监听 `window` 上的 `blume:consent` 事件，其 `detail.analytics` 就是读者的选择。`window.blumeConsent.analytics` 保存当前选择：在同意管理器给出答复之前为 `null`，之后为 `true` 或 `false`。
+
+```js
+window.addEventListener("blume:consent", (event) => {
+  if (event.detail.analytics) {
+    // 启动需要同意才能运行的东西
+  }
+});
+```

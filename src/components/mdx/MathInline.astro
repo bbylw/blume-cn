@@ -1,0 +1,12 @@
+---
+import katex from "katex";
+
+interface Props {
+  value: string;
+}
+
+const { value } = Astro.props;
+const html = katex.renderToString(value, { displayMode: false, throwOnError: false, output: "html" });
+---
+
+<span class="math-inline" set:html={html} />

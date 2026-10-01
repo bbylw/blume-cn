@@ -1,0 +1,30 @@
+---
+title: doctor
+description: 与构建做完全相同的扫描，报告配置、内容、依赖包和密钥上的问题，并给出项目最终解析出的配置摘要
+source: https://useblume.dev/docs/cli/doctor
+---
+
+`blume doctor` 与 `blume build` 完全一样地扫描项目并报告发现的问题，不生成也不构建任何东西。当构建因为某个不明显的原因失败时，第一个该运行的就是它；它也是一道放进 CI 的廉价关卡：
+
+```bash
+blume doctor
+```
+
+## 检查内容
+
+- **Node 版本**与已安装的 `blume` 包所支持的版本范围是否吻合，这个范围读自它自己的 `engines` 字段。超出该范围是一个警告：可能照样能跑，但它不属于 Blume 测试过的组合。
+- **`blume.config.ts`**，执行与构建完全相同的校验。被移除或改名的键会带着指明替代项的提示而失败，而不是只丢一句"无法识别的键"。
+- **每一个内容页面和文件夹元数据**：`blume dev` 与 `blume build` 在加载项目时会打印的那些诊断——frontmatter 无效、导航问题、include 目标缺失等等——全部汇总成一份报告。
+- **需要服务端的功能**出现在一个配置为静态输出的站点上——助手、MCP 服务器、Try it playground 内置的代理，或服务端模式的搜索（Mixedbread）：给出一个指明该功能的错误，并说明应当切换到哪个部署适配器（如果宿主适配器被设成了 `output: "static"`，则提示你去掉这个选项）。
+- **配置需要却没有安装的包**——某个搜索、内容源或助手适配器所导入的 SDK，某个部署适配器的 `@astrojs/*` 包，或 Vue、Svelte 交互岛所需的渲染器：逐个给出指明包的错误，并附上适合你所用包管理器的安装命令。`blume build` 在同一项检查上会直接停下。
+- **Blume 无法预先分析的 `components.ts` 覆盖项**——内联的或计算得来的条目，或者指向一个并不存在的文件的 import：每一处都给出一个错误，并标明它所在的行。
+- 在没有配置 `versions` 的站点上出现**形似版本的目录**（`v1.0/`）——否则它会被当作普通内容构建：给出一个指向 [`blume version`](/docs/cli/version) 的警告。
+- **已启用的功能会读取、却并未设置的密钥**，例如 `MIXEDBREAD_API_KEY` 或 `OPENROUTER_API_KEY`：给出一个指明变量名的警告。和 `blume dev`、`blume build` 一样，doctor 会先加载 `.env` 和 `.env.local`。
+
+## 摘要
+
+诊断之后，doctor 会打印项目最终解析出的配置，这样你以为自己配好的东西与 Blume 实际看到的东西之间的落差就一目了然：页面数量、输出模式与部署适配器、搜索服务、已配置的参考文档、分析、内容源适配器，以及助手是否开启、它用的是哪个后端。
+
+## 退出码与 JSON
+
+存在 error 级诊断时 doctor 以非零码退出，因此凡是会卡住构建的问题它都会卡住 CI；警告只作报告，不会失败。`--json` 会把诊断以 JSON 输出到 stdout，替代终端报告，结构与 [`blume validate --json`](/docs/cli/validate#json-output) 相同。

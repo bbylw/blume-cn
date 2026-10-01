@@ -1,0 +1,32 @@
+---
+title: GitHub Releases
+description: 把仓库的 GitHub Release 变成更新日志条目，发布即更新日志。
+source: https://useblume.dev/docs/content/sources/github-releases
+---
+
+内建的 `githubReleases()` 适配器把一个仓库的 release 变成更新日志：每个 release 都成为一条 `type: changelog` 条目，所以你的 release notes _就是_你的更新日志 —— 不需要写两遍。配合生成的[更新日志时间线](/docs/advanced/changelog)，发布一个 GitHub release 就会顺带发出更新日志条目。
+
+```ts blume.config.ts
+import { defineConfig } from "blume";
+import { filesystem, githubReleases } from "blume/sources";
+
+export default defineConfig({
+  content: {
+    sources: [
+      filesystem({ root: "content" }),
+      githubReleases({
+        prefix: "changelog",
+        owner: "acme",
+        repo: "sdk",
+        // prereleases: false,  // 包含预发布版本（默认关闭）
+        // drafts: false,       // 包含草稿（需要写权限 token）
+        // limit: 100,          // 限制 release 数量，最新的在前
+      }),
+    ],
+  },
+});
+```
+
+每个 release 会自动映射到更新日志的各个字段：它的名字（或 tag）成为标题，它的发布日期决定时间线顺序，tag 成为 `changelog.version`，预发布版本会被标记为 `Prerelease`（其余为 `Release`）。说明正文会作为条目正文渲染，但链接有两处改动：不是网页、邮件、电话或相对地址的链接（比如一个 `javascript:` URL）只保留它的文字；而指回你自己的 [`deployment.site`](/docs/deployment) 的链接会被改写成它的根相对路径，从而跟随预览部署和你的部署基础地址。给这个来源设置一个 `prefix`，它的 release 页面就会嵌套在 `/changelog/v1-2-0` 这样的路由下。
+
+私有仓库通过 `GITHUB_TOKEN` 环境变量认证 —— 与其它 GitHub 功能用的是同一个 token，绝不会内联进你的配置；适配器声明了它，所以缺少它的构建会发出警告。和[每个远程来源](/docs/content/sources#caching-and-offline-builds)一样，它会缓存在 `.blume/cache/<source>/` 下，并在 API 不可达时以离线方式提供。由于更新日志只是补充内容，一次无缓存情况下的抓取失败（比如没有 token 的 CI 构建）会退化为一份空更新日志并给出警告，而不是让构建失败 —— 在你的 CI 和部署环境里设置 `GITHUB_TOKEN`，它就会被填充。

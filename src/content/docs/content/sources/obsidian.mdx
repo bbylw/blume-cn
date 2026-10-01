@@ -1,0 +1,38 @@
+---
+title: Obsidian
+description: 直接读取 Obsidian vault，wikilink 与图片在构建期解析，无需导出步骤。
+source: https://useblume.dev/docs/content/sources/obsidian
+---
+
+内建的 `obsidian()` 适配器会就地读取一个 [Obsidian](https://obsidian.md) vault。没有导出步骤，也不会有任何东西生成到你的仓库里：这个 vault 始终是内容的唯一真实来源，而 Blume 在加载过程中把 Obsidian 的方言降级为 Markdown。
+
+```ts blume.config.ts
+import { defineConfig } from "blume";
+import { filesystem, obsidian } from "blume/sources";
+
+export default defineConfig({
+  content: {
+    sources: [
+      filesystem({ root: "docs" }),
+      obsidian({
+        prefix: "notes",
+        vault: "vault",
+        // 任意深度都要跳过的 vault 文件夹名，点开头的文件夹之外
+        exclude: ["Templates", "Daily"],
+      }),
+    ],
+  },
+});
+```
+
+`[[Wikilinks]]` 会变成路由链接，按整个 vault 中的笔记名寻址，而不是按路径 —— 这正是 Obsidian 寻址笔记的方式。自定义链接文字（`[[Note|label]]`）、标题锚点（`[[Note#Install]]`）、完整路径（`[[folder/Note]]` 和 `[[folder/Note.md]]`）、Obsidian 默认「尽可能短的路径」设置写出的部分路径（`[[guides/Note]]`），以及 Obsidian 在表格单元格中写下的 `[[Note\|label]]` 形式都能正常工作；而在 frontmatter 中设置了 `slug` 的笔记，会链接到该 slug 发布出来的路由。当两个笔记同名时，完整 vault 路径恰好等于该名字的笔记优先 —— Obsidian 会先把链接解析成路径、再解析成名字 —— 其次是 vault 顺序中靠前的那个（文件夹优先于笔记，不区分大小写，就像 Obsidian 的文件浏览器那样）。只有当一个 wikilink 真的通过这种冲突被解析时，Blume 才会警告；写一条更长的路径来消歧。块引用（`[[Note#^id]]`）会链接到所属笔记但不带锚点：块渲染出来并没有可落点的 id。标题锚点则针对目标笔记的真实标题来解析，匹配方式与 Obsidian 自动补全写出的形式一致（去掉 `**bold**`、`` `code` `` 与链接语法），并由填充页面清单的同一个 `extractHeadings` 流程生成 slug —— 所以指向 `#Install` 的链接会落在标题上，而不是落在一个没有任何页面会输出的 id 上。`[[#Install]]` 指向你正在写的这篇笔记里的某个标题。指向不存在标题的链接会保留页面链接、丢弃锚点并给出警告。
+
+Frontmatter 会保留 Blume 的[页面 schema](/docs/content/frontmatter)所接受的一切，再加上你在 [`frontmatter.extend`](/docs/content/frontmatter#custom-keys) 中声明的任意键（或者，对于该 `type` 的笔记，是某个内容类型的 `frontmatter`）；其余所有 Obsidian 属性 —— Dataview 字段、Templater 日期、`publish`，以及 Obsidian 自己的 `tags`、`aliases` 和 `cssclasses` —— 都会在笔记被降级时丢弃，所以一个用 Properties UI 写成的仓库也能在没有 frontmatter 报错的情况下构建。`aliases` 是被丢弃而不是被解析 —— 目前还不支持别名链接目标。笔记旁边的相对 Markdown 图片（`![chart](./chart.png)`）会直接从 vault 中提供；当 vault 位于你的 git 仓库内部时，vault 里的页面会像其他任何页面一样获得从 git 推导出的[「最后更新」日期](/docs/configuration#last-modified)。「编辑此页」链接通过 `github.dir` 解析，因此在 monorepo 中与文档应用并列的 vault 依然能链接到自己的文件；位于仓库之外的 vault 不会得到链接。
+
+vault 内的语言目录和版本快照，其读取方式与文件系统来源相同：`fr/Note.md` 在配置了 [i18n](/docs/content/i18n) 后发布到 `/fr/` 下，`v1.0/Note.md` 在配置了[版本](/docs/content/versioning)后发布到 `/v1.0/` 下，而指向这些笔记的 wikilink 会指向各自发布出来的路由。
+
+指向 `index` 笔记的链接会落到它所在文件夹的路由上，而不是一个并不存在的 `/index`。**无法解析的 wikilink 会退化为纯文本并给出构建警告，而不是让构建失败**，所以一个正在重构中途的仓库依然能发布。单行 `%%comments%%` 会被剥离，写在 HTML 注释里的 wikilink（`<!-- [[Draft]] -->`）原样保留，因为 Obsidian 也会把它藏起来；frontmatter 中没有 `title` 的笔记会以文件名作为标题 —— 这正是 Obsidian 自己采用的规则。`index` 笔记是唯一的例外：它命名的是一个路由而不是一篇笔记，所以它的标题会回落到 Blume 惯用的推导方式（先取第一个标题，再取人性化处理的路径段）。围栏代码块、缩进代码块和行内代码都逐字保留，所以一篇记录语法的笔记能完好存活。
+
+点开头的文件夹会被跳过，包括 Obsidian 自己的 `.obsidian` 配置目录和 `.trash` —— 开发模式的 watcher 也会忽略它们，所以在应用里挪动一个面板，或者把笔记删进回收站，都不会重建你的站点。而编辑笔记会。内容扫描不会读取的目录（`node_modules`、`dist`、`.git` 等）同样会被跳过，所以一个以项目自身为根的 vault 不会发布依赖包自带的 README。路径中含有 `#` 或 `?` 的笔记会带着一个错误被排除在外，和[内容文件](/docs/content#files-and-routes)一样：Astro 无法加载它的副本，所以给它换个名字。vault 内部的符号链接会被跟随，就像文件系统来源会跟随它们一样，所以链进 vault 的共享文件夹会随之一起发布。位于文件系统来源根目录内部的 vault 必须被排除掉（`filesystem({ root: "docs", exclude: ["**/_*", "**/.*", "vault/**"] })` —— `exclude` 会替换默认的 `["**/_*", "**/.*"]`，而不是追加上去，所以要保留这两项，好让 `_` 前缀的 partial 和点文件保持不发布）；随后 [`blume version <id>`](/docs/cli/version) 也会把它排除在快照之外，因为这个 vault 会继续把自己的笔记作为当前版本发布。
+
+尚未降级的部分：标注框（`> [!note]`）会渲染成普通引用块，嵌入（`![[image.png]]`）原样透传，多行 `%%comments%%` 保留在原位，并且没有反向链接图。

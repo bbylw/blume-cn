@@ -1,0 +1,70 @@
+---
+title: 速率限制
+description: 按 IP 限制读者调用服务端路由的频率，含 memory、Upstash 与 Cloudflare 三种适配器
+source: https://useblume.dev/docs/configuration/rate-limiting
+---
+
+读者每调用一次服务端路由，你都要付出一定成本：[assistant](/docs/configuration/assistant) 会消耗模型 token，[API playground](/docs/references/openapi#cors-and-the-proxy) 代理会向你的 API 转发请求，[Mixedbread 搜索](/docs/configuration/search#mixedbread) 则执行一次付费查询。Blume 会限制单个读者（按 IP 地址识别）调用它们各自的频率。超出限制的读者会收到 `429 Too Many Requests` 以及一个 `Retry-After` 响应头，assistant 则会提示他们几分钟后重试。
+
+速率限制默认开启，每位读者每条路由每 10 分钟 30 次请求：多到一个人永远不会碰到，少到足以拦下一个脚本。它只对服务端构建有意义；静态站点没有服务端路由可供限制。
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { upstash } from "blume/ratelimit";
+
+export default defineConfig({
+  rateLimit: upstash({ requests: 30, window: 600 }), // window 以秒为单位
+});
+```
+
+每条路由各自计数，因此一次繁忙的 playground 会话不会吃掉读者用于 assistant 提问的额度。
+
+## 计数保存在哪里
+
+| 适配器 | 计数保存在 | 限制生效范围 |
+| --- | --- | --- |
+| `memory()` | 服务端进程内存（默认） | 精确限于单个服务器；在 serverless 托管上按实例计算 |
+| `upstash()` | [Upstash Redis](https://upstash.com) | 在每个托管上都精确生效 |
+| `cloudflare()` | Cloudflare Workers 速率限制 | 按 Cloudflare 站点位置计算 |
+
+### Memory
+
+`memory()` 不需要任何依赖。在以单进程运行的服务器上，例如 `deployment: node()`，计数是精确的。Vercel、Netlify 和 Cloudflare 会运行许多短生命周期的实例，每个实例各自计数，所以在这些平台上它只能拦下一个读者的突发请求，而非精确执行限制。若想在这些托管上获得精确限制，请使用下面任意一种共享存储。
+
+```ts blume.config.ts lineNumbers
+import { memory } from "blume/ratelimit";
+
+rateLimit: memory({ requests: 60, window: 600 }),
+```
+
+### Upstash
+
+`upstash()` 把计数保存在 Upstash Redis 中，所有实例共享同一份。先创建一个数据库（在 Vercel 上可从 Marketplace 添加 Upstash），然后把它的 REST endpoint 和 token 分别设为 `UPSTASH_REDIS_REST_URL` 与 `UPSTASH_REDIS_REST_TOKEN`。Blume 通过 Upstash 的 REST API 通信，因此无需安装任何东西。在两者都设置好之前，路由会在内存中计数，并且 `blume build` 会给出警告。
+
+```ts blume.config.ts lineNumbers
+import { upstash } from "blume/ratelimit";
+
+rateLimit: upstash(),
+```
+
+### Cloudflare
+
+`cloudflare()` 使用 [Workers 速率限制](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)计数，适用于以 `deployment: cloudflare()` 部署的站点。Blume 会在构建时于 Worker 配置中声明该绑定，因此无需任何额外设置。Cloudflare 按位置计数，窗口只能是 10 秒或 60 秒，所以它的默认值是每 60 秒 10 次请求。
+
+```ts blume.config.ts lineNumbers
+import { cloudflare } from "blume/deploy";
+import { cloudflare as cloudflareRateLimit } from "blume/ratelimit";
+
+export default defineConfig({
+  deployment: cloudflare(),
+  rateLimit: cloudflareRateLimit({ requests: 10, window: 60 }),
+});
+```
+
+绑定的命名空间来自 Worker 的名称，因此同一账户下的两个站点不会共享计数。设置 `namespaceId` 可以自行指定。
+
+## 关闭它
+
+设置 `rateLimit: false` 可以放行所有请求 —— 例如当你的托管方防火墙已经在限制这些路由时。主机无法识别来源地址的请求始终会被放行，共享存储计数失败的请求同样如此：失败会被记录下来，因此存储服务中断不会把读者挡在门外。
+
+对于 assistant，请把速率限制与 [bot 检查](/docs/configuration/assistant#bot-protection)搭配使用，以拦下把请求分散到大量地址上的脚本。

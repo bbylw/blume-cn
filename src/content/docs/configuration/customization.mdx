@@ -1,0 +1,197 @@
+---
+title: 定制
+description: 用 components.ts 覆盖组件与布局插槽，接入交互岛、Astro 集成与 eject
+source: https://useblume.dev/docs/configuration/customization
+---
+
+## 组件覆盖 [#component-overrides]
+
+在项目根目录添加一个 `components.ts`（或 `components.tsx`）并导出 `defineComponents`。其中的 `mdx` map 既可以**替换**内置组件，也可以**新增**一个组件 —— 新组件在任何 `.mdx` 页面里都能用，无需 import。
+
+```ts components.ts lineNumbers
+import { defineComponents } from "blume";
+import Callout from "./components/Callout.astro";
+import Pricing from "./components/Pricing.astro";
+
+export default defineComponents({
+  mdx: {
+    Callout, // 替换内置的 Callout
+    Pricing, // 新增一个 <Pricing /> 组件
+  },
+});
+```
+
+键就是你在 MDX 里书写的名称（`<Callout>`、`<Pricing>`）。当你 import React 组件时，请使用 `.tsx` 文件名。
+
+### 引用形式 [#reference-form]
+
+每个覆盖项 —— 无论在 `mdx` 还是 `layout` 中 —— 都接受三种形式：
+
+```ts components.ts
+import { defineComponents } from "blume";
+import Callout from "./components/Callout.astro";
+
+export default defineComponents({
+  mdx: {
+    Callout, // 1. import 进来的组件
+    Note: "./components/Note.astro", // 2. 路径字符串（相对项目根目录解析）
+    Chart: { component: "./components/Chart.tsx", client: "load" }, // 3. 描述符
+  },
+});
+```
+
+Blume 以静态方式读取 `components.ts` —— 它从不执行该文件 —— 因此这三种形式就是它接受的全部。内联函数或表达式、在文件内部声明的组件、展开运算符、计算得到的键，以及不是下列模式字符串的 `client`，都会触发 `BLUME_COMPONENTS_INVALID` 错误并指明具体条目：`blume dev` 会在终端和浏览器浮层中报告它，`blume build` 则会直接失败。
+
+**描述符**形式额外提供一个 hydration 模式，让交互式的 React/Vue/Svelte 组件携带自己的 JavaScript 并在客户端激活。没有 `client` 模式时，框架组件会渲染为静态 HTML —— Blume 发现这种情况时会打印构建警告，因为这通常是个错误。
+
+| `client` | hydration 时机 |
+| --- | --- |
+| `"load"` | 页面加载时立即激活 |
+| `"idle"` | 主线程空闲时激活 |
+| `"visible"` | 滚动进入视口时激活 |
+| `"media"` | `media` 查询匹配时激活（附加 `media: "(min-width: 40rem)"`） |
+| `"only"` | 仅客户端，绝不服务端渲染 |
+
+带 `client` 模式的 `mdx` 条目*就是*一个交互岛：它在每个页面都可用，hydration 行为与放进 [`islands/` 文件夹](/docs/content/islands)的组件完全一致。那个文件夹仍然是零配置的路径 —— 当你想要一个不同于文件名的名称、一个 `media` 查询，或希望交互岛与其他覆盖项并排放置时，再使用 `components.ts` 条目。
+
+### 为覆盖项标注类型
+
+当你替换内置组件时，从 `blume/components` 中 import 它的 prop 类型，让你的组件符合那份契约 —— 这些类型是从组件本身推导出来的，因此永远不会失配：
+
+```tsx components/Callout.tsx
+import type { CalloutProps } from "blume/components";
+
+export default function Callout(props: CalloutProps) {
+  // ……你自己的提示框，prop 与内置版相同
+}
+```
+
+内容组件的 prop 类型都有导出（`CalloutProps`、`CardProps`、`TabsProps`、`StepsProps`、`BadgeProps` 等）。
+
+## 布局插槽 [#layout-slots]
+
+`layout` map 用你自己的组件替换 Blume 的某块界面外壳。每个覆盖项接收到的 prop 与它所替换的内置组件完全相同，因此你可以包裹默认实现，也可以从零开始。
+
+```ts components.ts
+import { defineComponents } from "blume";
+import Footer from "./components/Footer.astro";
+import Logo from "./components/Logo.astro";
+
+export default defineComponents({
+  layout: {
+    Logo, // 页头中的品牌标识 + 标题
+    Footer, // 全站页脚，取代 `footer` 配置的那个
+  },
+});
+```
+
+已接线的插槽：
+
+| 插槽 | 替换对象 | Props |
+| --- | --- | --- |
+| `Layout` | 整个页面外壳（`RootLayout`） | 内置布局接收到的全部内容，外加 `layout` map |
+| `Header` | 顶部导航栏 | `site`、`logo`、`navigation`、`route`、`searchEnabled` 等 |
+| `Logo` | 页头中的品牌链接（标识 + 标题） | `site`、`logo`、`locale` |
+| `Search` | 页头搜索触发按钮 + 弹窗 | `navigation`、`strings`、`locale`、`assistantEnabled` |
+| `Sidebar` | 主导航树 | `items`、`currentRoute` |
+| `MobileNav` | 移动抽屉内的导航（默认复用 `Sidebar`） | `items`、`currentRoute` |
+| `Breadcrumbs` | 面包屑路径 | `crumbs` |
+| `TableOfContents` | 本页大纲 | `headings`、`title`、`variant` |
+| `Pagination` | 上一页/下一页页脚链接 | `prev`、`next`、`strings` |
+| `Feedback` | 文章下方的“这个页面有帮助吗？”评分（仅在 [`feedback`](/docs/configuration#page-feedback)开启时渲染） | `strings`、`comments` |
+| `PageHeader` | 文章上方的注入点（无内置实现） | `page`、`headings`、`route` |
+| `PageFooter` | 文章下方的注入点（无内置实现） | `page`、`headings`、`route` |
+| `Footer` | 内容网格之后的[站点页脚](/docs/configuration#footer)：链接、社交资料、仓库链接和 Cookie 设置 | `footer`、`locale`、`site`、`navigation`、`ui` |
+
+`PageHeader` 和 `PageFooter` 没有内置组件 —— 在你设置它们之前什么都不渲染，这使它们成为放置促销横幅或“最后更新于”提示的便捷注入点。内置的 `Footer` 保存着通往你的仓库和社交资料的唯一链接，因此 `Footer` 覆盖项（配置无法表达的营销型页脚该放的地方）应该保留它们。设置了 `consent` 时，同样要保留重新打开它的入口：任何带 `data-blume-consent-open` 的元素都可以充当 [Cookie 设置](/docs/configuration/consent#changing-an-answer)链接。
+
+布局插槽接受与 MDX 覆盖项相同的[三种引用形式](#reference-form)，因此插槽可以是路径字符串，也可以在你想要交互式页头或页脚时使用已 hydration 的描述符（`{ component, client }`）。
+
+## 交互岛 [#interactive-islands]
+
+对于交互式 UI（React、Vue 或 Svelte），把组件放进 `islands/` 文件夹，然后在任意 MDX 页面中使用它 —— Blume 会替你完成 hydration，无需任何包装或注册：
+
+```tsx islands/Counter.tsx lineNumbers
+import { useState } from "react";
+
+export default function Counter() {
+  const [n, setN] = useState(0);
+  return <button onClick={() => setN(n + 1)}>Clicked {n}</button>;
+}
+```
+
+```mdx page.mdx
+Use it anywhere: <Counter />
+```
+
+hydration 策略和框架配置参见 [Islands](/docs/content/islands)。
+
+## 自定义页面 [#custom-pages]
+
+在 `pages/` 文件夹下添加 `.astro` 文件，让完全自定义的路由与文档并存 —— 一个落地页、一个定价页，或手工搭建的索引页。它们保留自己的位置，因此相对 import 和 `getStaticPaths` 都照常工作，并且可以从 `blume:data` 模块读取你的配置、导航和路由。
+
+完整指南参见 [Custom pages](/docs/advanced/custom-pages)。
+
+## 组件注册表
+
+`blume add` 会把一个由 Blume 维护的组件以**源码**形式复制到你的项目里 —— 它归你所有，你可以随意编辑。不带参数运行它可以列出可用的组件：
+
+```bash
+blume add
+```
+
+安装一个布局插槽（页头、侧边栏、面包屑、目录、分页或反馈）或任意内容组件（提示框、卡片、标签页、步骤、折叠面板等）：
+
+```bash
+blume add callout
+blume add pagination
+```
+
+复制过来的文件从 `blume/*` 引入框架的其余部分，因此在你改动之前它的渲染效果与内置版完全一致。`blume add` 会打印用于注册它的 `defineComponents` 片段 —— 内容组件放在 `mdx` 下，布局部件放在 `layout` 下。
+
+## Astro 集成 [#astro-integrations]
+
+通过 `blume.config.ts` 顶层 `integrations` 数组添加任意 Astro 集成。请先在你的站点中安装该集成；Blume 不会把它加入生成运行时的依赖，也不会管理它的 Astro 兼容性。
+
+```bash
+npm install @astrojs/partytown
+```
+
+```ts blume.config.ts lineNumbers
+import partytown from "@astrojs/partytown";
+import { defineConfig } from "blume";
+
+export default defineConfig({
+  integrations: [
+    partytown({
+      config: { forward: ["dataLayer.push"] },
+    }),
+  ],
+});
+```
+
+Blume 保持自身内置集成的原有顺序，然后按声明顺序追加你的条目。它不会排序或去重，因此两个 `name` 相同的集成都会运行。Blume 只校验 `integrations` 是数组，每个条目则由 Astro 校验并报告无效集成。
+
+由于 Blume 加载集成的方式是从生成的 Astro 配置中重新 import `blume.config.ts`，而不是复制实例，配置模块每次运行会求值两次 —— 一次在 Blume 读取你的配置时，一次在 Astro 加载它时。请保持集成工厂无副作用（返回集成即可，不要在构造时写文件或打开连接），这样第二次求值就是无害的。
+
+同样的集成在 `blume dev` 和 `blume build` 中都会运行。在 `blume dev` 期间编辑 `blume.config.ts` 会重新生成隐藏的 Astro 配置并触发配置重启；如果改动后的集成没有生效，请重启 `blume dev`。Blume 无法判断哪些配置改动会影响集成，因此一旦 `integrations` 非空，对 `blume.config.ts` 的每一次编辑 —— 即使改的是无关字段 —— 都会重启开发服务器，而不是热更新。Blume 只跟踪 `blume.config.ts` 的内容，因此编辑它 import 的其他文件不会单独触发生成 —— 这类编辑之后请重启 `blume dev`。如果你 eject 了，Blume 托管的 `astro.config.mjs` 会保留一条指向 `blume.config.ts` 的相对桥接，因此配置好的集成仍会运行；之后你可以在完全接管时把它们直接移进 Astro 配置。
+
+## Eject [#eject]
+
+当你想要完全的控制权时，把生成的运行时 eject 成一个独立的 Astro 项目：
+
+```bash
+npx blume eject --yes
+```
+
+eject 是单向操作：隐藏的 `.blume/` 运行时变成一个归你所有、可直接修改的普通 Astro 应用。`blume` 包依然可以 import，因此你保留了它的组件、主题和 Markdown 处理器。
+
+eject 会把 `package.json` 里的脚本指向 `astro dev` 和 `astro build`，并按名称加入这个 Astro 应用所 import 的包 —— 生成的样式表需要 `astro`、`@tailwindcss/vite`、`tailwindcss` 和 `@tailwindcss/typography`，还有搜索客户端、集成、配置接线的 adapter，交互岛/示例/assistant 用到 React 时需要 `react`，assistant 路由需要 `ai`，EPUB 导出需要 `epub-gen-memory` —— 版本范围与 Blume 自身使用的一致。在 `dev` 或 `build` 之前先跑一次安装；eject 会列出它添加了什么。ejected 应用中的每个路径都是相对的，因此在任何检出目录下都能构建，CI 也不例外。
+
+从那以后，请通过应用自己的脚本运行它（`npm run dev`、`npm run build`）：在 ejected 项目里 `blume dev`、`blume build`、`blume check`、`blume sync` 和 `blume preview` 都会停下并提示你改用这些脚本。再次运行 `blume eject` 同样会被拒绝，因为它会覆盖你的修改；传 `--force` 可以无论如何重新生成应用。
+
+### eject 保留了什么
+
+隐藏运行时作为页面提供的路由会被写进应用的 `src/pages`，因此它响应同样的 URL：每个页面的 Markdown 孪生版本、带 `/404.md` 与 `/404.json` 孪生版本的 [404 页面](/docs/advanced/custom-pages#404-page)、托管的 MCP server，以及位于 `/api/docs/…` 和 `/openapi.json` 的 [JSON 文档 API](/docs/discoverability/json-api) —— `llms.txt` 和未找到页面会把 agent 指向它们。
+
+ejected 应用的 `build` 脚本运行的是普通的 `astro build`，而 `blume build` 叠加在其上的产物 —— 搜索索引（以及托管提供方的索引同步）、`llms.txt` 和 `llms-full.txt`、`sitemap.xml`、`robots.txt`、`agent-readability.json`、`.well-known` 探测文件、Agent Skills，以及平台的 `_redirects`/`_headers` 文件 —— 依然会产出：ejected 的 `astro.config.mjs` 中的 Blume 集成会从 Astro 的 `astro:build:done` hook 写出它们，扫描项目（你的 `blume.config.ts` 和内容）的方式与 CLI 当年一致。ejected 构建不再做的是 CLI 的 adapter 后处理：Vercel 和 Cloudflare 的 `Accept: text/markdown` 路由拼接、Vercel 函数包审计、`node()` 服务器入口包装（`.well-known` 探测文件的 media type 和 CORS 头、对下载 SVG 的沙箱处理，以及每个重定向的确切状态码）、`netlify()` 服务器构建写入 `.netlify/v1/config.json` 的响应头规则、Cloudflare Worker 的命名（取自你的项目名）及其用于在项目根目录执行 `wrangler deploy` 的 `.wrangler/deploy` 重定向，以及 `--analyze`/`--budget-*` 质量门禁。

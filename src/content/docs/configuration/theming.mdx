@@ -1,0 +1,286 @@
+---
+title: 主题
+description: 用 token 驱动的主题覆盖亮色与暗色模式，含字体、暗色配色与设计 token
+source: https://useblume.dev/docs/configuration/theming
+---
+
+Blume 的主题由 token 驱动，开箱即支持亮色与暗色模式。按你的需要多取或少取：常见情况改几个配置 token，用 `theme.css` 覆盖任意设计 token，或用 Tailwind 工具类定制组件。
+
+## 配置 token
+
+日常使用的旋钮位于配置中的 `theme` 下：
+
+```ts blume.config.ts lineNumbers
+theme: {
+  accent: "teal",   // 命名预设或任意 CSS 颜色
+  radius: "md",     // none | sm | md | lg
+  mode: "system",   // system | light | dark
+  fonts: {          // 自托管的 Google 字体
+    display: "inter",
+    body: "inter",
+    mono: "ibm-plex-mono",
+  },
+}
+```
+
+### Accent [#accent]
+
+强调色用于着色可交互元素和高亮元素 —— 步骤标记、选中的标签页、徽章、卡片悬停等等。使用命名预设或任意 CSS 颜色：
+
+```ts blume.config.ts lineNumbers
+theme: {
+  accent: "#ff0066", // hex、oklch()、rgb()……任何 CSS 能理解的值
+}
+```
+
+命名预设：`blue`（默认）、`green`、`orange`、`pink`、`purple`、`red` 和 `teal`。每个预设都有一个更深的亮色模式色阶和一个更浅的暗色模式色阶，因此强调色文字和按钮标签在两种模式下都满足 WCAG AA 对比度（4.5:1）。
+
+字符串同时作用于两种颜色模式；若要[按模式设置不同强调色](#dark-mode-colors)，请传入一个对象。
+
+位于强调色或操作色填充之上的文字，例如按钮标签或步骤编号，在该颜色上白色满足 AA 时为白色，否则为深色。浅色强调色无需任何额外配置即可获得深色标签。[`blume audit`](/docs/cli/audit#theme-contrast-low) 会用同样的标准检查自定义的强调色、操作色和背景色。
+
+### Radius
+
+`radius` 设置卡片、代码块、提示框和输入框共用的圆角大小 —— `none`、`sm`、`md`（默认）或 `lg`。
+
+### 颜色模式
+
+`mode` 设置初始配色方案：
+
+- **`system`**（默认）—— 跟随读者的操作系统偏好
+- **`light`** / **`dark`** —— 默认使用其中一种方案
+
+页头始终有一个切换按钮供读者切换，并且他们的选择会跨次访问被记住。暗色模式通过 `<html>` 元素上的 `data-theme="dark"` 属性应用。
+
+### 字体 [#fonts]
+
+`fonts` 为三种用途设置字体：
+
+- **`display`** —— 标题（`h1`–`h6`）
+- **`body`** —— 正文、UI 和文章内容
+- **`mono`** —— 代码块和行内代码
+
+标题的字母间距（`-0.05em`）由主题本身提供，属于 display 级排版，因此你为 `display` 选的任何字体 —— 包括默认的 Inter 这类无衬线字体族 —— 在标题字号下都能正确呈现，而不依赖字体自带的字距设置。
+
+每一项都默认使用精心挑选的 Google 字体，因此 Blume 开箱即看起来是经过设计的：
+
+```ts blume.config.ts lineNumbers
+theme: {
+  fonts: {
+    display: "inter",         // 默认
+    body: "inter",            // 默认
+    mono: "ibm-plex-mono",    // 默认
+  },
+}
+```
+
+只设置你想改的用途，其余保持默认值：
+
+```ts blume.config.ts lineNumbers
+theme: {
+  fonts: { display: "geist" }, // body 与 mono 仍为 Inter / IBM Plex Mono
+}
+```
+
+字体是**自托管**的：Blume 在构建时下载它们并从你自己的站点提供，因此运行期不会有指向 Google 的请求，也不会有布局偏移（Astro 会自动生成兜底的度量匹配字体）。
+
+一个裸字符串就是下面精选集合中的 Google Fonts slug：
+
+| 类别 | Slug |
+| --- | --- |
+| 无衬线 | `dm-sans` `figtree` `geist` `ibm-plex-sans` `inter` `inter-tight` `manrope` `open-sans` `plus-jakarta-sans` `roboto` `source-sans-3` `space-grotesk` `work-sans` |
+| 衬线 | `ibm-plex-serif` `lora` `merriweather` `playfair-display` `source-serif-4` |
+| 等宽 | `fira-code` `geist-mono` `ibm-plex-mono` `jetbrains-mono` `roboto-mono` `source-code-pro` `space-mono` |
+
+#### 任意提供方的字体族
+
+需要一个精选集合之外的字体族吗 —— 比如能覆盖非拉丁文字的那种？传入一个带有精确名称的对象。它同样是自托管并以相同方式优化的：
+
+```ts blume.config.ts lineNumbers
+theme: {
+  fonts: {
+    display: { name: "Noto Sans JP", weights: [400, 700] },
+    body: { name: "Noto Sans JP", weights: [400, 500, 700] },
+  },
+}
+```
+
+- **`name`** —— 提供方列出的字体族精确名称。
+- **`provider`** —— 字体族来自哪里：`google`（默认）、`fontsource`、`bunny` 或 `fontshare`。
+- **`weights`** —— 要加载的字重，用数字或类似 `"100..900"` 的可变范围表示。默认为 `[400, 500, 600, 700]`。
+- **`subsets`** —— 要加载的字符子集，使用提供方的名称（`latin`、`latin-ext`、`vietnamese`、`cyrillic`、`greek` 等）。默认为 `latin` 加上你配置的 locale 所需的部分 —— 见下文。
+- **`fallback`** —— 字体加载期间以及缺少字形时使用的系统字体栈：`sans`、`serif` 或 `mono`。mono 用途默认为 `mono`，其余默认为 `sans`。
+
+#### 子集与 locale
+
+Google、Bunny 和 Fontsource 会把每个字体族拆成按文字系统划分的子集，只有你加载的子集才会得到一个 `@font-face`。Blume 从你的 [`i18n.locales`](/docs/content/i18n) 推导出这个列表：包含越南语、波兰语、俄语或希腊语 locale 的站点，会在 `latin` 之外加载 `vietnamese`、`latin-ext`、`cyrillic` 或 `greek`，这样变音符号和非拉丁字母会用你选定的字体渲染，而不是回退到系统字体。没有 `i18n` 配置块、或只有拉丁-1 语言的站点只加载 `latin`。浏览器只在页面用到某个子集的字符时才下载它，预加载也遵循同一份列表。
+
+在某个字体族上设置 `subsets` 可以覆盖推导出的列表 —— 例如单 locale 站点，但其内容仍需要该 locale 并不蕴含的文字系统：
+
+```ts blume.config.ts lineNumbers
+theme: {
+  fonts: {
+    body: { name: "Be Vietnam Pro", subsets: ["latin", "vietnamese"] },
+  },
+}
+```
+
+像 `inter` 这样的精选 slug 会遵循 locale 推导出的列表；这些字体族也可以用对象形式来固定子集。
+
+#### 本地字体文件
+
+对于你拥有的字体（或任何提供方都不提供的字体），把某个用途指向项目中的字体文件。每个变体会成为一个 `@font-face`：
+
+```ts blume.config.ts lineNumbers
+theme: {
+  fonts: {
+    display: {
+      name: "Berkeley Mono",
+      variants: [
+        { src: "./fonts/BerkeleyMono-Regular.woff2", weight: 400 },
+        { src: "./fonts/BerkeleyMono-Bold.woff2", weight: 700 },
+      ],
+    },
+  },
+}
+```
+
+路径相对于项目根目录解析。`weight` 和 `style`（`normal`、`italic`、`oblique`）是可选的 —— 省略时 Astro 会从字体文件中读取。
+
+:::note
+当你显式设置 `theme.fonts` 时，你的 display 和 body 字体会自动为生成的 [Open Graph 卡片](/docs/discoverability/open-graph#card-fonts)设置样式，让分享出去的链接与站点风格一致。非 Google 提供方的字体族在那里会被跳过（卡片渲染器只能从 Google Fonts 获取）；本地文件在任何地方都可用。
+:::
+
+想退回系统字体栈吗？直接在 [`theme.css`](#themecss)中覆盖 `--blume-font-*` token。
+
+### 暗色模式配色 [#dark-mode-colors]
+
+`accent` 和 `background` 遵循同一条规则：字符串同时作用于两种颜色模式，`{ light, dark }` 对象则分别设置每种模式：
+
+```ts blume.config.ts lineNumbers
+theme: {
+  accent: { light: "blue", dark: "teal" },
+  background: {
+    light: "#ffffff",
+    dark: "#0a0a0a",
+  },
+}
+```
+
+每种颜色都可以填命名预设或任意 CSS 颜色。对于 `background`（以及 `backgroundImage`），两个键都可以省略其中一个以只覆盖单一模式 —— `background: { dark: "#0a0a0a" }` 会保留默认的亮色背景。
+
+### 操作色
+
+`action` 是主行动召唤（CTA）和 `action` Tailwind 工具类（`bg-action`、`text-action`）使用的次要强调色。它默认为你的 `accent`：
+
+```ts blume.config.ts
+theme: {
+  action: "#ff0066",
+}
+```
+
+### 背景图
+
+用 `backgroundImage` 设置内容背后的背景图 —— 一个 URL 或 `public/` 下的路径。和颜色一样，字符串同时作用于两种模式，`{ light, dark }` 对象则分别设置每种模式的图片：
+
+```ts blume.config.ts lineNumbers
+theme: {
+  backgroundImage: {
+    light: "/bg-light.svg",
+    dark: "/bg-dark.svg",
+  },
+}
+```
+
+## theme.css [#themecss]
+
+在项目根目录放一个 `theme.css`，即可覆盖任意设计 token。它是层叠中的最后一层，因此优先级高于默认值和配置 token：
+
+```css theme.css lineNumbers
+:root {
+  --blume-accent: oklch(0.68 0.14 180);
+  --blume-radius: 0.5rem;
+}
+
+:root[data-theme="dark"] {
+  --blume-background: oklch(0.16 0 0);
+}
+```
+
+在 `:root` 下设置 token 用于亮色模式，在 `:root[data-theme="dark"]` 下设置用于暗色模式。颜色 token 在暗色选择器处以更高优先级声明了各自独立的内置暗色值，因此只写 `:root` 而覆盖 `--blume-accent`、`--blume-background` 等只会作用于亮色模式 —— 若两种模式都要改变，请同时声明暗色块。
+
+`theme.css` 会被内联到站点的 Tailwind 入口中，因此 Tailwind 指令在它里面同样有效。monorepo 中最需要知道的是 `@source`：Blume 会扫描你的项目以寻找工具类，而一个从同级 workspace 包引入组件的页面需要那个包也被扫描。相对于 `theme.css` 指定它 —— 这是 Tailwind 的标准写法 —— Blume 会把这个路径带入生成的样式表：
+
+```css theme.css lineNumbers
+@source "../../packages/ui/src";
+```
+
+### 设计 token
+
+| Token | 控制项 |
+| --- | --- |
+| `--blume-background` | 页面背景 |
+| `--blume-foreground` | 正文文字 |
+| `--blume-muted` | 低对比度的表面 —— 提示框、表头 |
+| `--blume-muted-foreground` | 次要文字 |
+| `--blume-border` | 边框和分隔线 |
+| `--blume-accent` | 强调色 |
+| `--blume-accent-foreground` | 强调色背景上的文字和图标 |
+| `--blume-action` | 次要强调色（默认为 accent） |
+| `--blume-action-foreground` | 操作色背景上的文字和图标（默认为强调色前景色） |
+| `--blume-code-background` | 代码块底色 |
+| `--blume-code-highlight`, `--blume-code-highlight-border` | 高亮代码行的背景和左侧标线（`// [!code highlight]` 或 `{1,4-5}` 区间） |
+| `--blume-code-add`, `--blume-code-add-border` | 新增行的背景和左侧标线（`// [!code ++]`） |
+| `--blume-code-remove`, `--blume-code-remove-border` | 删除行的背景和左侧标线（`// [!code --]`） |
+| `--blume-code-word`, `--blume-code-word-border` | 高亮词的背景和外框（`// [!code word:…]`） |
+| `--blume-content-width` | 正文栏最大宽度 —— 文章、面包屑、目录、反馈和分页（默认 `42rem`） |
+| `--blume-radius` | 圆角半径 |
+| `--blume-font-display` | 标题字体 |
+| `--blume-font-body` | 正文 / UI 字体 |
+| `--blume-font-mono` | 代码字体 |
+
+把任意 `--blume-font-*` token 设为一个字体栈，即可使用精选列表之外的字体，或回退到系统字体栈：
+
+```css theme.css lineNumbers
+:root {
+  --blume-font-body: ui-sans-serif, system-ui, sans-serif;
+}
+```
+
+## Tailwind 工具类
+
+Blume 的主题内部基于 Tailwind v4 构建，你项目中的 `.astro`、`.tsx` 和 `.jsx` 文件也会被扫描 —— 因此你可以用工具类给自定义组件和页面设置样式，无需任何 Tailwind 配置。每一个 token 都以工具类形式暴露，因此你的组件会自动跟随主题：
+
+| Token                       | 工具类                       |
+| --------------------------- | -------------------------- |
+| `--blume-background`        | `bg-background`            |
+| `--blume-foreground`        | `text-foreground`          |
+| `--blume-muted`             | `bg-muted`                 |
+| `--blume-muted-foreground`  | `text-muted-foreground`    |
+| `--blume-border`            | `border-border`            |
+| `--blume-accent`            | `bg-accent`, `text-accent` |
+| `--blume-accent-foreground` | `text-accent-foreground`   |
+| `--blume-action`            | `bg-action`, `text-action` |
+| `--blume-action-foreground` | `text-action-foreground`   |
+| `--blume-code-background`   | `bg-code`                  |
+| `--blume-content-width`     | `max-w-content`            |
+| `--blume-radius`            | `rounded-blume`            |
+| `--blume-font-display`      | `font-display`             |
+| `--blume-font-body`         | `font-sans`                |
+| `--blume-font-mono`         | `font-mono`                |
+
+## 层叠顺序
+
+样式分三层解析，每一层都覆盖前一层：
+
+1. **基础层**
+
+    Blume 的样式重置、默认 token 和组件样式。
+
+2. **配置 token**
+
+    `theme` 中的 `--blume-accent`、`--blume-radius` 以及 `--blume-font-*` token。
+
+3. **theme.css**
+
+    你的 token 覆盖 —— 最终决定权。

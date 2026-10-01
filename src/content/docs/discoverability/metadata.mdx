@@ -1,0 +1,79 @@
+---
+title: 元数据
+description: 每个页面自动渲染的 head 标签、Open Graph 卡片与 X 归属，以及逐页面的 SEO 覆盖
+source: https://useblume.dev/docs/discoverability/metadata
+---
+
+每个页面都会根据你的配置和 frontmatter 渲染标准的 `<head>` 标签 —— 无需任何配置。凡是可以调整的值，都放在 `blume.config.ts` 的 `seo` 键下，或页面的 frontmatter 的 `seo` 下。
+
+- `<title>` —— 页面标题加上你的站点 `title`。
+- `<meta name="description">` 和 `og:description` —— 页面的 `description`，回退到站点的 `description`。
+- `og:title` 和 `og:site_name` —— 页面标题和你的站点 `title`。
+- `<link rel="canonical">` 和 `og:url` —— 页面的绝对 URL（当 [`deployment.site`](/docs/deployment) 已设置时）。
+- `og:type` —— blog 文章和更新日志条目为 `article`，其他页面为 `website`。文章页面还会根据页面的 `date` 和最后修改时间输出 `article:published_time` 与 `article:modified_time`。
+- `og:image` —— 该页面的 [OG 图片](/docs/discoverability/open-graph)。生成的卡片同时会声明自己的 `og:image:width`、`og:image:height`、`og:image:type` 和 `og:image:alt`，这样爬虫不必先抓取就能完成排版；你自己提供的 `seo.image` 则不声明这些，因为它的尺寸和格式未知。
+- `twitter:card`、`twitter:title`、`twitter:description`、`twitter:image` —— X 卡片。有图片的页面会得到宽版的 `summary_large_image`；没有图片的页面仍会得到紧凑的 `summary` 卡片，而不是渲染成一条裸链接。
+
+## X 归属
+
+X 从 `og:*` 标签读取卡片上的其他一切内容，因此它唯一无法推断的就是要署名的账号。把它们设在 `seo.x` 下，Blume 会输出 `twitter:site`（你的站点账号）和 `twitter:creator`（作者的账号）。`@` 是可选的 —— `acme` 和 `@acme` 都可以。
+
+```ts blume.config.ts lineNumbers
+seo: {
+  x: { handle: "@acme", creator: "@jane" },
+}
+```
+
+页面可以指定自己的作者，客座文章正需要这样做：
+
+```yaml lineNumbers
+---
+title: How we shipped it
+seo:
+  x:
+    creator: "@guestauthor"
+---
+```
+
+## 你自己的标签
+
+对于 Blume 没有提供设置的一切，在 `seo.metatags` 下添加标签，每个页面都会带上它们 —— 自定义页面和 API 参考页也不例外。它适合放来自 Google、Bing 或 Facebook 的站点验证令牌、一个 `theme-color`，或者应用横幅：
+
+```ts blume.config.ts lineNumbers
+seo: {
+  metatags: {
+    "google-site-verification": "abc123",
+    "msvalidate.01": "def456",
+    "theme-color": "#0b5fff",
+    "apple-itunes-app": "app-id=123456789",
+  },
+}
+```
+
+每个键是标签名，每个值是它的内容。Open Graph 系列（`og:`、`fb:`、`article:` 等）按协议规定用 `property` 渲染，其他一切用 `name`。Blume 自己写出的那些标签（列在本页顶部）不能在这里设置，因此一个页面永远不会为同一个标签带上两个值。构建结果会指出控制每个标签的设置：`og:image` 来自 [`seo.og`](/docs/discoverability/open-graph) 或页面的 `seo.image`，而 `robots` 来自页面的 `seo.noindex`。
+
+## 逐页面覆盖 [#per-page-overrides]
+
+用 `seo` frontmatter 逐页面覆盖其他任意标签：
+
+```yaml lineNumbers
+---
+title: Pricing
+description: Plans and pricing for every team size.
+seo:
+  title: Plans and pricing
+  canonical: https://acme.com/pricing
+  noindex: false
+---
+```
+
+| 属性 | 类型 | 默认值 | 说明 |
+| - | - | - | - |
+| `seo.title?` | `string` | - | 替换 `<title>`、`og:title` 和 `twitter:title` 中的页面标题。站点标题仍会追加在后面：在标题为 Acme Docs 的站点上，上面的例子会渲染成 “Plans and pricing - Acme Docs”。 |
+| `seo.description?` | `string` | - | 覆盖 meta 和 `og:description`。 |
+| `seo.image?` | `string` | - | 自定义社交图片（参见 Open Graph 图片）。 |
+| `seo.canonical?` | `string` | - | 覆盖 canonical URL。 |
+| `seo.noindex?` | `boolean` | - | 输出 robots noindex 并跳过结构化数据。 |
+| `seo.x.creator?` | `string` | - | 把这个页面署名给某个 X 账号（`twitter:creator`），覆盖配置里的 `seo.x.creator`。 |
+
+标记为 `noindex` 的页面也会退出 [sitemap](/docs/discoverability/sitemap-and-robots#sitemap)，并跳过[结构化数据](/docs/discoverability/structured-data)。

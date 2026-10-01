@@ -1,0 +1,30 @@
+---
+title: Sanity
+description: 用 GROQ 查询拉取数据集，字段映射为 frontmatter、Portable Text 转为 Markdown。
+source: https://useblume.dev/docs/content/sources/sanity
+---
+
+内建的 `sanity()` 适配器会执行一条 GROQ 查询，把每个文档的字段映射为 frontmatter，把它 Portable Text 的正文映射为 Markdown。适配器把 `@sanity/client` 声明为运行时依赖 —— 一个可选的 peer，所以只有在你使用这个来源时才需要安装。
+
+```ts blume.config.ts
+import { defineConfig } from "blume";
+import { filesystem, sanity } from "blume/sources";
+
+export default defineConfig({
+  content: {
+    sources: [
+      filesystem({ root: "docs" }),
+      sanity({
+        prefix: "guides",
+        projectId: "abc123",
+        dataset: "production",
+        query: `*[_type == "guide"]`,
+        // 字段路径默认为 title / slug.current / body / _updatedAt
+        fields: { slug: "slug.current", body: "content" },
+      }),
+    ],
+  },
+});
+```
+
+私有数据集的读取 token 来自 `SANITY_TOKEN` 环境变量，适配器声明了它。自定义 Portable Text 块类型通过引擎的 `serializers` 选项映射为 Blume 组件 —— 当你直接构造 `sanitySource` 并把它传给 [`custom()`](/docs/content/sources/custom) 时可用。设置 `serializers` 会以 MDX 写出该来源的页面，所以 serializer 返回的组件或指令都能渲染出来。

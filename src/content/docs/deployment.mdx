@@ -1,0 +1,236 @@
+---
+title: 部署
+description: 部署到任意静态托管平台，或切换到服务端渲染
+source: https://useblume.dev/docs/deployment
+---
+
+## 部署到任意平台（静态）
+
+`blume build` 会把你的文档编译成纯 HTML、CSS 和一份位于 `dist/` 的本地搜索索引。不需要运行任何服务器 —— 把任意静态托管指向这个文件夹即可。
+
+| 配置项 | 值 |
+| --- | --- |
+| 构建命令 | `blume build` |
+| 输出目录 | `dist` |
+| Node 版本 | 22.12 或更新版本 |
+
+这些设置在 Vercel、Netlify、Cloudflare Pages、GitHub Pages、Amazon S3 + CloudFront，以及任意存储桶或 CDN 上都适用。确保 `blume` 是一个依赖项，这样托管平台才能执行构建。
+
+一次静态构建包含：
+
+- 每一个文档页和自定义页，都是静态 HTML
+- 一份本地搜索索引（默认 Orama，可选 Pagefind）
+- 站点 URL 已知时的 [`sitemap.xml`](/docs/discoverability/sitemap-and-robots#sitemap)
+- [`robots.txt`](/docs/discoverability/sitemap-and-robots#robots)，在站点 URL 已知时指向 sitemap
+- 面向 AI 工具的 `llms.txt` 和 `llms-full.txt`
+- 重定向页面
+- 开启 `seo.og.enabled` 时预渲染的 [Open Graph 图片](/docs/discoverability/open-graph)
+
+### 设置站点 URL [#set-your-site-url]
+
+Sitemap、canonical 标签、RSS 和 Open Graph 图片都需要一个绝对来源地址。在 **Vercel**、**Netlify** 和 **Cloudflare Pages** 上，Blume 会在构建时从平台环境中检测它 —— 无需任何配置。
+
+设置 `site`（一个绝对的 `http://` 或 `https://` URL）可以覆盖检测到的值，也可以为那些不暴露该信息的托管平台（GitHub Pages、S3、自建 CDN）补上一个。对静态构建来说，那就是普通的 `deployment` 对象：
+
+```ts blume.config.ts lineNumbers
+deployment: {
+  site: "https://docs.example.com",
+}
+```
+
+在 Vercel 和 Netlify 上，自动检测会优先使用你稳定的生产域名，而不是每次部署的预览 URL，这样 canonical 来源地址在多次部署之间保持不变。Cloudflare Pages 只暴露当前部署的 URL（`CF_PAGES_URL`），它每次部署都会变，所以请在那里设置 `site`。
+
+在 `blume dev` 期间，如果没有设置站点 URL，它会回退到你的本地开发服务器（例如 `http://localhost:4321`），这样依赖站点的功能 —— Open Graph 图片、canonical、sitemap —— 开箱即用。构建永远不会使用这个回退值，因此生产产物绝不会指向 localhost。
+
+## 在本地预览
+
+发布之前，先像静态托管那样原样预览生产构建：
+
+```bash
+blume build
+blume preview
+```
+
+`blume preview` 可以提供静态构建，以及 `node()` 和 `cloudflare()` 的服务端构建。Vercel 和 Netlify 适配器没有本地预览服务器，所以在 `vercel()` 或 `netlify()` 的服务端构建之后，它会直接报错停止。请改用 `blume dev` 试用站点，或者用 `vercel deploy`、`netlify deploy` 部署一个预览。
+
+## 子路径部署 [#subpath-deploys]
+
+想把文档挂在 `example.com/docs` 这样的路径下？设置 `base` —— 在 GitHub Pages 项目站上很常见。整个站点（连根路径一起）都会移到 base 之下，内部链接和资源也会被改写成包含它。
+
+```ts blume.config.ts lineNumbers
+deployment: {
+  base: "/docs",
+}
+```
+
+`base`（以及 `site`）同样是每个托管适配器的选项：`vercel({ base: "/docs" })`。
+
+每个页面在 base 之下都保留自己的路径，即使它位于一个与 base 同名的内容文件夹里：设 `base: "/docs"` 时，`docs/setup.md` 会提供在 `/docs/docs/setup`，它的 canonical URL、侧边栏链接和 `llms.txt` 条目也都指向那里。你写的以 base 开头的根相对链接会被视为已包含它，并原样保留，所以请用相对链接（`./docs/setup`）或完整路径（`/docs/docs/setup`）来链接那个页面。
+
+## 把文档挂载到某个路径下 [#mount-the-docs-under-a-path]
+
+`basePath` 会把每一个生成的路由挂载到某个路径段之下（`/docs/getting-started`），同时完全不动侧边栏 —— 顶层依然是你的各个板块，而不是一个包裹用的分组。当文档位于 `/docs/*` 而站点根目录仍归你所用时，就用它（类似于 Docusaurus 的 `routeBasePath` 或 Fumadocs 的 `baseUrl`）。
+
+```ts blume.config.ts lineNumbers
+basePath: "/docs",
+```
+
+链接按挂载在根目录来写（`/getting-started`）；Blume 会改写它们，以及重定向、sitemap、canonical URL、Open Graph 图片、`llms.txt` 和搜索索引。公共资源（图片、`public/` 下的文件）仍留在站点根目录；如果你设置了 [`base`](#subpath-deploys)，则位于它之下。
+
+这与上面两个路径是不同的概念：
+
+- 按来源设置的 [`prefix`](/docs/content/sources#adapters) 为**一个**来源添加命名空间，并且**确实会**新增一个侧边栏分组。
+- `deployment.base` 是**整个**应用所从其提供的托管子目录。两者可以叠加 —— 两者都设置时，一个页面会落在 `{deployment.base}/{basePath}/page`。
+
+## 服务端渲染 [#server-rendering]
+
+静态产物足以覆盖大多数文档。当你需要按请求处理的功能时，切换到服务端输出 —— 最典型的是 [assistant](/docs/configuration/assistant) 端点和 [MCP server](/docs/discoverability/mcp)。做法是指定托管平台：`deployment` 接受一个从 `blume/deploy` 导入的适配器。
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { vercel } from "blume/deploy";
+
+export default defineConfig({
+  deployment: vercel(),
+});
+```
+
+每个适配器都接受相同的具名选项 —— `site`、`base` 和 `output` —— 其余任何内容都会原样透传给底层的 `@astrojs/*` 适配器，所以即使某个选项 Blume 没有具名列出，它依然能传下去：
+
+```ts blume.config.ts lineNumbers
+deployment: vercel({
+  site: "https://docs.example.com",
+  // Passed straight to @astrojs/vercel.
+  isr: { expiration: 60 },
+}),
+```
+
+| 适配器 | 包 | 适用场景 |
+| --- | --- | --- |
+| `vercel()` | `@astrojs/vercel` | Vercel —— 打磨得最好的一条路 |
+| `netlify()` | `@astrojs/netlify` | Netlify Functions |
+| `node()` | `@astrojs/node` | 自托管 Node 服务器、容器 |
+| `cloudflare()` | `@astrojs/cloudflare` | Cloudflare Workers 和 Pages |
+
+`vercel()` 和 `node()` 随 Blume 一起提供 —— 选一个就能用。`netlify()` 和 `cloudflare()` 需要在项目里装上对应的包（例如 `bun add -d @astrojs/netlify`）。如果缺少它，`blume build` 会停下并给出适合你包管理器的安装命令，`blume dev` 会给出警告，[`blume doctor`](/docs/cli/doctor) 会把它报告出来。用 pnpm 10 或更新版本时，还需要在 `pnpm-workspace.yaml` 的 `allowBuilds` 下批准这些包带来的构建脚本（`sharp`，以及 Cloudflare 的 `workerd`），否则 pnpm 会中止安装。
+
+指定一个适配器会把构建切换为服务端输出。如果你想在该托管平台上仍然保持静态构建 —— 保留它的站点检测以及它会读取的平台文件 —— 传入 `output: "static"`：
+
+```ts blume.config.ts lineNumbers
+deployment: netlify({ output: "static" }),
+```
+
+服务端构建包含静态构建的全部内容，外加你添加的任何 Astro endpoint 或中间件。`node()` 适配器会产出一个独立服务器，你可以用 `node dist/server/entry.mjs` 直接运行。除非在启动时设置 `HOST` 和 `PORT` 环境变量（`HOST=0.0.0.0 PORT=8080 node dist/server/entry.mjs`），它会监听 `localhost:4321`；传给 `node()` 的 `host` 和 `port` 不起作用，因为 `@astrojs/node` 会用 Astro 自己的服务器设置替换它们。这个服务器通过指向你项目中 `node_modules` 的链接来解析它的包，所以部署时要带上项目和已安装的依赖，而不能只部署 `dist/`。当站点要发布发现文件、提供内容源下载的图片，或配置了重定向时，Blume 会在 Astro 的入口前放一个小的包装层（把原入口移到旁边的 `astro-entry.mjs`）。它会带上正确的媒体类型和 CORS 头发送 `.well-known` 发现文件，并以沙箱方式提供下载的 SVG —— 这些事情独立服务器的静态处理器自己做不到 —— 同时按各自配置的状态码响应每一次重定向。
+
+在 `blume build` 之后，`cloudflare()` 的服务端构建可以用 `npx wrangler deploy` 从项目根目录部署：Blume 会把重定向过的 Wrangler 配置写到 `.wrangler/deploy/`（并把 `.wrangler/` 加进 `.gitignore`），并用你的项目给 Worker 命名 —— 取 `package.json` 的 `name`，否则取站点主机名，再否则取文件夹名 —— 除非项目根目录下你自己的 `wrangler.jsonc` 设置了 `name`。
+
+在 Vercel 和 Cloudflare 上，服务端构建还会开启 [`Accept: text/markdown` 内容协商](/docs/discoverability/markdown#content-negotiation)，这样一个带上该请求头、来请求任意内容页面的 agent，会在同一个 URL 上收到它的原始 Markdown 镜像。在 Vercel 上，Blume 会把按请求头条件生效的重写规则植入部署的路由配置；在 Cloudflare 上，它会在 Astro 那个 Worker 之前生成一个小 Worker，并把 `assets.run_worker_first` 指向除带指纹的构建产物以及原始 `.md`、`.txt`、`.json`、`.well-known` 文件之外的每一条路径 —— 否则平台会在任何服务器代码运行之前就返回预渲染的页面（以及某个无页面支撑的 URL 对应的 `404.html`）；这些豁免掉的文件则保留它们的零 Worker 快速路径。这个 Worker 还会在针对预渲染的逐页 JSON 文档（`/api/docs/pages/{route}.json`）的请求抵达时，从资源绑定中给出响应，因为否则 Astro 会把它路由到 `/api/` 这个 catch-all。
+
+:::note
+`vercel` 和 `cloudflare` 同时也是两个[分析适配器](/docs/configuration/analytics)的名字。当同一份配置里两者都用到时，给其中一个导入起别名：`import { cloudflare as cloudflareDeploy } from "blume/deploy"`。
+:::
+
+:::note
+服务端功能有自己的配置 —— 例如 assistant 需要一个模型 API key。设置方法见 [assistant 指南](/docs/configuration/assistant)。
+:::
+
+## 私有文档
+
+Blume 自己不带登录系统。静态构建就是一堆普通文件，任何能访问该托管平台的人都能取走 `dist/` 里的任何内容。要让站点保持私有，请打开你所用托管平台的访问保护，它会在提供文件之前检查每一个请求：
+
+- **Vercel**：[Deployment Protection](https://vercel.com/docs/deployment-protection)，作用域选 **All Deployments**，这样生产环境也被覆盖，而不只是预览。Vercel Authentication 允许你的 Vercel 团队成员进入；Password Protection 允许持有共享密码的任何人进入，需要付费方案。
+- **Netlify**：在所有部署上开启[密码保护](https://docs.netlify.com/manage/security/secure-access-to-sites/password-protection/)，用共享密码，或在 Enterprise 方案上用团队登录。
+- **Cloudflare**：在提供站点的 Worker 上开启 [Cloudflare Access](https://developers.cloudflare.com/workers/configuration/cloudflare-access/)（**Workers & Pages**，然后是你的 Worker，然后是 **Access**），它会覆盖该 Worker 响应的一切域名。你可以选择按邮箱地址、邮箱域名或 Cloudflare 账号成员身份来登录。
+- **GitHub Pages**：在 GitHub Enterprise Cloud 上以组织身份私有发布站点，只有对仓库有读权限的人才能查看。
+- **你自己的服务器**：把认证放在 `dist/` 前面，比如 nginx 的 `auth_basic` 或一个具备身份识别能力的代理。
+
+托管平台的保护对[服务端构建](#server-rendering)同样有效。它覆盖整个站点：如果想让部分页面保持公开，把它们作为单独的站点发布。
+
+Blume 写入 `dist/` 的一切都在这层保护之后，包括页面、搜索索引、`.md` 副本、`llms.txt` 和 Open Graph 图片。有几个功能会伸到它之外：
+
+- 托管的[搜索服务](/docs/configuration/search)（Algolia、Orama Cloud、Typesense 或 Mixedbread）会在那个服务上保留你自己的一份内容副本。内置的 Orama、FlexSearch 和 Pagefind 索引是 `dist/` 里的文件，因此它们保持私有。
+- 保护范围之外的服务读不到你的页面。**Open in chat** 会把一个打不开的链接交给 ChatGPT 或 Claude，Slack 或 X 的链接预览无法显示你的 Open Graph 卡片，agent 也读不到 `llms.txt` 或 MCP server。设置 `ai.openInChat: false` 可以隐藏这些对话操作。
+
+## 重定向 [#redirects]
+
+在 `blume.config.ts` 里把旧 URL 映射到新 URL：
+
+```ts blume.config.ts
+redirects: [{ from: "/old", to: "/new", status: 301 }],
+```
+
+`status` 接受 `301`、`302`、`307` 或 `308`（默认 `301`）。服务端构建在请求时按配置的状态码响应重定向。静态构建既会输出重定向页面**和**托管平台会读取的平台文件，因此会发出真正的 HTTP 重定向：`netlify()` 和 `cloudflare()` 用 `_redirects`，`vercel()` 用 `vercel.json`；而没有指定托管平台时，上述两者都会输出，外加一份 `blume-redirects.json` —— 那是给其它任何东西（nginx/Apache 规则、边缘 Worker）用的结构化清单。你自己放在 `public/` 里的 `_redirects` 或 `vercel.json` 不会被改动。
+
+有两个托管平台需要的不止那个文件：
+
+- **Netlify** 会优先提供实际存在的文件，而不是重定向规则 —— 除非强制该规则生效，而静态构建在每个 `from` 处都有一个重定向页面。`netlify()` 的 `_redirects` 会强制其规则（`/old /new 301!`）。Cloudflare 拒绝这个标志，所以没有指定托管平台的构建所写出的文件会略过它，在 Netlify 上那种构建会改为返回重定向页面；用 `netlify({ output: "static" })` 指定托管平台即可获得 HTTP 重定向。
+- **Vercel** 从项目根目录读取 `vercel.json`，绝不从输出目录读取，所以 `dist/` 里的那份只有在你用 Vercel CLI 直接部署该文件夹时才生效（`vercel deploy dist`）。通过 Git 关联的项目永远不会读取它：它会提供重定向页面，但不会提供[内容类型](#content-types)里的任何响应头。把 `dist/vercel.json` 中的 `redirects` 和 `headers` 复制到项目根目录的 `vercel.json` 里，或者服务端构建改用 `vercel()`，它的路由配置会带上重定向和这些发现相关的响应头。
+
+:::note
+`from` 和 `to` 都要按挂载在根目录来写，也就是以 `/` 开头（`to` 也可以是完整的 `https://` URL）—— 无论在 [`base`](#subpath-deploys) 还是 [`basePath`](#mount-the-docs-under-a-path) 之下，Blume 都会替你改写两侧，所以重定向会落在 base 之内。若 `to` 指向 `public/` 里的一个文件（`/files/guide.pdf`），它会加上 `base` 但不会加 `basePath`，因为那个文件就是从那里提供的。你已经手动写进 `to` 里的 base 会被保留，而不是被叠加两次。
+:::
+
+### 模式重定向 [#pattern-redirects]
+
+一个 `from` 可以一次覆盖多条路径，写法与 Mintlify 和 `vercel.json` 相同：
+
+```ts blume.config.ts
+redirects: [
+  { from: "/beta/:slug*", to: "/v2/:slug*" },
+  { from: "/blog/:slug", to: "/articles/:slug" },
+  { from: "/articles/concepts-*", to: "/concepts" },
+  { from: "/old/article-*", to: "/new/article-*" },
+],
+```
+
+- `:name` 匹配一个完整的路径段：`/blog/:slug` 覆盖 `/blog/hello`，但不覆盖 `/blog/a/b`。
+- 作为最后一个路径段的 `:name*` 匹配路径的其余部分，段数不限：`/beta/:slug*` 会把 `/beta/guides/setup` 送到 `/v2/guides/setup`，并把 `/beta` 本身送到 `/v2`。最后一段写成 `*` 效果相同。
+- 路径段末尾的 `*` 匹配从那里开始的路径其余部分：`/articles/concepts-*` 覆盖 `/articles/concepts-overview`。
+
+`to` 按名称读取捕获组，可以是完整路径段（`/:slug*`、`/:slug`），也可以用一个 `*` 来对应 `from` 中的 `*` 所匹配到的内容（`:splat`，`_redirects` 里的拼法，同样也能读到它）。没有读取任何捕获组的 `to` 会把该模式覆盖的所有路径都送到同一个页面。精确重定向优先于覆盖同一路径的模式，而模式会按你列出的顺序依次尝试。
+
+每个托管平台都会拿到自己语法下的模式：`_redirects` 里的 splat、`vercel.json` 里的 `path-to-regexp` 源，以及 `vercel()` 或 `netlify()` 服务端构建的路由配置。`node()` 和 `cloudflare()` 服务器会自行匹配，`blume dev` 也一样。静态构建不会为模式写出重定向页面 —— 那需要为该模式覆盖的每一条路径各写一个 —— 所以不读取这些文件的托管平台（比如 GitHub Pages）只会应用精确重定向；`blume-redirects.json` 则按你书写的形式列出模式。
+
+一个模式不能同时匹配到一个页面：各托管平台对这两者中哪个该胜出意见不一，所以构建会停下并报 `BLUME_REDIRECT_MATCHES_PAGE`，同时指明是哪个页面。请把模式收窄到真正改动了的路径。
+
+## 内容类型 [#content-types]
+
+在托管平台会读取某个文件的地方，构建还会输出一个 `_headers` 文件，为那些面向 AI 的原始端点固定 `charset=utf-8` —— 即 `/<route>.md`、`/<route>.mdx` 以及那些 `.txt` 文件（`llms.txt`、`llms-full.txt`）。这些响应本身是合法的 UTF-8，但许多静态托管平台会以 `text/markdown` / `text/plain` 且**不带** charset 的方式提供它们，于是浏览器回退到 Windows-1252 —— 直接打开原始 URL 时，含非 ASCII 字符的文档（日语、带变音的拉丁字母等）就会显示成乱码。HTML 页面不受影响，因为它们带有 `<meta charset>`。Netlify 在静态部署时会读取 `_headers`，Cloudflare（Pages 以及 Workers 静态资源）在静态和服务端构建时都会读取，所以这些适配器以及未指定托管平台的静态托管都能得到该文件；Vercel（响应头走路由配置）和 Node（服务器忽略该文件）则不会。Netlify 的服务端构建改为把同样的规则写进它 Frameworks API 配置（`.netlify/v1/config.json`）的 `headers` 里。Vercel 的静态构建则改为把同样的规则写进 `dist/vercel.json`，而通过 Git 关联的项目不读取它（见[重定向](#redirects)）。你自己放在 `public/` 里的 `_headers` 不会被改动。
+
+## 环境变量
+
+当某个功能需要运行时密钥时，如果它缺失，Blume 会在 `blume dev`/`build` 时发出警告 —— 这样问题会尽早暴露，而不是等到第一次请求：
+
+| 功能 | 变量 |
+| --- | --- |
+| Assistant（AI Gateway） | `AI_GATEWAY_API_KEY`（或 Vercel OIDC） |
+| Assistant（其它适配器） | 该适配器的默认密钥环境变量（`OPENAI_API_KEY`、`ANTHROPIC_API_KEY`、`GEMINI_API_KEY`、`XAI_API_KEY`、`OPENROUTER_API_KEY`、`LLMGATEWAY_API_KEY`、`INKEEP_API_KEY`），或你传给它的 `apiKeyEnv` |
+| Mixedbread 搜索 | `MIXEDBREAD_API_KEY` |
+| [内容源](/docs/content/sources) | `NOTION_TOKEN`（`notion()`）、`SANITY_TOKEN`（`sanity()`）、`CONTENTFUL_ACCESS_TOKEN`（`contentful()`）、`PAYLOAD_API_KEY`（`payload()`）、`STRAPI_API_TOKEN`（`strapi()`）、`GITHUB_TOKEN`（`githubReleases()`，以及从 GitHub 读取的 `mdxRemote()`） |
+
+本地开发把它们放在 `.env.local`，生产环境放在你所用托管平台的环境变量里。内容源会在抓取时读取自己的密钥，在 `blume dev` 和 `blume build` 期间都会如此，所以要把它设在你的站点构建时能读到的地方。搜索索引同步（Algolia、Orama Cloud、Typesense）所需的构建时密钥，会在同步步骤中单独给出警告。
+
+## 构建缓存 [#build-cache]
+
+Blume 保留两份缓存供构建复用。Astro 和 Vite 的缓存在 `.blume/.cache/` 下（其中包括内容存储和图片转换）。已渲染的 [OG 卡片](/docs/discoverability/open-graph#card-cache) 位于 `node_modules/.cache/blume/og`，所以重新构建时只会渲染那些标题、描述或品牌信息发生变化的卡片。某个平台是否在多次部署之间保留该目录，情况各不相同：
+
+- **Vercel** 会从构建缓存里恢复 `node_modules/**`，所以卡片会延续（缓存上限 1 GB，保留一个月，按分支做 key —— 新分支从生产缓存开始）。
+- **Netlify** 会恢复 `node_modules`，所以卡片会延续。
+- **Cloudflare Workers Builds** 只保留包管理器缓存，以及针对被识别为 Astro 项目的 `node_modules/.astro` —— 绝不会保留 `node_modules/.cache` —— 所以在那里每次部署都会渲染全部卡片。
+- **GitHub Actions** 以及你自己管理的其他 runner 不会保留任何东西，除非你自己缓存这个目录：
+
+```yaml
+- uses: actions/cache@v4
+  with:
+    path: node_modules/.cache/blume/og
+    key: blume-og-${{ runner.os }}-${{ hashFiles('**/bun.lock', '**/package-lock.json', '**/pnpm-lock.yaml') }}
+    restore-keys: blume-og-${{ runner.os }}-
+```
+
+卡片按内容做 key，所以 key 不精确也没关系：恢复的缓存只可能省下渲染，永远不会提供错误的卡片。
+
+有一个安装命令会在所有平台上丢弃缓存：`npm ci` 会在安装前删除 `node_modules`。请保持用 `npm install`、`bun install` 或 `pnpm install` 作为安装命令，才能享受缓存复用。
+
+## 构建摘要
+
+每次构建都会打印一份摘要 —— 输出模式、适配器、解析出的站点 URL、搜索服务、重定向数量、sitemap 和 `llms.txt` 状态，以及任何已启用的服务端功能 —— 这样你可以在部署前确认（发布）了什么，包括所有自动检测到的内容。

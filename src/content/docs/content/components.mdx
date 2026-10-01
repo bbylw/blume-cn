@@ -1,0 +1,842 @@
+---
+title: 组件
+description: Blume 内置组件总览，涵盖卡片、步骤、标签页、徽章、类型表格、代码组等
+source: https://useblume.dev/docs/content/components
+---
+
+Blume 自带一套无障碍、可换主题的组件，在任何 `.mdx` 页面上都能用，且**无需 import**。下面每个组件都配有实时预览和它的源码。这些组件是原生的、不依赖 React；只有当你的项目用到 React 时才会启用 React——项目里出现任何 `.tsx` 或 `.jsx` 文件、一个 React [交互岛](/docs/content/islands)、[`<Component>`](#component) 示例，或[组件覆盖](/docs/configuration/customization)——或者启用了[助手](/docs/configuration/assistant)时。
+
+## Card 与 CardGroup
+
+卡片用一个图标、标题和一段简短说明把读者引向某个目的地。用 `CardGroup` 把它们排成响应式网格。落地页、章节索引和“下一步”这类地方都适合用它们——凡是引导读者继续往前走的地方。
+
+**[快速上手](/docs/quickstart)**
+
+安装 Blume 并发布你的第一个页面。
+
+**[组件](/docs/content/components)**
+
+浏览组件库。
+
+```astro lineNumbers
+<CardGroup cols={2}>
+  <Card title="Quickstart" href="/docs/quickstart" icon="rocket">
+    Install Blume and ship your first page.
+  </Card>
+  <Card title="Components" href="/docs/content/components" icon="folder">
+    Browse the component library.
+  </Card>
+</CardGroup>
+```
+
+`Card` 接受 `title`、可选的 `href`（不传就是不可点击的卡片），以及取自 Blume 内置图标集的 `icon`。`CardGroup` 接受 `cols`（默认 `2`）。
+
+卡片还接受 `img`（横跨顶部的图片，或配合 `horizontal` 从 `sm` 断点起与文字并排）、`cta`（文字下方用强调色显示的一行行动号召）、`arrow`（标题与 CTA 之后的一个箭头；默认只对外链显示）、`type`（像提示框那样给卡片着色并挑选匹配的图标：`note`、`info`、`tip`、`check`、`warning` 或 `danger`），以及 `color`（给图标用的任意 CSS 颜色）。
+
+## Steps [#steps]
+
+编号纵向序列，用来放有先后顺序的说明——安装步骤、配置流程，以及顺序要紧的教程。每个 `Step` 接受一个 `title` 和可选的 `icon`，图标会显示在标记里取代编号。`Steps` 上的 `titleSize` 用来设定步骤标题的字号，像正文一样（`p`，默认值）或像 `h4`、`h3`、`h2` 标题一样。
+
+1. **安装 Blume**
+
+    把这个包加入你的项目。
+
+2. **编写页面**
+
+    在你的内容文件夹里放一个 `.mdx` 文件。
+
+3. **发布上线**
+
+    运行 `blume build` 并部署 `dist/`。
+
+```astro lineNumbers
+<Steps>
+  <Step title="Install Blume">Add the package to your project.</Step>
+  <Step title="Write a page">
+    Drop an `.mdx` file into your content folder.
+  </Step>
+  <Step title="Ship it">Run `blume build` and deploy `dist/`.</Step>
+</Steps>
+```
+
+## Tabs [#tabs]
+
+在原地切换等价的同类内容——不同语言的变体、各操作系统的命令，或不同的实现路线——而不必把一切都堆在页面上。每个 `Tab` 接受一个 `title`。
+
+**macOS**
+
+用 Homebrew 安装这套工具链。
+
+**Windows**
+
+用 winget 安装这套工具链。
+
+```astro lineNumbers
+<Tabs>
+  <Tab title="macOS">Use Homebrew to install the toolchain.</Tab>
+  <Tab title="Windows">Use winget to install the toolchain.</Tab>
+</Tabs>
+```
+
+加上 `inline` 可以渲染成无边框样式——一条贯穿全宽的分隔线上的标签条，内容像散文一样在其下流动——而不是带边框的方框。加上 `param` 可以把当前标签同步到 URL 查询参数而不是 hash，这样选中项就能分享：一个以 `?install=windows` 结尾的链接会打开 Windows 标签。每个分组同步到各自的 `param`，因此你可以在同一个页面上使用多个彼此独立、可深链的分组。
+
+标题相同的标签会一起切换——在一个分组里选了“macOS”，所有带 macOS 标签的分组都会跟着变。加上 `syncKey` 可以限定这种同步范围：只有共享同一个 key 的分组才会一起切换，这样碰巧标题相同的无关分组仍保持独立；或者用 `sync={false}` 让某个分组完全不参与。
+
+当前标签会写入 URL hash，因此链接会打开对应标签；传 `hash={false}` 则不去动 URL。当没有链接或同步选中项决定初始标签时，`defaultTabIndex` 决定先打开哪个标签（从零开始计数，默认 `0`）。`dropdown` 会把标签条换成下拉菜单（仅在带边框的布局中生效），`borderBottom={false}` 去掉标签条下方那条分隔线，每个 `Tab` 还接受一个显示在标题之前的 `icon`。
+
+**macOS**
+
+用 Homebrew 安装这套工具链。
+
+**Windows**
+
+用 winget 安装这套工具链。
+
+```astro lineNumbers
+<Tabs inline param="install">
+  <Tab title="macOS">Use Homebrew to install the toolchain.</Tab>
+  <Tab title="Windows">Use winget to install the toolchain.</Tab>
+</Tabs>
+```
+
+## View
+
+用 `<View>` 块为多个受众写同一页内容，比如使用不同编程语言或框架的读者。每个不同的 `title` 都会变成页面内容上方选择器里的一个选项，并且只显示被选中视图的块。目录也会随之变化：隐藏视图里的标题会从目录中消失。`<View>` 之外的散文在每个视图里都会显示，共享同一标题的块会一起显示或隐藏，因此同一页可以交替出现共享区块和视图专属区块。`icon` 会显示在选择器里视图名称的旁边。
+
+````mdx lineNumbers
+Everyone reads this paragraph.
+
+<View title="JavaScript" icon="braces">
+
+## Install the client
+
+```bash
+npm install @acme/commerce
+```
+
+</View>
+
+<View title="Python" icon="terminal">
+
+## Install the client
+
+```bash
+pip install acme-commerce
+```
+
+</View>
+````
+
+在读者另选一个视图之前，显示的是第一个视图。Blume 会跨页面记住用视图写法页面上的这个选择，并把它以 `?view=Python` 写入 URL，因此链接会打开同一个视图。指向视图内部某个标题的链接会打开该视图。当页面大部分内容都随选择变化时用 `<View>`，只有一小部分变化时用 [Tabs](#tabs)。面向 agent 的 Markdown 会包含每个视图，各自归在自己的名字之下。
+
+## Badge
+
+一个小小的行内标签，用来标注状态或元数据——版本标签、“新”或“beta”标记、稳定程度。`variant` 用来让颜色贴合语义。
+
+### 默认
+
+不带特别强调的中性元数据。
+
+稳定
+
+```astro
+<Badge>Stable</Badge>
+```
+
+### 强调
+
+借助主题强调色吸引视线——适合“新”或精选标记。
+
+新增
+
+```astro
+<Badge variant="accent">New</Badge>
+```
+
+### 成功
+
+正面或通过的状态。
+
+通过
+
+```astro
+<Badge variant="success">Passing</Badge>
+```
+
+### 警告
+
+需要谨慎使用的东西，比如实验性功能。
+
+测试版
+
+```astro
+<Badge variant="warning">Beta</Badge>
+```
+
+### 危险
+
+负面或破坏性变更的状态，比如已废弃。
+
+已废弃
+
+```astro
+<Badge variant="danger">Deprecated</Badge>
+```
+
+### 颜色、形状与尺寸
+
+除 `variant` 之外，徽章还接受 `color`——一个具名色相（`blue`、`green`、`orange`、`purple`、`red`、`teal`、`violet`、`yellow`）、一个中性色（`gray`、`surface`、`white`、`surface-destructive` 或 `white-destructive`），或一个十六进制值——以及 `shape`（`rounded`，默认值，或 `pill`）、`size`（默认 `xs`、`sm`、`md`，或 `lg`）、用来改成描边而非填充的 `stroke`、显示在标签之前的 `icon`、悬停文字 `tooltip`，以及把它变暗的 `disabled`。
+
+带图标和描边的紫色药丸标签：Preview
+
+```astro
+<Badge color="purple" icon="sparkles" shape="pill" stroke>Preview</Badge>
+```
+
+## Icon [#icon]
+
+按名字渲染图标——卡片、步骤、标签页和侧边栏条目用的是同一个 `icon` 属性。名字来自 [Lucide](https://lucide.dev/icons)，全小写并用连字符分隔（`rocket`、`gauge`、`book-open`）。
+
+
+
+```astro
+<Icon icon="rocket" size={20} />
+```
+
+Blume 只认 Lucide——裸名字会解析到 Lucide，你也可以给名字加上 `lucide:` 前缀（`lucide:rocket`），以和其它图标输入方式保持一致。`size` 设置像素尺寸（默认 `16`），`color` 给它着色（任意 CSS 颜色，默认 `currentColor`）。传入原始的 `<svg>` 字符串、图片 URL 或本地图片路径来代替名字，就能渲染你自己的图形；再加一个 `label` 让辅助技术能够识别它——没有 `label` 时该图标被视为装饰性的。
+
+图标在构建期解析并内联成零 JS 的 SVG——运行时不会请求任何资源。
+
+## 文件树 [#file-tree]
+
+用来说明一个项目或文件夹的布局。把一个普通的 Markdown 列表包起来，Blume 就会把它渲染成树状——在配置类文档里讲解结构时很顺手。
+
+- docs/
+  - index.mdx
+  - guides/
+    - configuration.mdx
+- blume.config.ts
+
+```astro lineNumbers
+<FileTree>
+
+- docs/
+  - index.mdx
+  - guides/
+    - configuration.mdx
+- blume.config.ts
+
+</FileTree>
+```
+
+## Accordion [#accordion]
+
+把相关的折叠块堆在一个带分隔线的边框容器里——常见问题、可选步骤或长示例。每个子项是一个 `AccordionItem`（`title`、可选的 `icon`、`description`、`defaultOpen`）。若只想单独做一个折叠块，用 [Expandable](#expandable)。
+
+**支持 MDX 吗？**
+
+支持——每个页面都可以是 `.md` 或 `.mdx`。
+
+**主题可定制吗？**
+
+可以，通过 Tailwind v4 设计令牌和你自己的 `theme.css`。
+
+```astro lineNumbers
+<Accordion>
+  <AccordionItem title="Does it support MDX?">
+    Yes — every page can be `.md` or `.mdx`.
+  </AccordionItem>
+  <AccordionItem title="Is the theme customizable?">
+    Yes, via Tailwind v4 tokens and your own `theme.css`.
+  </AccordionItem>
+</Accordion>
+```
+
+## Expandable [#expandable]
+
+一个轻量的行内折叠块，用来放嵌套的细节——展开某个字段的子属性，或一段可选的补充说明。`title` 是切换按钮上的文字（默认是“显示更多”）；设 `defaultOpen` 可让它初始展开。
+
+**显示高级选项**
+
+这些设置是可选的，很少需要改动。
+
+```astro
+<Expandable title="Show advanced options">
+  These settings are optional and rarely need changing.
+</Expandable>
+```
+
+## Columns
+
+把卡片或区块排成等宽列的响应式网格，在移动端自动重排。`Columns` 接受 `cols`；每个单元格用一个 `Column` 包起来。
+
+**快速**
+
+基于 Astro 和 Vite 构建。
+
+**可定制主题**
+
+Tailwind v4 设计令牌。
+
+```astro lineNumbers
+<Columns cols={2}>
+  <Column>
+    <Card title="Fast" icon="rocket">
+      Built on Astro and Vite.
+    </Card>
+  </Column>
+  <Column>
+    <Card title="Themeable" icon="sun">
+      Tailwind v4 design tokens.
+    </Card>
+  </Column>
+</Columns>
+```
+
+## CodeGroup [#codegroup]
+
+把几个代码块归到一个带标签页的切换器里——每种语言或每个文件一个标签页。标签文字就是每个代码块的标题（语言之后的那部分文字），分组的复制按钮位于标签栏上，复制的是当前显示的那个代码块。加上 `dropdown` 可以改用菜单而不是标签栏来切换。
+
+```ts TypeScript
+export const greet = (name: string) => `Hello, ${name}`;
+```
+
+```python Python
+def greet(name: str) -> str:
+    return f"Hello, {name}"
+```
+
+```rust Rust
+fn greet(name: &str) -> String {
+    format!("Hello, {name}")
+}
+```
+
+````astro
+<CodeGroup>
+
+```ts TypeScript
+export const greet = (name: string) => `Hello, ${name}`;
+```
+
+```python Python
+def greet(name: str) -> str:
+    return f"Hello, {name}"
+```
+
+```rust Rust
+fn greet(name: &str) -> String {
+    format!("Hello, {name}")
+}
+```
+
+</CodeGroup>
+````
+
+## Frame
+
+把一张图片或任意视觉内容包进居中的边框里，并可选地加上 `caption`（以 Markdown 渲染）和 `hint`。
+
+Frame 会居中并为视觉内容添加图注。
+
+<svg
+  width="160"
+  height="72"
+  viewBox="0 0 160 72"
+  role="img"
+  aria-label="Sample frame"
+>
+  <rect width="160" height="72" rx="8" fill="#3b82f6" />
+</svg>
+
+一幅**带边框**的插图。
+
+```astro lineNumbers
+<Frame
+  caption="A **framed** illustration."
+  hint="Frames center and caption visuals."
+>
+  <img src="/screenshot.png" alt="Product screenshot" />
+</Frame>
+```
+
+## YouTube
+
+把 YouTube 视频嵌进一个响应式的、对隐私友好的（`youtube-nocookie.com`）16:9 画面中，并且不加载任何客户端 JavaScript。传入视频 `id` 或完整的 `url`，再加上可选的 `title`（用于无障碍）和以秒为单位的 `start` 起始时间。
+
+[Big Buck Bunny](https://www.youtube.com/watch?v=aqz-KE-bpKQ)
+
+```astro lineNumbers
+<YouTube id="aqz-KE-bpKQ" title="Big Buck Bunny" />
+<YouTube url="https://youtu.be/aqz-KE-bpKQ" start={30} />
+```
+
+## Color
+
+显示色板并提供可复制的十六进制值——适合记录一套配色或品牌色。用 `variant="compact"` 做色板列表，或用 `variant="table"` 配合 `Color.Row` 把它们分组。每个 `Color.Item` 接受一个 `name` 和一个 `value`（十六进制字符串，或针对感知主题的 `{ light, dark }`）；感知主题的色板会复制读者当前所看主题对应的那个值。
+
+- **blue-500**：`#3B82F6`
+
+- **green-500**：`#16A34A`
+
+- **background**：`#FFFFFF`（浅色）、`#0A0A0A`（深色）
+
+```astro lineNumbers
+<Color variant="compact">
+  <Color.Item name="blue-500" value="#3B82F6" />
+  <Color.Item name="green-500" value="#16A34A" />
+  <Color.Item name="background" value={{ light: "#FFFFFF", dark: "#0A0A0A" }} />
+</Color>
+```
+
+## Tree
+
+渲染带可展开文件夹的层级文件/文件夹结构。（想要一个由列表驱动的简版，见[文件树](#file-tree)；`Tree` 则提供按文件夹的控制。）使用 `Tree.Folder`（`name`、可选的 `defaultOpen`、`openable`）和 `Tree.File`（`name`）。
+
+- src/
+  - index.ts
+  - components/
+    - Button.tsx
+- blume.config.ts
+
+```astro lineNumbers
+<Tree>
+  <Tree.Folder name="src" defaultOpen>
+    <Tree.File name="index.ts" />
+    <Tree.Folder name="components">
+      <Tree.File name="Button.tsx" />
+    </Tree.Folder>
+  </Tree.Folder>
+  <Tree.File name="blume.config.ts" />
+</Tree>
+```
+
+## Panel
+
+一个带标题的容器，用来放补充性的旁支内容。`title` 是可选的。
+
+**需要知道**
+
+Panel 用来承载补充细节，不会打断主线流程。
+
+```astro
+<Panel title="Good to know">
+  Panels hold supporting detail without interrupting the main flow.
+</Panel>
+```
+
+## Tooltip
+
+让行内术语在悬停时显示定义或提示。`tip` 是悬停文字；还可以加一个可选的 `headline`，以及用于后续链接的 `cta` + `href`。
+
+把鼠标悬停在 **API**（API：一组软件用来通信的协议。）这个词上可以了解更多。
+
+```astro
+Hover the <Tooltip tip="A set of protocols software uses to communicate." headline="API" cta="Read the guide" href="/docs/quickstart">API</Tooltip> term.
+```
+
+## Tile
+
+一个可点击的预览，用视觉元素——一个图标或一张图片——领起，上面配标题与描述。适合画廊和作品展示。接受 `title`、`description` 和 `href`；子元素就是那个视觉元素。
+
+**[快速上手](/docs/quickstart)**
+
+几分钟内发布你的第一个页面。
+
+```astro
+<Tile
+  title="Quickstart"
+  description="Ship your first page in minutes."
+  href="/docs/quickstart"
+>
+  <Icon icon="rocket" size={28} />
+</Tile>
+```
+
+## Prompt [#prompt]
+
+一行内容，由标签和复制按钮组成。`description`（Markdown）是可见的标签；正文则是提示词本身——默认隐藏，按下 **Copy prompt** 按钮时连同其中的链接、列表和代码一起以 Markdown 形式复制到剪贴板。`actions` 控制按钮（例如 `["copy", "cursor"]`）。
+
+**让模型为某个接口编写文档。**
+
+> 为 POST /v1/pets 接口编写参考文档。
+
+```astro
+<Prompt
+  description="Ask the model to **document** an endpoint."
+  actions={["copy"]}
+>
+  Write reference docs for the POST /v1/pets endpoint.
+</Prompt>
+```
+
+## Visibility [#visibility]
+
+按受众显示或隐藏内容。`for="web"` 只在站点上渲染；`for="agents"` 面向 AI agent 读取的 Markdown（`llms-full.txt` 以及每个页面的 `.md` 镜像）。
+
+```astro
+<Visibility for="web">Shown on the site only.</Visibility>
+<Visibility for="agents">Shown only in the generated Markdown.</Visibility>
+```
+
+## 类型表格
+
+用来记录某个对象的属性——它的 props、类型和默认值——的表格。用 `TypeTable` 手工写各行，或用 `AutoTypeTable` 直接从一个 TypeScript 接口或类型别名生成。
+
+### 类型表格
+
+一个 **Prop / 类型**网格，每一行展开后可看到它的描述与细节。传入一个以属性名为键的 `type` 映射；每个条目接受 `type`，以及可选的 `description`、`default`、`required` 标志、`typeDescription` 和 `typeDescriptionLink`。可选属性（未设 `required`）会在名字后显示一个 `?`。
+
+| 属性 | 类型 | 默认值 | 描述 |
+| - | - | - | - |
+| `label` | `string` | - | 按钮上可见的标签文字。 |
+| `variant?` | `"primary" \| "ghost"` | `"primary"` | 视觉样式。 |
+| `disabled?` | `boolean` | - | |
+
+```astro lineNumbers
+<TypeTable
+  type={{
+    label: {
+      type: "string",
+      required: true,
+      description: "The button's visible label.",
+    },
+    variant: {
+      type: '"primary" | "ghost"',
+      default: '"primary"',
+      description: "Visual style.",
+    },
+    disabled: { type: "boolean" },
+  }}
+/>
+```
+
+### 自动类型表格
+
+从一个 TypeScript 类型生成类型表格，让文档始终与源码保持同步。用 `path`（相对于项目根目录解析）和类型 `name` 指向 `AutoTypeTable`。描述来自 JSDoc 注释，默认值来自 `@default` 标签，可选属性（`?`）也会相应标注。
+
+```astro
+<AutoTypeTable path="./src/button.ts" name="ButtonProps" />
+```
+
+你也可以用 `type` 直接内联传入类型，而不用 `path`——小例子这样很方便：
+
+| 属性 | 类型 | 默认值 | 描述 |
+| --- | --- | --- | --- |
+| `label` | `string` | | 按钮上可见的标签文字。 |
+| `variant?` | `"primary" \| "ghost"` | `"primary"` | 视觉样式。 |
+| `disabled?` | `boolean` | | 禁用交互。 |
+
+```astro lineNumbers
+<AutoTypeTable
+  name="ButtonProps"
+  type={`
+export interface ButtonProps {
+  /** The button's visible label. */
+  label: string;
+  /**
+   * Visual style.
+   * @default "primary"
+   */
+  variant?: "primary" | "ghost";
+  /** Disable interaction. */
+  disabled?: boolean;
+}
+`}
+/>
+```
+
+## API 字段 [#api-fields]
+
+用来逐个手工记录接口字段的表格行，样式与生成的 [OpenAPI 参考](/docs/references/openapi)一致。`ParamField` 表示一个请求参数，由说明它去向的属性命名：`path`、`query`、`header` 或 `body`。`ResponseField` 表示响应中的一个字段，由 `name` 命名。两者都接受 `type`、`required`、`deprecated` 和一个 `default`，并以内容作为描述；`ResponseField` 还接受用在名字前后做标注的 `pre` 与 `post`。
+
+- **`userId`** · path · `string` · 必填
+
+  用户的 ID。
+
+- **`limit`** · query · `integer` · 默认 `20`
+
+  返回多少条结果，最多 100 条。
+
+- **`plan`** · beta · `string`
+
+  用户的套餐。
+
+```mdx lineNumbers
+<ParamField path="userId" type="string" required>
+  The user's ID.
+</ParamField>
+
+<ParamField query="limit" type="integer" default={20}>
+  How many results to return, up to 100.
+</ParamField>
+
+<ResponseField name="plan" type="string" post={["beta"]}>
+  The user's plan.
+</ResponseField>
+```
+
+可以用一个 [`Expandable`](#expandable) 把对象的字段嵌进它的描述里：
+
+```mdx lineNumbers
+<ResponseField name="address" type="object">
+  Where the order ships.
+
+  <Expandable title="properties">
+    <ResponseField name="city" type="string" required>
+      City name.
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+```
+
+在带 `api` frontmatter 的页面上，这些 `ParamField` 还会用来生成页面的 Try it 面板和请求示例：见[手写 API 页面](/docs/references/api-pages)。这些字段沿用与 Mintlify 相同的名字和属性，因此为它写的页面可以直接照原样渲染。页面的 Markdown 副本会列出每个字段及其类型与标志。
+
+### 请求与响应示例 [#request-and-response-examples]
+
+`RequestExample` 和 `ResponseExample` 用来承载代码块，每个带标题的围栏各占一个标签页（`dropdown` 会切换成语言菜单，和 [`CodeGroup`](#codegroup) 一样）。在宽屏上它们会固定到页面旁边的一列里，请求在上、响应在下，并在读者滚动浏览字段时保持在视野中，就像 OpenAPI 操作的示例那样；页面会收起目录来腾出空间。在窄屏上它们则跟随页面内容。
+
+````mdx lineNumbers
+<RequestExample>
+
+```bash cURL
+curl --request POST https://api.acme.dev/v1/users \
+  --header "Authorization: Bearer $ACME_TOKEN" \
+  --data '{ "email": "ada@example.com" }'
+```
+
+```ts title="Acme SDK"
+await acme.users.create({ email: "ada@example.com" });
+```
+
+</RequestExample>
+
+<ResponseExample>
+
+```json 201
+{ "id": "usr_8f2k", "status": "invited" }
+```
+
+</ResponseExample>
+````
+
+把它们写在页面顶层的任意位置即可；每个都会移到那一列。嵌套在另一个组件里（比如某个 `Tab` 中）的则会留在书写处不动。
+
+## GitHub 信息
+
+一张指向 GitHub 仓库的卡片，带有 star 和 fork 数量。这些数字在构建期获取——没有客户端 JavaScript——因此显示的是你上次构建时的数字，而非实时数据；即使 API 不可达，卡片仍会在没有这些数字的情况下渲染。传入 `owner` 和 `repo`，或省略它们以使用 `blume.config` 中的仓库。设置 `GITHUB_TOKEN` 环境变量可以提高 API 速率限制；`token` 属性能为某一张卡片覆盖该变量，但环境变量能让你不必把 token 写进内容里。
+
+卡片会从 [`github.host`](/docs/configuration#github-enterprise) 读取实例，因此在 Enterprise 托管的站点上，显式的 `owner`/`repo` 也会指向那个实例。传入 `host` 可以把某一张卡片指向别处——比如从 Enterprise 站点指向一个公开项目；REST 基址会以与从 `github.host` 相同的方式推导出来。
+
+[haydenbleasel/blume](https://github.com/haydenbleasel/blume)
+
+```astro lineNumbers
+<!-- 使用 blume.config 中的仓库 -->
+<GithubInfo />
+
+<!-- 或指向任意仓库 -->
+<GithubInfo owner="haydenbleasel" repo="blume" />
+
+<!-- 或指向另一个实例上的仓库 -->
+<GithubInfo host="https://github.com" owner="haydenbleasel" repo="blume" />
+```
+
+## Component [#component]
+
+`Component` 会把项目 `examples/` 目录下的一个示例文件渲染成实时预览，并排展示带高亮的源码，用标签页切换。用 `path` 指向一个文件——它在 `examples/` 下的位置，不带扩展名（所以 `examples/counter.tsx` 的 `path="counter"`）。React、Vue、Svelte 和 Astro 示例都受支持；框架示例会水合，Astro 示例则静态渲染。预览与代码由同一个文件保持同步。
+
+预览渲染在一个隔离的框里，文档样式完全影响不到它——不会有正文边距、排版或主题外壳渗进你的组件。这个框会带上 Tailwind（preflight 以及从你的项目和示例目录扫描到的工具类）、Blume 的设计令牌（因此 `bg-background` 这类类名默认跟随站点配色），并实时跟随站点的浅色/深色切换。面板会按渲染出的示例自适应大小——示例在加载后变大或变小时仍会继续跟踪——Preview 与 Code 两个标签共享同一高度，因此来回切换不会让页面跳动。
+
+若想用你自己的设计系统来美化预览——比如 shadcn 变量——把 `examples.css` 指向一个样式表即可。它会在 Blume 默认样式之后注入每个预览框，因此你的令牌优先生效。不要在里面 `@import "tailwindcss"`；这个框已经提供了 Tailwind。深色模式覆盖既可以用 `.dark`，也可以用 `[data-theme="dark"]`：
+
+```ts
+// blume.config.ts
+export default defineConfig({
+  examples: { css: "examples/theme.css" },
+});
+```
+
+```css
+/* examples/theme.css */
+:root {
+  --primary: oklch(0.6 0.2 260);
+}
+
+.dark {
+  --primary: oklch(0.75 0.15 260);
+}
+
+@theme inline {
+  --color-primary: var(--primary);
+}
+```
+
+目录也是可配置的——当你的示例放在别处时（比如某种 registry 布局），设置 `source`（或使用字符串简写 `examples: "..."`）。`path` 始终相对于它：
+
+```ts
+// blume.config.ts
+export default defineConfig({
+  examples: "registry/files-sdk",
+});
+```
+
+```astro
+<!-- registry/files-sdk/file-list/basic.tsx -->
+<Component path="file-list/basic" />
+```
+
+`examples` 也可以是一个 glob（任何含 `*`、`?`、`[]`、`{}` 或 `!` 的模式）。只有匹配的文件会被发现，而 `path` 相对于该 glob 的静态前缀（第一个通配符之前的部分）。这适用于把每个组件的源码与其示例放在一起的 registry——只指向示例即可，这样没有默认导出、无法预览的源码就不会被一并扫进来：
+
+```ts
+// blume.config.ts
+export default defineConfig({
+  // registry/files-sdk/file-list/file-list.tsx — 源码，不纳入
+  // registry/files-sdk/file-list/examples/basic.tsx — 被发现
+  examples: "registry/files-sdk/**/examples/*",
+});
+```
+
+```astro
+<!-- 相对于 registry/files-sdk 作为键 -->
+<Component path="file-list/examples/basic" />
+```
+
+在 monorepo 中，示例所导入的组件通常位于同级的 workspace 包中。Tailwind 的 `@source` 扫描的是文件而不是 import：Blume 会扫描你的项目和 `examples` 目录（无论 `source` 指向哪里，哪怕在项目之外），因此只在这个同级包里用到的类，在你把该包加入扫描范围之前不会被生成。你可以借助 `examples.css`（用于预览框）或 `theme.css`（用于站点）里的一条 `@source` 指令来做到这一点，路径相对于它所在的文件书写——这是 Tailwind 的标准规则——Blume 会把它一并带进生成的样式表：
+
+```css
+/* examples/theme.css */
+@source "../../../packages/ui/src";
+```
+
+```tsx
+import { useState } from "react";
+
+const Counter = () => {
+  const [count, setCount] = useState(0);
+
+  return (
+    <button
+      className="rounded-blume border-border bg-background text-foreground hover:bg-muted border px-4 py-2 text-sm font-medium transition-colors"
+      onClick={() => setCount((value) => value + 1)}
+      type="button"
+    >
+      Clicked {count} {count === 1 ? "time" : "times"}
+    </button>
+  );
+};
+
+export default Counter;
+```
+
+```astro
+<!-- examples/counter.tsx -->
+<Component path="counter" />
+```
+
+Astro 示例会实时渲染，且不加载任何客户端 JavaScript：
+
+```astro
+---
+interface Props {
+  title?: string;
+}
+
+const { title = "Hello from Astro" } = Astro.props;
+---
+
+<div class="rounded-blume border border-border bg-muted/30 px-5 py-4">
+  <p class="m-0 font-semibold text-foreground text-sm">{title}</p>
+  <p class="m-0 mt-1 text-muted-foreground text-sm">
+    A static, server-rendered example — no client JavaScript ships.
+  </p>
+</div>
+```
+
+## CodeBlock
+
+`CodeBlock` 用与你围栏代码相同的 Shiki 主题和 transformer 来高亮一段代码字符串——包括浅色/深色切换——用于放不下围栏的场合，比如落地页或自定义组件。传入 `code` 和 `lang`：
+
+```ts
+export const greet = (name: string): string =>
+`Hello, ${name}!`;
+```
+
+```astro
+---
+import CodeBlock from "blume/components/content/CodeBlock.astro";
+---
+
+<CodeBlock lang="ts" code={source} />
+```
+
+`title` 设置标题栏上的文字——比如一个文件名——否则那里显示的是语言名；`icons={false}` 会隐藏语言的品牌图标，就像围栏代码可以通过 [`markdown.code.icons`](/docs/content/syntax#code-blocks) 做到的那样。
+
+若想自己对 HTML 字符串做高亮（例如在你自己的组件内部），从 `blume/markdown` 导入底层辅助函数：
+
+```ts
+import { highlightCode } from "blume/markdown";
+
+const html = await highlightCode(source, "ts");
+```
+
+## Diff
+
+`Diff` 渲染 git 风格的差异，使用与你代码块相同的 Shiki 主题高亮，并且完全在构建期产出——没有客户端 JavaScript。可以给它两个行内字符串（`old` / `new`）、两个文件路径（`before` / `after`），或一份统一的补丁（行内的 `patch` 字符串或一个 `src` 文件）。
+
+**变更前**
+
+```ts
+export function greet(name) {
+return "Hi, " + name;
+}
+```
+
+**变更后**
+
+```ts
+export function greet(name: string): string {
+return "Hi, " + name + "!";
+}
+```
+
+```astro
+<Diff
+  lang="ts"
+  old={`export function greet(name) {
+  return "Hi, " + name;
+}`}
+  new={`export function greet(name: string): string {
+  return "Hi, " + name + "!";
+}`}
+/>
+```
+
+对比项目中的两个文件，路径相对于项目根目录：
+
+<Diff before="diffs/button-before.ts" after="diffs/button-after.ts" />
+
+```astro
+<Diff before="diffs/button-before.ts" after="diffs/button-after.ts" />
+```
+
+或者渲染一份统一的补丁——既可以用 `src` 从文件读取，也可以用 `patch` 内联给出：
+
+<Diff src="diffs/greet.patch" />
+
+```astro
+<Diff src="diffs/greet.patch" />
+```
+
+```astro
+<Diff
+  patch={`--- a/greet.ts
++++ b/greet.ts
+@@ -1,3 +1,4 @@
+-export function greet(name) {
+-  return "Hi, " + name;
++export function greet(name: string): string {
++  const greeting = "Hi, " + name + "!";
++  return greeting;
+ }`}
+/>
+```

@@ -1,0 +1,20 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className = "" } = Astro.props;
+---
+
+<div class:list={["columns", className]}>
+  <slot />
+</div>
+
+<style>
+  .columns {
+    display: grid;
+    gap: 1rem;
+    margin-block: 1.75rem;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  }
+</style>

@@ -1,0 +1,273 @@
+---
+title: OpenAPI 参考
+description: 把 OpenAPI 规范渲染成原生 API 参考，每个接口一个真实页面，带 schema 表、代码示例和 Try it 演练场
+source: https://useblume.dev/docs/references/openapi
+---
+
+把一个 OpenAPI 规范指给 Blume，它就会生成一份原生 API 参考：**每个接口一个真实页面**，按 tag 分组放进受标签页约束的侧边栏，带 schema 表、请求/响应示例、生成的代码示例，以及一个交互式 [Try it](#try-it-playground) 面板。由于每个接口都是一个真正的 Blume 页面，它有自己的 URL，会出现在**站内搜索**和 `llms.txt` 中，还会得到一张 Open Graph 图片 —— 与手写文档别无二致。
+
+每份参考都是从 `blume/reference` 导入并登记在 `reference` 下的一个**适配器**：`openapi()` 对应 OpenAPI 文档，[`asyncapi()`](/docs/references/asyncapi) 对应 AsyncAPI 文档，[`graphql()`](/docs/references/graphql) 对应 GraphQL schema。每个适配器掌管自己的规范来源、挂载路由和显示选项，因此这个列表里每种类型想放多少都行。下面的配置以公开的 Petstore 规范为例，把 Blume 指向它。
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import { openapi } from "blume/reference";
+
+export default defineConfig({
+  reference: [
+    openapi({ spec: "https://petstore3.swagger.io/api/v3/openapi.json" }),
+  ],
+});
+```
+
+它把参考挂在 `/reference`（一个概览页）上，每个接口位于 `/reference/<tag>/<operation>`。`spec` 要么是一个 `http(s)` URL，要么是你项目中某个本地文件的路径。Blume 用 [Scalar 的 OpenAPI 解析器](https://github.com/scalar/scalar)解析它 —— Swagger 2.0 和 OpenAPI 3.0 规范会自动升级到 3.1。适配器只是对参考的一份纯描述 —— 不是解析后的规范 —— 因此 Blume 可以预先校验它，并把它内联进生成的站点；完全不写 `reference`（或留空）则不会渲染出任何参考。要记录的是事件驱动 API 或 GraphQL API 吗？请看 [AsyncAPI](/docs/references/asyncapi) 和 [GraphQL](/docs/references/graphql)。
+
+参考不会自己添加页眉标签页。要让它露出来，把一个[导航标签页](/docs/content/navigation#tabs)指向它的路由 —— 这同时也限定了原生渲染器下接口侧边栏的范围：
+
+```ts blume.config.ts
+navigation: {
+  tabs: [{ label: "API", path: "/reference" }],
+}
+```
+
+:::note
+接口进入搜索索引的依据是它们的 **summary、description、tag 和 endpoint**（`GET /pets/{id}`）。渲染出的 schema 表和代码示例不参与全文索引；搜索匹配接口的标题、正文、小节和路径，然后链到它自己的页面。
+:::
+
+## 本地规范 [#a-local-spec]
+
+相对路径从你的项目根目录解析，并在构建时读取。JSON 和 YAML 都可以：
+
+```ts blume.config.ts lineNumbers
+reference: [openapi({ spec: "./openapi.yaml" })],
+```
+
+## 路由 [#route]
+
+`route` 控制参考挂载的位置 —— 概览页的位置，以及每条接口路由的前缀（也是你让导航标签页指向的那个路由）：
+
+```ts blume.config.ts lineNumbers
+reference: [
+  openapi({
+    route: "/api",   // 概览页在 /api，接口在 /api/<tag>/<operation>
+    spec: "./openapi.yaml",
+  }),
+],
+```
+
+## 代码示例与 schema [#code-samples-and-schemas]
+
+`codeSamples` 决定每个接口渲染哪些语言，顺序就按你列出的顺序。它默认为 `["curl", "js", "python"]`。`expandSchemas` 让嵌套的 schema 行默认展开而非折叠：
+
+```ts blume.config.ts lineNumbers
+reference: [
+  openapi({
+    spec: "./openapi.yaml",
+    codeSamples: ["curl", "python", "go", "java", "csharp"],
+    expandSchemas: true,
+  }),
+],
+```
+
+每一段示例都是针对该请求的纯文本、可直接复制粘贴的代码，使用该语言标准或最常见的 HTTP 客户端：
+
+| Id | 语言 | 客户端 | 也接受 |
+| - | - | - | - |
+| `curl` | cURL | `curl` | `bash`, `sh`, `shell` |
+| `python` | Python | `requests` | `py` |
+| `js` | JavaScript | `fetch` | `javascript` |
+| `node` | Node.js | `axios` | `nodejs`, `node.js` |
+| `typescript` | TypeScript | `fetch` | `ts` |
+| `php` | PHP | curl 扩展 | |
+| `go` | Go | `net/http` | `golang` |
+| `java` | Java | `java.net.http` | |
+| `ruby` | Ruby | `net/http` | `rb` |
+| `powershell` | PowerShell | `Invoke-RestMethod` | `ps1` |
+| `swift` | Swift | `URLSession` | |
+| `csharp` | C# | `HttpClient` | `c#`, `cs` |
+| `dotnet` | .NET | RestSharp | `.net`, `dot-net` |
+| `c` | C | libcurl | |
+| `cpp` | C++ | cpr | `c++` |
+| `kotlin` | Kotlin | OkHttp | `kt` |
+| `rust` | Rust | reqwest | `rs` |
+| `dart` | Dart | `package:http` | `flutter` |
+
+每个值都由它自己语言的引号规则包裹，因此像 `If-Match: "33a64df5"` 这样的请求头，或含 `$` 的请求体，都会按原样送达 API。
+
+### 你自己的示例 [#your-own-samples]
+
+想展示你的 SDK 而不是原始 HTTP 调用，就在规范里给某个接口加上 `x-codeSamples`。这是 Redocly 定义的扩展，Speakeasy 和 Stainless 都能替你写。每个条目需要一个 `lang`、一份 `source`，以及可选的 `label`：
+
+```yaml openapi.yaml lineNumbers
+paths:
+  /plants:
+    get:
+      x-codeSamples:
+        - lang: typescript
+          label: SDK
+          source: |
+            const plants = await planter.plants.list();
+        - lang: bash
+          label: CLI
+          source: |
+            planter list
+```
+
+这些示例会渲染成独立的标签页，排在生成的示例之前；读者改动 [Try it](#try-it-playground) 表单时，它们保持原样不。旧的 `x-code-samples` 写法同样有效。若只想展示自己的示例，设置 `codeSamples: false`。
+
+## Try it 演练场 [#try-it-playground]
+
+原生渲染的接口页面默认带一个交互式 **Try it** 面板。Blume 直接从接口本身生成表单：每个 path、query 和 header 参数一个输入项，一个依据请求体 schema 构建的请求体编辑器，全部内容都按规范里的示例预填。取值上线路径的方式与规范的描述一致：数组和对象参数遵循各自的 `style` 和 `explode`（query 中为 `tags=dog&tags=cat`，path 中为 `1,2`，`deepObject` 为 `filter[color]=red`），而 `application/x-www-form-urlencoded` 或 `multipart/form-data` 的请求体会以表单字段而非 JSON 发送。服务器选择器列出该接口的服务器（优先它自己的 `servers`，其次是它所在 path 的，最后是规范的，每处 `{variable}` 取其 `default`），并留一个自由文本字段供填写其它基础 URL；认证输入项则对应接口[解析出的安全要求](#authorization) —— bearer token、API key 和基本凭据，OAuth2 则是一个粘贴 token 的字段（自带 access token 即可；Blume 不跑那个流程）。
+
+面板与代码示例始终保持同步：填进表单的值会实时更新生成的示例，因此复制出来的 curl 命令总与点下 **Send** 时所发的请求完全一致。它也不会碍事 —— 面板以折叠状态在服务端渲染，其 JavaScript 只在读者首次打开时才加载。从不碰它的读者不会下载其中任何东西。
+
+浏览器唯一发不出的方法是 `TRACE`：`fetch` 会拒绝它，因此 `trace` 接口上的 **Send** 只作提示而不发送，而基于 `fetch` 的 JavaScript 示例也只是一句说明而非代码。cURL 和 Python 的示例都能正常发出。
+
+`playground: false` 就是全部的关闭开关：
+
+```ts blume.config.ts lineNumbers
+reference: [openapi({ spec: "./openapi.yaml", playground: false })],
+```
+
+### 凭据 [#credentials]
+
+输入到认证框里的凭据只留在内存中，刷新即消失。勾选 **Remember on this device** 会把它们持久化到 `localStorage`，作用域限定在文档站点的 origin —— 它们绝不会被发往被调用 API 之外的任何地方。无论输入了什么，代码示例里始终显示占位符（`YOUR_TOKEN` 之类），除非读者打开 **Include my values in samples**。
+
+### CORS 与代理 [#cors-and-the-proxy]
+
+与 [Scalar 嵌入页](/docs/references/scalar)一样，请求**直接从浏览器**发往目标 API，因此 API 必须允许来自文档站点的跨域请求（`Access-Control-Allow-Origin`）。做不到这一点时，设置 `playground.proxy`：一个 URL 会让请求经由你自己托管的代理转发，`true` 则启用内置的 `/_api-proxy` 路由（若你设置了 [`basePath`](/docs/deployment#mount-the-docs-under-a-path)，则位于 `{basePath}/_api-proxy`）—— 它需要[服务端输出](/docs/deployment#server-rendering)：一个主机适配器，例如来自 `blume/deploy` 的 `deployment: vercel()`：
+
+```ts blume.config.ts lineNumbers
+reference: [
+  openapi({
+    spec: "./openapi.yaml",
+    playground: {
+      proxy: true,   // 或换成你自己的 URL
+    },
+  }),
+],
+```
+
+内置代理只会把请求转发到你的规范在 `servers` 中声明的 origin（可以出现在文档级、path 级或接口级，变量取默认值）—— 跨重定向也一样 —— 因此一个公开的文档部署无法被指向其网络内的其它主机。输入到面板里的 **Custom base URL** 不算已声明的服务器：启用代理后，发往它的请求会被 403 拒绝。它只转发面板自己设置的请求头 —— 填好的凭据与 header 参数，以及请求体的 `Content-Type` —— 因此 cookie、浏览器替文档站点附带的凭据（比如受密码保护的预览上的 HTTP Basic 认证），以及你的主机添加的请求头（`X-Forwarded-For`、`CF-*`、`X-Vercel-*`）都不会到达 API。它读取请求体的上限只有 4 MB（更大的会得到 `413`），并且它转发的每个响应都带上 `Content-Security-Policy: sandbox`、`X-Content-Type-Options: nosniff` 和 `Cross-Origin-Resource-Policy: same-origin` —— 对 HTML 或 SVG 还会额外带 `Content-Disposition: attachment` —— 这样回显输入的 API 错误页就无法在文档 origin 上执行脚本。这个代理和每个读者可调用的服务端路由一样，按读者[限流](/docs/configuration/rate-limiting)。
+
+## 多份规范 [#multiple-specs]
+
+用 `sources` 让一个适配器发布多份规范。每个来源都有自己的概览路由和接口页面，并共享适配器的显示选项。给每个来源一个 `label`（用于侧边栏并据此推导路由），或者显式设置 `route`：
+
+```ts blume.config.ts lineNumbers
+reference: [
+  openapi({
+    sources: [
+      { label: "Public API", spec: "./public.json" },   // → /reference/public-api
+      { label: "Admin API", route: "/admin", spec: "./admin.json" },
+    ],
+  }),
+],
+```
+
+`spec` 是单条目 `sources` 的简写，因此只有在不止一份规范时才需要动 `sources`。当两份规范需要不同的显示选项 —— 比如不同的代码示例集合 —— 改为列出两个 `openapi()` 适配器，各自带自己的 `route`。原生页面旁边若要嵌入 [Scalar](/docs/references/scalar) 参考，则在列表里另加一个 `scalar()` 适配器。来源按列表顺序解析，两个来源解析到同一路由时，先出现的那个胜出（构建会对被丢弃的那个发出警告）。
+
+### 按来源的索引 [#per-source-indexing]
+
+生成的页面默认参与搜索、`llms.txt` 和爬虫索引。次要或内容重叠的规范可以选择退出其中任意一项，而不必隐藏它的页面或把它从导航里移除：
+
+```ts blume.config.ts lineNumbers
+reference: [
+  openapi({
+    sources: [
+      { label: "Public API", route: "/api", spec: "./public.json" },
+      {
+        label: "Platform API",
+        route: "/platform",
+        spec: "./platform.json",
+        includeInSearch: false,
+        includeInLlms: false,
+        noindex: true,
+      },
+    ],
+  }),
+],
+```
+
+- `includeInSearch: false` 让该来源的概览页和接口不出现在站内搜索中。
+- `includeInLlms: false` 让它们不出现在两个 `llms.txt` 文件中。
+- `noindex: true` 添加爬虫 noindex 元数据，并把这些页面从 sitemap 中移除。
+
+每个接口页面的 meta description 是该接口自己的 `description`（或 `summary`），后面跟一句自动生成、指明端点的话 —— “Petstore API 中 `GET /pets` 端点的参考文档。” —— 因此即便规范里的摘要都是简短的单行文字，每个页面仍会带上一段各不相同、正好适合搜索摘要长度的描述。这句话是英文的。如果你的规范正文用的是另一种语言，在该来源上设置 `seoDescriptionSuffix: false` 去掉它，只用手写的正文描述每个页面；既没有 `description` 也没有 `summary` 的接口会回退到它的标题（`GET /pets`），所以不会有页面带着空描述上线：
+
+```ts blume.config.ts lineNumbers
+reference: [
+  openapi({
+    sources: [{ spec: "./openapi.de.json", seoDescriptionSuffix: false }],
+  }),
+],
+```
+
+[`scalar()`](/docs/references/scalar) 嵌入页只接受其中的 `noindex` —— 它本就在 Blume 的搜索和 `llms.txt` 之外，因此那两个 `include*` 设置在那里无事可做。
+
+## Overlays [#overlays]
+
+当规范由别的工具生成、或归另一个团队所有时，用 [OpenAPI Overlay](https://spec.openapis.org/overlay/latest.html) 把你的文档改动留在它之外：一个单独的文件，列出要对规范做的改动，比如更清晰的描述、公开的服务器 URL，或删除内部接口。把 overlays 写在 `spec` 旁边。每一个都是本地路径或 `http(s)` URL，并按顺序生效：
+
+```ts blume.config.ts lineNumbers
+reference: [
+  openapi({
+    spec: "./openapi.json",
+    overlays: ["./overlays/public.yaml"],
+  }),
+],
+```
+
+```yaml overlays/public.yaml lineNumbers
+overlay: 1.1.0
+info:
+  title: Public docs
+  version: 1.0.0
+actions:
+  - target: $.paths.*[?@['x-internal'] == true]
+    remove: true
+  - target: $.info
+    update:
+      description: The public Acme API.
+```
+
+每个 action 的 `target` 都是一个 [JSONPath](https://www.rfc-editor.org/rfc/rfc9535) 表达式。`update` 会合并进它选中的每一个节点：对象按键逐一合并，数组追加新元素，其它值直接替换。`copy` 会从规范中别处合并进一个节点（Overlay 1.1），而 `remove: true` 则删除被选中的目标。Overlay Specification 1.0 和 1.1 都受支持。
+
+Overlays 作用在原样的规范上，也就是 Blume 把它升级到 OpenAPI 3.1 之前，因此 overlay 针对的是你撰写规范时所用的那个版本。一切由规范构建出来的东西都会看到结果：接口页面、侧边栏、搜索、`llms.txt` 和 MCP 服务器。使用 `sources` 时，给每个来源配自己的 `overlays`。一个无法生效的 overlay 会像无法读取的规范一样让这份参考构建失败，因此坏掉的 overlay 无法把它本该隐藏的内容发布出去。
+
+## 认证 [#authorization]
+
+声明了[安全要求](https://spec.openapis.org/oas/v3.1.0#security-requirement-object)的接口会在参数之上渲染一个 **Authorization** 小节，生成的代码示例也会带上占位凭据（`Authorization: Bearer YOUR_TOKEN`、一个 API key 请求头，或一个 query key —— 取决于所用方案）。这里没有可配置项：Blume 从规范中读取 `security`，因此这份参考始终与 API 实际强制的要求一致。
+
+OpenAPI 的语义原样沿用：
+
+- 接口自身的 `security` 覆盖文档根部的默认值；`security: []` 表示它**公开**，不渲染 Authorization 小节。
+- 多条要求条目是并列可选的 —— 渲染成“或”字样的分组；同一条目内的每个方案都必须同时满足。第一个可选项用于代码示例。
+- 空的 `{}` 条目表示该接口的认证是**可选**的，小节里也会这样写明。
+- OAuth2 的 scope 按方案逐项列出；来自 `components.securitySchemes` 的方案 `description` 会就地渲染。
+
+## Webhooks 与 callbacks [#webhooks-and-callbacks]
+
+你 API 发出的请求也会被记录下来。规范顶层 `webhooks` 中的每个 [webhook](https://spec.openapis.org/oas/v3.1.0#oas-webhooks) 都像接口一样拥有自己的页面：归入它的第一个 tag，若没有 tag 则归入一个 **Webhooks** 分组。页面展示 payload 的 schema，以及你的端点应当回传的响应。取代 Try it 面板和代码示例的，是侧栏中的一个示例 payload —— 因为这个请求是你的 API 发出的，而不是它提供的服务。webhook 页面只列出该 webhook 自己声明的 `security`：规范根部的 `security` 保护的是对你 API 的调用，因此不适用于 API 发出的请求。
+
+```yaml openapi.yaml lineNumbers
+webhooks:
+  newPet:
+    post:
+      summary: New pet added
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Pet"
+      responses:
+        "200":
+          description: Return a 200 to acknowledge the event.
+```
+
+接口的 [`callbacks`](https://spec.openapis.org/oas/v3.1.0#callback-object) —— 你的 API 向调用方提供的 URL 发回的请求 —— 会渲染在该操作页面的 **Callbacks** 小节里。每一条都展示 URL 表达式（`{$request.body#/callbackUrl}`）、它的方法、它的请求体以及预期的响应。在 `components.callbacks` 下声明并用 `$ref` 引用的 callbacks 行为一致。
+
+Webhook 页面是真正的页面：它们在搜索、`llms.txt` 和 MCP 服务器中都在列，而且它们的 Markdown 会告诉智能体这是一个由 API 发出的请求，智能体因此不会去调用它。
+
+## 改为嵌入 Scalar [#embedding-scalar-instead]
+
+`openapi()` 始终渲染 Blume 自己的页面。若想改为在单一路由上嵌入 [Scalar](https://scalar.com) 那套自带的 API 参考界面 —— 它自己的侧边栏、搜索、主题和请求客户端 —— 就用一个来自 `blume/reference` 的 `scalar()` 适配器替代（或并列于）当前这个。[Scalar](/docs/references/scalar)页面介绍了这个嵌入页能做什么、不能做什么，以及如何把 Scalar 自己的选项透传进去。

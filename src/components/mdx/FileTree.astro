@@ -1,0 +1,72 @@
+---
+interface Props {
+  class?: string;
+}
+
+const { class: className = "" } = Astro.props;
+---
+
+<div class:list={["file-tree", className]}>
+  <div class="file-tree__bar">
+    <span class="file-tree__dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="file-tree__label">项目结构</span>
+  </div>
+  <div class="file-tree__body">
+    <slot />
+  </div>
+</div>
+
+<style>
+  .file-tree {
+    margin-block: 1.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    overflow: hidden;
+    background-color: var(--bg-subtle);
+  }
+  .file-tree__bar {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.5rem 0.875rem;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--bg-muted);
+  }
+  .file-tree__dots {
+    display: inline-flex;
+    gap: 0.3rem;
+  }
+  .file-tree__dots i {
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 9999px;
+    background-color: var(--border-strong);
+  }
+  .file-tree__label {
+    font-size: 0.6875rem;
+    font-weight: 650;
+    letter-spacing: 0.08em;
+    color: var(--fg-subtle);
+  }
+  .file-tree__body {
+    padding: 0.875rem 1rem;
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    line-height: 1.75;
+    color: var(--fg-muted);
+    overflow-x: auto;
+  }
+  .file-tree__body :global(ul) {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .file-tree__body :global(li) {
+    margin: 0;
+    white-space: pre;
+  }
+  .file-tree__body :global(strong) {
+    color: var(--fg);
+    font-weight: 620;
+  }
+</style>

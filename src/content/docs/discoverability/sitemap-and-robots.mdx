@@ -1,0 +1,80 @@
+---
+title: Sitemap 与 robots
+description: 构建时输出 sitemap.xml 与 robots.txt，并用 Content-Signal 声明内容供 AI 使用的范围
+source: https://useblume.dev/docs/discoverability/sitemap-and-robots
+---
+
+搜索爬虫和 AI 爬虫都从站点根目录的同两个文件入手。Blume 每次构建都会写出这两个文件，而 `robots.txt` 承载着 AI 爬虫会去找的内容使用信号 —— 因此这里是可发现性的搜索侧与智能体侧的交汇点。
+
+## Sitemap [#sitemap]
+
+Blume 在构建时写出一份包含每个可索引页面的 `sitemap.xml`。它需要一个绝对的 [`deployment.site`](/docs/deployment)，并列出除草稿、隐藏和 [`noindex`](/docs/discoverability/metadata#per-page-overrides) 页面之外的所有页面。在[带版本](/docs/content/versioning)的站点上，canonical 指向线上对应页面的归档页面也会被排除 —— 该被索引的是线上页面。默认开启：
+
+```ts blume.config.ts lineNumbers
+seo: {
+  sitemap: true,
+}
+```
+
+放入自己的 `public/sitemap.xml` 即可接管 —— Blume 绝不会覆盖你放在 `public/` 里的文件。
+
+## Robots [#robots]
+
+Blume 写出的 `robots.txt` 允许所有爬虫访问，声明你的[内容信号](#content-signals)，并在有 sitemap 时加上一行指向它的 `Sitemap:`。默认开启：
+
+```ts blume.config.ts lineNumbers
+seo: {
+  robots: true,
+}
+```
+
+```txt robots.txt
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=yes
+Allow: /
+
+Sitemap: https://docs.example.com/sitemap.xml
+```
+
+### 内容信号 [#content-signals]
+
+`Content-Signal` 这一行 —— 正在成形的内容使用约定 —— 声明 AI 爬虫可以如何复用你的文档。Blume 默认输出它，**且每个信号都设为 `yes`**，这与它「文档对人和智能体一律开放」的立场一致：
+
+- `search` —— 传统搜索与 AI 搜索索引
+- `aiInput` —— 回答时的 grounding / RAG
+- `aiTrain` —— 模型训练
+
+把任一信号设为 `false` 即可限制它；不写的那些仍为 `yes`：
+
+```ts blume.config.ts lineNumbers
+agents: {
+  contentSignals: {
+    aiTrain: false, // 退出训练，保留搜索与 grounding
+  },
+}
+```
+
+```txt robots.txt
+User-agent: *
+Content-Signal: search=yes, ai-input=yes, ai-train=no
+Allow: /
+```
+
+设置 `contentSignals: false` 即可完全去掉这行声明：
+
+```ts blume.config.ts lineNumbers
+agents: {
+  contentSignals: false,
+}
+```
+
+| 属性 | 类型 | 默认值 | 说明 |
+| - | - | - | - |
+| `agents.contentSignals?` | `boolean \| object` | - | `Content-Signal` 声明。为 `true` 或不写时所有信号都输出为 yes；为 `false` 时删掉这一行；为对象时逐个设置信号。 |
+| `contentSignals.search?` | `boolean` | - | 允许用于搜索索引（`search`）。默认 `true`。 |
+| `contentSignals.aiInput?` | `boolean` | - | 允许在回答时用于 AI grounding / RAG（`ai-input`）。默认 `true`。 |
+| `contentSignals.aiTrain?` | `boolean` | - | 允许用于 AI 模型训练（`ai-train`）。默认 `true`。 |
+
+内容信号表达的是一种偏好，而不是访问控制：它告诉守规矩的爬虫你希望内容被如何使用，而是否遵守由爬虫自己负责。同一份策略会以 `contentUsage` 的形式镜像在[智能体可读性清单](/docs/discoverability/agent-discovery#agent-readability)里，因此从不读 `robots.txt` 的智能体也能看到它。
+
+放入自己的 `public/robots.txt` 即可接管。

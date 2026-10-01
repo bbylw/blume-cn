@@ -1,0 +1,21 @@
+---
+interface Props {
+  cols?: number;
+  class?: string;
+}
+
+const { cols = 2, class: className = "" } = Astro.props;
+---
+
+<div class:list={["card-group", className]} style={`--cols:${cols}`}>
+  <slot />
+</div>
+
+<style>
+  .card-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+    gap: 0.875rem;
+    margin-block: 1.75rem;
+  }
+</style>

@@ -1,0 +1,114 @@
+---
+interface Heading {
+  depth: number;
+  slug: string;
+  text: string;
+}
+
+interface Props {
+  headings: Heading[];
+  class?: string;
+}
+
+const { headings, class: className = "" } = Astro.props;
+// 标题里的锚点链接（`#`）属于装饰，目录里不应出现
+const items = headings
+  .filter((h) => h.depth === 2 || h.depth === 3)
+  .map((h) => ({ ...h, text: h.text.replace(/\s*#+\s*$/, "") }));
+---
+
+{
+  items.length > 0 && (
+    <nav class:list={["toc", className]} aria-label="本页目录" data-toc>
+      <p class="toc__title">本页目录</p>
+      <ul class="toc__list">
+        {items.map((h) => (
+          <li>
+            <a href={`#${h.slug}`} class="toc__link" data-depth={h.depth} data-toc-link={h.slug}>
+              {h.text}
+            </a>
+          </li>
+        ))}
+      </ul>
+    </nav>
+  )
+}
+
+<script>
+  function initToc() {
+    const toc = document.querySelector<HTMLElement>("[data-toc]");
+    if (!toc) return;
+
+    const links = new Map<string, HTMLAnchorElement>();
+    for (const link of toc.querySelectorAll<HTMLAnchorElement>("[data-toc-link]")) {
+      const key = link.dataset.tocLink;
+      if (key) links.set(key, link);
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const link = links.get(entry.target.id);
+          if (!link) continue;
+          if (entry.isIntersecting) {
+            for (const l of links.values()) l.removeAttribute("data-current");
+            link.setAttribute("data-current", "true");
+          }
+        }
+      },
+      { rootMargin: "-88px 0px -70% 0px", threshold: 0 },
+    );
+
+    for (const link of links.keys()) {
+      const el = document.getElementById(link);
+      if (el) observer.observe(el);
+    }
+  }
+
+  initToc();
+  document.addEventListener("astro:page-load", initToc);
+</script>
+
+<style>
+  .toc__title {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: var(--fg-subtle);
+    margin-bottom: 0.625rem;
+  }
+  .toc__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.0625rem;
+    border-left: 1px solid var(--border);
+  }
+  .toc :global(.toc__link) {
+    display: block;
+    padding: 0.28rem 0.75rem;
+    margin-left: -1px;
+    border-left: 1px solid transparent;
+    font-size: 0.8125rem;
+    line-height: 1.5;
+    color: var(--fg-subtle);
+    text-decoration: none;
+    transition:
+      color 0.15s ease,
+      border-color 0.15s ease;
+  }
+  .toc :global(.toc__link:hover) {
+    color: var(--fg);
+  }
+  .toc :global(.toc__link[data-current]) {
+    color: var(--accent);
+    border-left-color: var(--accent);
+    font-weight: 600;
+  }
+  .toc :global(.toc__link[data-depth="3"]) {
+    padding-left: 1.5rem;
+    font-size: 0.78125rem;
+  }
+</style>

@@ -1,0 +1,94 @@
+---
+interface Props {
+  title: string;
+  href?: string;
+  icon?: string;
+  description?: string;
+  /** 是否在链接后加箭头 */
+  external?: boolean;
+  cta?: string;
+}
+
+const { title, href, icon, description, external, cta } = Astro.props;
+const Tag = href ? "a" : "div";
+---
+
+<Tag class="card" href={href} target={external ? "_blank" : undefined} rel={external ? "noreferrer noopener" : undefined}>
+  <span class="card__glow" aria-hidden="true"></span>
+  {icon && <span class="card__icon" aria-hidden="true">{icon}</span>}
+  <span class="card__title">{title}</span>
+  {description && <span class="card__desc">{description}</span>}
+  {href && (
+    <span class="card__cta">
+      {cta ?? "了解更多"}
+      <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 3.5 10.5 8 6 12.5"></path>
+      </svg>
+    </span>
+  )}
+</Tag>
+
+<style>
+  .card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    background-color: var(--bg);
+    padding: 1.125rem 1.25rem 1.25rem;
+    transition:
+      border-color 0.18s ease,
+      transform 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+  a.card:hover {
+    border-color: color-mix(in oklab, var(--accent) 45%, var(--border));
+    transform: translateY(-2px);
+    box-shadow: 0 12px 28px -18px rgb(0 0 0 / 0.4);
+  }
+  .card__glow {
+    position: absolute;
+    inset-inline: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+  a.card:hover .card__glow {
+    opacity: 0.8;
+  }
+  .card__icon {
+    font-size: 1.1rem;
+    line-height: 1;
+    margin-bottom: 0.15rem;
+  }
+  .card__title {
+    font-weight: 650;
+    color: var(--fg);
+    letter-spacing: -0.01em;
+  }
+  .card__desc {
+    font-size: 0.875rem;
+    line-height: 1.7;
+    color: var(--fg-muted);
+  }
+  .card__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-top: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--accent);
+  }
+  a.card:hover .card__cta svg {
+    transform: translateX(2px);
+  }
+  .card__cta svg {
+    transition: transform 0.18s ease;
+  }
+</style>

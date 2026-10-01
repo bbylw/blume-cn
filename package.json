@@ -1,0 +1,42 @@
+{
+  "name": "blume-zh",
+  "type": "module",
+  "version": "1.0.0",
+  "private": true,
+  "packageManager": "bun@1.4.2",
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check",
+    "typecheck": "astro check && tsc --noEmit"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^8.0.2",
+    "@astrojs/react": "^7.0.0",
+    "@astrojs/rss": "^4.0.19",
+    "@astrojs/sitemap": "^3.7.4",
+    "@tailwindcss/typography": "^0.5.20",
+    "@tailwindcss/vite": "^4.3.3",
+    "astro": "^7.3.5",
+    "github-slugger": "^2.0.0",
+    "katex": "^0.18.10",
+    "lucide-react": "^1.49.0",
+    "mermaid": "^12.0.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "rehype-katex": "^7.0.1",
+    "remark-directive": "^4.0.0",
+    "remark-math": "^6.0.0",
+    "tailwindcss": "^4.3.3",
+    "unist-util-visit": "^5.1.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.10",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "typescript": "^6.0.3"
+  }
+}

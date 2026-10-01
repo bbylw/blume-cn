@@ -1,0 +1,33 @@
+---
+title: Contentful
+description: 通过 Content Delivery API 读取内容类型，无需额外安装任何依赖。
+source: https://useblume.dev/docs/content/sources/contentful
+---
+
+内建的 `contentful()` 适配器通过 Content Delivery API 读取某个内容类型的条目，并把每个条目的富文本正文降级为 Markdown：标题、标记、链接、列表、引用、表格和嵌入资源都会映射到对应的 Markdown 写法；而放在 Markdown 长文本字段里的正文会按原样透传，只有一点例外：不是网页、邮件、电话或相对地址的链接（比如一个 `javascript:` URL）只保留它的文字 —— 在富文本里也是这样。无需安装任何东西 —— 适配器直接对话 REST API。
+
+```ts blume.config.ts
+import { defineConfig } from "blume";
+import { contentful, filesystem } from "blume/sources";
+
+export default defineConfig({
+  content: {
+    sources: [
+      filesystem({ root: "docs" }),
+      contentful({
+        prefix: "guides",
+        space: "abc123",
+        contentType: "guide",
+        // environment: "master", locale: "en-US"
+        // 字段 id 默认为 title / description / slug / body，
+        // 日期默认为 sys.updatedAt
+        fields: { body: "content" },
+        // 额外的 Delivery API 查询参数
+        params: { "fields.section": "sdk" },
+      }),
+    ],
+  },
+});
+```
+
+Delivery API 的 token 来自 `CONTENTFUL_ACCESS_TOKEN` 环境变量，适配器声明了它。在 `--preview` 下，适配器通过 Preview API 使用 `CONTENTFUL_PREVIEW_TOKEN` 读取草稿。Preview API 会拒绝 delivery token，所以没有预览 token 的 `--preview` 会以明确的错误失败，而不是回退到 `CONTENTFUL_ACCESS_TOKEN`。资源是从 Contentful 的 CDN 引用的，而不是下载下来 —— 它们的 URL 是稳定的。当一个条目被嵌入时，会通过引擎的 `serializers` 选项（以内容类型 id 为键）映射为 Blume 组件，前提是你直接构造 `contentfulSource` 并把它传给 [`custom()`](/docs/content/sources/custom)；设置 `serializers` 会以 MDX 写出该来源的页面，让返回的组件得以渲染，而没有 serializer 的嵌入条目会记在一条注释里。指向另一个条目的链接会渲染成纯文本，因为没有可指向的路由。

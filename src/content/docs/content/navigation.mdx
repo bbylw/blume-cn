@@ -1,0 +1,359 @@
+---
+title: 导航
+description: "侧边栏、分组、标签页、面包屑与页面操作，涵盖导航结构的全部可配置项。"
+source: https://useblume.dev/docs/content/navigation
+---
+
+Blume 先根据文件系统构建侧边栏，然后让你随意微调——想调多少就调多少：逐页调整、逐文件夹调整，或者用一份显式配置统管。面包屑、上一页/下一页链接和页内大纲都由同一套模型推导而来，无需任何接线。
+
+## 自动生成的侧边栏
+
+默认情况下，侧边栏与你的内容目录一一对应：
+
+- 文件夹变成**分组**，文件变成**页面**
+- 页面的标签取自它的 frontmatter `title`；分组的标签是「人性化」的文件夹名，常见缩写如 API、CLI、SDK 保持大写（`api-reference` 会显示为 "API Reference"）
+- 条目先按[数字前缀](/docs/content)排序，然后按字母序排序，文件夹的 `index` 页面排在最前
+- 带 `index` 页面的文件夹，其分组行会链接到该页面，因此点击板块名就会打开该板块的落地页
+
+对很多站点来说这已经足够——下面的一切都是可选项。
+
+## 页面标签、图标与徽标
+
+在页面的 frontmatter 中通过 `sidebar` 调整单个页面在侧边栏中的样子：
+
+```yaml lineNumbers
+sidebar:
+  label: Quickstart # 覆盖侧边栏中显示的标题
+  icon: rocket # Blume 内置图标集中的一个图标
+  badge: New # 条目旁的小标签
+  order: 1 # 在所属分组内的排序位置
+```
+
+完整的页面结构参见 [Frontmatter](/docs/content/frontmatter)。
+
+## 文件夹分组
+
+每个文件夹都会成为一个侧边栏分组。在它同级页面的位置放一个 [`meta.ts`](/docs/content/meta)，即可设置该分组的标题、图标、顺序以及子项的顺序：
+
+```ts meta.ts
+import { defineMeta } from "blume";
+
+export default defineMeta({
+  title: "Guides",
+  icon: "book-open",
+  pages: ["configuration", "theming", "deployment"],
+});
+```
+
+全部字段以及在扫描时计算 meta 的做法，参见[文件夹 Meta](/docs/content/meta)。
+
+文件夹的 `meta.title` 与它自己 `index` 页面 frontmatter 中的 `title` 是各自独立解析的——在 i18n 下翻译了其中一个却忘了另一个，就会出现侧边栏正确、但落地页自身的 `<title>`/标题仍是旧内容的情况。当二者不一致，且该 index 页面隐藏了自己的侧边栏行（`sidebar.hidden: true`）时，文件夹标题是该页面唯一的侧边栏标签，Blume 会报出 `BLUME_NAV_INDEX_TITLE_MISMATCH` 警告。当 index 行可见时，侧边栏已经同时显示了两个标题，因此把文件夹标题和不同的页面标题配对（「CLI」配「Overview」）没有问题。从回退语言环境填充的未翻译页面不在此列——它们的标题属于回退语言环境，正确的做法是翻译页面，而不是去改它的 frontmatter。
+
+若想给页面分组却_不_增加 URL 层级，请使用带括号的文件夹名——参见[页面](/docs/content#group-folders)。
+
+## 显示模式 [#display-modes]
+
+`navigation.sidebar.display` 决定每个侧边栏分组的渲染方式：
+
+```ts blume.config.ts lineNumbers
+navigation: {
+  sidebar: {
+    display: "flat", // "flat" | "group" | "page"
+  },
+}
+```
+
+- **`flat`**（默认）——不可折叠的标题，其页面列在下方。不属于任何分组的页面总是最先列出，位于各分组板块之上，因此不会被误认为某个分组的子项。
+- **`group`**——每个分组是一个可折叠的 `<details>` 展开区。分组默认折叠；包含当前页面的分组总是默认展开，这样只有你所在的部分被展开。无论如何都想让某个分组保持展开，可在[文件夹 Meta](/docs/content/meta)中设置 `collapsed: false`。
+- **`page`**——每个分组占一行，点击后侧边栏会滑入一个子面板，只显示该分组的条目，顶部有一个返回箭头。面板能感知当前路由，因此直接访问分组内的某个页面会直接打开到它。
+
+:::tip
+`page` 模式能让层级较深的板块保持整洁——当分组下有很多子项，你更想逐层进入而不是一路滚过去时，就用它。
+:::
+
+在 `group` 和 `page` 两种模式下，当前页面未展开的板块不会写入该页面的 HTML，而是在首次展开时才获取（当指针或焦点移到它所在行时就会预取，所以展开通常是瞬时的；一旦获取过，本次访问期间就会一直保留）。在大型站点上，这往往是一个页面重量的主要部分：随页面一起下发的只有已展开板块的行。这些行是预渲染片段，位于 `/blume-nav/` 之下，因此不需要任何服务器。不启用 JavaScript 的读者会看到已展开的板块和分组行；而站点地图、上一页/下一页链接和已展开的板块，保证爬虫仍能访问到每个页面。
+
+### 按分组覆盖 [#per-group-overrides]
+
+任何自动生成的分组都可以脱离全局模式——无需配置显式侧边栏。在文件夹的 [`meta.ts`](/docs/content/meta) 中设置 `display`，或者——当该文件夹有 `index` 页面时——在该页面 frontmatter 的 `sidebar` 下设置，只有该分组会改变：
+
+```ts meta.ts
+import { defineMeta } from "blume";
+
+export default defineMeta({
+  title: "Client SDKs",
+  display: "page",
+});
+```
+
+```yaml index.mdx
+---
+title: Client SDKs
+sidebar:
+  display: page
+---
+```
+
+自动生成分组的实际模式按优先级从高到低解析：
+
+1. 该分组自身 `index` 页面 frontmatter 中的 `sidebar.display`
+2. 文件夹 `meta.ts` 中的 `display`
+3. 全局的 `navigation.sidebar.display`
+4. Blume 默认值（`flat`）
+
+分组的 `display` 只作用于该分组本身——嵌套子分组会沿同一条链各自解析自己的值。处于 `page` 模式且带 index 页面的分组依然会下钻到子面板：index 页面会作为面板的第一项列出，直接访问它的 URL 也会直接打开面板。
+
+在其他任何位置，`sidebar.display` 都不起作用——非 index 页面、内容根目录自身的 `index` 页面（根目录不是分组，请用 `navigation.sidebar.display`），以及配置了[显式侧边栏](#explicit-sidebar)时的任何页面（此时各个分组的模式由其条目自己决定）——因此 Blume 会报出 `BLUME_SIDEBAR_DISPLAY_IGNORED` 警告，而不是悄悄把它丢掉。`collapsed` 仍然只对 `group` 模式有效；当分组解析为 `flat` 或 `page` 时它不起作用。
+
+[显式侧边栏](#explicit-sidebar)中的分组会用它自己的 `display` 覆盖全局模式，与前面完全一致。
+
+## 目录列表 [#directory-listings]
+
+分组自己的页面可以在其内容下方列出该分组的其他页面，于是板块的落地页同时充当它的目录。在文件夹的 [`meta.ts`](/docs/content/meta) 中设置 `directory`：
+
+```ts guides/meta.ts lineNumbers
+import { defineMeta } from "blume";
+
+export default defineMeta({
+  directory: "card",
+});
+```
+
+- **`card`** 把每个页面和子分组显示为带图标和描述的卡片。
+- **`accordion`** 把页面列为行，每个子分组则是可展开以显示其页面的板块。
+- **`none`** 不列出任何内容。这是默认值。
+
+只有拥有自己页面的分组才有地方展示这份列表：文件夹的 `index` 页面，或显式分组中的 `root`。该设置会向下传递到嵌套文件夹，因此在内容根目录的 `meta.ts` 上设置一次 `directory` 就能让每个板块都有列表；而文件夹也可以设置自己的值（包括 `none`）来覆盖继承到的值。[显式侧边栏](#explicit-sidebar)同样以这种方式在其分组上设置 `directory`。
+
+## 排序 [#ordering]
+
+侧边栏自动生成时，顺序按优先级从高到低解析：
+
+1. **配置中的侧边栏**
+
+    显式的 `navigation.sidebar` 会完全取代自动生成的目录树。
+
+2. **文件夹 Meta**
+
+    `meta.ts` 中的 `pages` 数组决定分组的顺序。
+
+3. **Frontmatter**
+
+    页面上的 `sidebar.order`。
+
+4. **文件系统**
+
+    `index` 页面优先，然后数字前缀，然后按标签的字母序。
+
+两个同级项落在相同的显式顺序或数字顺序上时，它们之间会退回按字母序排列——Blume 会报出 `BLUME_DUPLICATE_SIDEBAR_ORDER` 警告，以免这种并列被忽略。
+
+## 隐藏页面 [#hidden-pages]
+
+把页面从侧边栏——以及上一页/下一页翻页——中隐藏，同时仍会构建它、并可通过 URL 访问：
+
+```yaml
+sidebar:
+  hidden: true
+```
+
+文件夹的 `index` 页面既是分组行的链接目标，也是分组内的第一行。隐藏 index 页面会只留下这个带链接的标题：分组行依然会打开落地页，上一页/下一页链接也依然会经过它。
+
+## 标签页 [#tabs]
+
+把顶级板块渲染成页眉中的标签页，适合把大型站点划分为若干独立区域——比如适配器、API 和 AI 指南。当当前路由落在某个标签页的 `path` 之下时，该标签页会高亮：
+
+```ts blume.config.ts lineNumbers
+navigation: {
+  tabs: [
+    { label: "Adapters", path: "/adapters", icon: "plug" },
+    { label: "API", path: "/api", icon: "rocket" },
+    { label: "AI", path: "/ai", icon: "sparkles" },
+  ],
+}
+```
+
+标签页可选的 `icon`（一个[内置图标](/docs/content/components#icon)名称、图片路径/URL，或内联 SVG）会显示在标签旁，无论在页眉还是在移动端导航抽屉中。
+
+启用后的 [OpenAPI](/docs/references/openapi)、[AsyncAPI](/docs/references/asyncapi) 或 [GraphQL](/docs/references/graphql) 引用会挂载到自己的路由上，但不会自动添加标签页——把某个标签页指向该路由，就能让它出现在页眉中（对原生渲染器而言，还能限定其操作侧边栏的范围），标签文字随你定：
+
+```ts blume.config.ts
+navigation: {
+  tabs: [
+    { label: "API", path: "/reference" },
+  ],
+}
+```
+
+标签页的 `path` 是它所在板块的前缀，同时也是链接目标。如果某个板块的 `path` 不是它自己的某个页面——比如没有 `index.mdx` 的文件夹——链接就会指向 404，因此标签页会改为回退到该板块的第一个页面。位于标签页 `path` 上的静态[自定义页面](/docs/advanced/custom-pages)也算作该板块自己的页面：有了 `pages/guides.astro`，`/guides` 标签页就会落到该页面上，同时 `guides/` 文件夹填充它的侧边栏。自动生成的[更新日志](/docs/advanced/changelog)索引同样如此，于是 `/changelog` 标签页打开的是时间线，而不是最新一条。
+
+如果你希望标签页落到别处——比如板块内的某个特定页面——就设置 `href`：
+
+```ts blume.config.ts
+navigation: {
+  tabs: [
+    { label: "Guides", path: "/guides", href: "/guides/getting-started" },
+  ],
+}
+```
+
+没有设置 `href` 的标签页沿用上述解析规则。
+
+给标签页加上 `items` 就能把它变成下拉菜单。该标签页自身不再指向任何链接：它在页眉中展开由这些条目组成的菜单，在移动端导航抽屉中就地展开它们。它的 `path` 仍然用于限定侧边栏范围并标记当前标签页，`href` 则不再适用。每个条目需要一个 `label` 和一个 `path`，还可以有可选的 `icon`、`description` 和 `tag`，与[选择器](#selectors)的条目一致：
+
+```ts blume.config.ts lineNumbers
+navigation: {
+  tabs: [
+    { label: "Guides", path: "/guides" },
+    {
+      label: "SDKs",
+      path: "/sdks",
+      items: [
+        { label: "JavaScript", path: "/sdks/javascript", description: "Node and the browser" },
+        { label: "Python", path: "/sdks/python", tag: "Beta" },
+      ],
+    },
+  ],
+}
+```
+
+在 [i18n](/docs/content/i18n) 站点上，标签页的 `label`（以及下拉条目的 `label`）可以是按语言环境映射的对象而不是字符串——优先取当前语言环境的值，其次取默认语言环境的值：
+
+```ts blume.config.ts
+navigation: {
+  tabs: [
+    { label: { en: "Docs", fr: "Documentation" }, path: "/docs" },
+    { label: "CLI", path: "/cli" }, // 普通字符串在任何语言环境下都原样渲染
+  ],
+}
+```
+
+[选择器](#selectors)的标签不支持映射：它的 `label` 和每个条目的标签都是普通字符串。
+
+标签页还会**限定侧边栏的范围**：当当前路由落在某个标签页的 `path` 之下时，侧边栏只显示该板块的页面——因此 `/adapters/*` 只列出适配器。标签页 `path` 处的文件夹即为该板块，所以除了标签页本身不需要任何额外配置；把内容按每个标签页一个文件夹来组织，再让每个标签页指向它即可。
+
+对于不属于任何标签页的路由（或某个 `path` 为 `/` 的标签页下的路由），侧边栏会显示那些_不_属于任何标签页的页面——每个标签页的文件夹都从它面前隐藏，因为该板块在页眉里已经有自己的标签页了。于是根落地页会列出散落的顶层页面，而带板块的内容则留在各自的标签页后面，这与 Fumadocs 的根文件夹做法一致。如果某个路由没有自己的页面可以这样展示，就会改为显示完整的目录树，因此侧边栏永远不会空白。
+
+## 选择器 [#selectors]
+
+要在一个站点的若干完整分区之间切换——产品、版本，或任何成组的目标集合——可以添加一个 `selector`。每个选择器都会渲染成页眉里的下拉菜单，并显示 `path` 与当前路由匹配的那一项：
+
+```ts blume.config.ts lineNumbers
+navigation: {
+  selectors: [
+    {
+      kind: "version",
+      label: "Version",
+      items: [
+        { label: "v2 (latest)", path: "/v2", icon: "rocket" },
+        { label: "v1", path: "/v1" },
+      ],
+    },
+  ],
+}
+```
+
+每个条目需要一个 `label`、一个 `path`，以及可选的 `icon`、`description` 和 `tag`。`kind`（`dropdown`、`product`、`version` 或 `language`）只是提示该选择器的用途；它们渲染出的下拉菜单完全相同。
+
+配置了[版本控制](/docs/content/versioning)后，Blume 会自动渲染一个版本选择器——在这里声明自己的 `kind: "version"` 选择器会取代自动生成的那个，因此手写的方案仍然可用。
+
+在比桌面侧边栏更窄的屏幕上，选择器、版本选择器和[语言切换器](/docs/content/i18n#the-language-switcher)会从页眉移到移动端导航抽屉顶部，各自占满抽屉宽度。
+
+## 置顶链接 [#featured-links]
+
+把链接固定到侧边栏顶部、所有板块之上——比如博客、更新日志、联系或支持页面，这些地方应该永远一键可达。与自动生成的目录树不同，置顶链接**不受标签页限定**：它们在每个路由、每种断点下都会显示。
+
+```ts blume.config.ts lineNumbers
+navigation: {
+  featured: [
+    { label: "Blog", href: "https://example.com/blog", icon: "newspaper" },
+    { label: "Contact", href: "/contact", icon: "headphones" },
+  ],
+}
+```
+
+每个链接需要一个 `label`、一个 `href`，以及可选的 `icon`（一个[内置图标](/docs/content/components#icon)名称、图片路径/URL 或内联 SVG——与其他地方完全相同）。`href` 可以指向任何位置：外部 URL 会在新标签页中打开，而内部路由（如 `/contact`）会在构建时与你的页面校验，若没有任何匹配会给出警告。
+
+## 显式侧边栏 [#explicit-sidebar]
+
+若要完全掌控，可以在 `navigation.sidebar` 中列出显式条目——直接写数组是 `sidebar.items` 的简写，而对象形式则把它们与全局的 [`display`](#display-modes) 组合在一起。一旦设置了条目，Blume 就会原样使用它们，并跳过基于文件系统的生成：
+
+```ts blume.config.ts lineNumbers
+navigation: {
+  sidebar: [
+    "/", // 页面，按路由引用
+    {
+      label: "Guides", // 分组
+      collapsed: false,
+      items: ["/configuration", "/configuration/theming"],
+    },
+    { label: "GitHub", href: "https://github.com/owner/repo" }, // 外部链接
+  ],
+}
+```
+
+每个条目要么是页面路由（字符串），要么是分组（`label` + `items`），要么是链接（`label` + `href`）。分组可以嵌套、可以覆盖全局的 [`display` 模式](#display-modes)、可以默认 `collapsed`，还可以链接一个 `root` 页面，用 [`directory`](#directory-listings) 列出该分组的页面。
+
+对于无法照原样渲染的条目，Blume 会给出警告：匹配不到任何页面的路由（该条目会被略去）、匹配不到任何页面的 `root`（它的链接会 404），以及既没有路由、`href`、`root` 也没有 `items` 的条目（会被略去）。
+
+## 页眉操作 [#header-actions]
+
+`navigation.actions` 把普通链接放进页眉，位于图标按钮左侧；`navigation.cta` 则是唯一的实心按钮：
+
+```ts blume.config.ts lineNumbers
+navigation: {
+  actions: [{ href: "/changelog", label: "Changelog" }],
+  cta: { href: "https://example.com/signup", label: "Start free" },
+}
+```
+
+和标签页标签一样，在[多语言](/docs/content/i18n#per-locale-navigation)站点上，这里的 `label` 也可以是语言环境代码到文本的映射。
+
+`cta` 故意是单数——文档页眉只容得下一件要读者去做的事，而一排按钮什么也没要求。次要链接应放进 `actions`，或者当它们应与侧边栏放在一起时放进 [`featured`](#featured-links)。
+
+`http(s)` 或协议相对的 href 会在新标签页中打开；路由则留在当前标签页，并像 `featured` 链接一样在构建时与你的页面校验——因此由同一主机上另一个应用提供的页面（比如产品站的 `/signup`）应写成绝对 URL。在 `sm` 断点以下，`actions` 会被隐藏，因为那时的页眉只容得下 logo 和导航开关。`cta` 在那里同样隐藏，唯一的例外是没有导航开关的页面——比如没有标签页的 `PageLayout` 落地页——它会保留，因为在手机上没有别的方式能把它呈现出来。
+
+## 仓库链接 [#repository-link]
+
+当你在配置中设置了 [`github`](/docs/configuration) 后，Blume 会在[页脚](/docs/configuration#footer)中你的社交资料之前显示一个 GitHub 图标，链接到你的仓库。它默认开启；用 `navigation.repo` 可以隐藏：
+
+```ts blume.config.ts lineNumbers
+navigation: {
+  repo: false, // 隐藏页脚的 GitHub 链接（默认：true）
+}
+```
+
+只有配置了 `github` 时该链接才会出现，因此没有仓库的项目无论哪种设置都不受影响。
+
+`repo` 也可以接受一个绝对 URL，让 GitHub 标记指向 GitHub 上的任意位置：
+
+```ts blume.config.ts lineNumbers
+navigation: {
+  repo: "https://github.com/acme",
+}
+```
+
+这适用于文档仓库为私有仓库的项目。`github` 同时驱动逐页面的编辑链接、GitHub 标记和[代理清单](/docs/discoverability/agent-discovery)中的仓库，因此这类项目必须不设置 `github`——而正是一个 URL 让它仍能显示一个指向公开位置的标记。`footer.socials.github` 中的 URL 会取代这个标记；指向其他主机的链接则应放在页脚的 `links` 或 [`actions`](#header-actions) 中。
+
+## 面包屑与翻页
+
+它们直接来自侧边栏目录树，无需任何配置：
+
+- **面包屑**会在标题上方显示当前页面所属的父分组。
+- 每个页面底部的**上一页和下一页**链接遵循侧边栏顺序，并跳过隐藏的页面。在页面的 frontmatter 中设置 [`pagination: false`](/docs/content/frontmatter) 即可在该页面上取消它们。
+
+## 本页大纲
+
+右侧栏的大纲会根据每个页面的标题自动生成——默认取 `##` 和 `###`——因此长页面依然便于快速浏览。设置 [`toc`](/docs/configuration#table-of-contents) 可以改变标题范围或关闭大纲。在更窄的屏幕上，右栏会隐藏，大纲则折叠成内容上方的「本页大纲」下拉菜单。
+
+## 页面操作 [#page-actions]
+
+在目录下方，每个页面都会显示一组快捷操作：
+
+- **在 GitHub 上编辑**——直接链接到源文件。在配置中设置 [`github`](/docs/configuration) 后出现。
+- **回到顶部**——平滑地把长页面滚回顶部。
+
+另外还有一些把页面交给 AI 工具的操作——**复制为 Markdown** 和**在对话中打开**——参见[面向代理的 Markdown](/docs/discoverability/markdown#copy-as-markdown)。
+
+反馈则放在页面底部：一个「本页对你有帮助吗？」的是/否评分，它会发送 `feedback` 分析事件，且不需要 `github`——参见[页面反馈](/docs/configuration#page-feedback)。
+
+开启 [`export`](/docs/configuration/export) 后，还有一个**导出**操作，让读者可以把页面下载为 PDF 或 EPUB。

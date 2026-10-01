@@ -1,0 +1,41 @@
+---
+title: 远程 MDX
+description: 通过 HTTP 从 GitHub 仓库子树或 raw 基础 URL 抓取 Markdown 与 MDX。
+source: https://useblume.dev/docs/content/sources/remote-mdx
+---
+
+内建的 `mdxRemote()` 适配器通过 HTTP 抓取原始的 `.md`/`.mdx`。文件列表既可以从 GitHub 仓库的某个子树枚举（`github`），也可以针对一个 raw 基础 URL 显式指定（`url` + `files`）：
+
+```ts blume.config.ts
+import { defineConfig } from "blume";
+import { filesystem, mdxRemote } from "blume/sources";
+
+export default defineConfig({
+  content: {
+    sources: [
+      filesystem({ root: "docs" }),
+      // acme/sdk 的 docs/ 子树，挂载到 /sdk 下
+      mdxRemote({
+        prefix: "sdk",
+        github: { owner: "acme", repo: "sdk", ref: "main", path: "docs" },
+      }),
+    ],
+  },
+});
+```
+
+如果你想自己列出文件，把 `url` 指向一个 raw 基础 URL：
+
+```ts blume.config.ts
+mdxRemote({
+  prefix: "sdk",
+  url: "https://raw.githubusercontent.com/acme/sdk/main/docs",
+  files: ["intro.mdx", "guide.mdx"],
+});
+```
+
+私有仓库的 token 从 `GITHUB_TOKEN` 环境变量读取 —— 适配器声明了它，所以未设置时 `blume dev` 和 `blume build` 会发出警告。它绝不会被内联进你的配置或生成的产物中，而且只会发往 GitHub 自己的主机（`api.github.com`、`raw.githubusercontent.com`），绝不会发往自定义的 `url` 基础地址。公共仓库不需要它也能工作。
+
+远程页面以完整的 MDX 加组件保真度渲染：它们的正文会被实体化到一个隐藏的暂存目录中，并通过 Astro 与你的本地文档一起渲染，所以标注框、标签页以及其它所有 Blume 组件都能继续工作。
+
+和每个远程来源一样，抓取到的页面会被缓存以支持离线构建，并用 `blume sync` 刷新 —— 参见[缓存与离线构建](/docs/content/sources#caching-and-offline-builds)。

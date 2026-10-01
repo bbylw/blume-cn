@@ -1,0 +1,51 @@
+---
+title: 技能
+description: Blume 随包提供的 agent 技能：帮你搭脚手架、迁移旧站点、让文档跟上产品，以及为你自己的站点编写技能
+source: https://useblume.dev/docs/advanced/skills
+---
+
+Blume 随包提供[agent 技能](https://docs.claude.com/en/docs/claude-code/skills) —— 一套操作手册，教编码 agent（Claude Code、Codex、Cursor）如何完成 Blume 式的活儿，而你不必逐条解释。它们在 GitHub 上位于仓库的 `skills/` 目录，同时也打包在已安装的包的 `skills/` 下，因此任何 agent 都可以直接指向某个 `SKILL.md`。
+
+## Blume
+
+核心技能。它教会 agent Blume 是什么，以及如何生成脚手架、编写和配置一个站点 —— 从文件系统推导出来的导航、配置 schema、内容组件 —— 并把 agent 指向随安装包一起分发的完整文档（`blume` 包内的 `docs/` 目录，路径取决于你的包管理器把它装到了哪里 —— 在 pnpm monorepo 中是依赖它的那个 workspace 的 `node_modules`，而不是仓库根目录）。在任何由 agent 帮你编写文档的项目里都可以安装它：
+
+```bash
+npx skills add haydenbleasel/blume
+```
+
+## 迁移
+
+`blume-migrate` 把一个已有的文档站迁移到 Blume：Mintlify、Fumadocs、Docusaurus、Starlight、Nextra，或任何其它框架。它以地道的 Blume 为目标，而不是逐行照搬：为每个具名框架提供一份映射参考，为每一个会变动的 URL 配一个重定向，并报告它丢弃了什么。运行它最省事的方式是 [`blume migrate`](/docs/migrating)，它会检测你的框架，并针对随包分发的那份打开 Codex 或 Claude Code。想在别的 agent 里使用它，请安装：
+
+```bash
+npx skills add haydenbleasel/blume --skill blume-migrate
+```
+
+## 让文档自我更新
+
+`blume-update-docs` 让你的文档与它们所描述的产品保持同步。每次运行 —— 通常由你在 agent 运行器里配置的定时任务触发 —— 它会把最近合并的 PR、更新日志、配置 schema 和 CLI 帮助与文档内容逐一比对，只更新那些事实上已经过时的页面（feature flag 后面的工作会被忽略），用 `blume build` 验证，然后开启或更新一个 `blume/*` pull request。如果什么都没有过时，它会报告一次干净的空操作，而不是开一个吵闹的 PR。
+
+```bash
+npx skills add haydenbleasel/blume --skill blume-update-docs
+```
+
+Blume 不托管这套自动化 —— 把这个技能接进 Claude Code 的定时任务、Codex 或 Cursor 的自动化，或者干脆用 cron，并授予它读取仓库历史和开 PR 的权限。一个典型的每周提示词：
+
+```text
+使用 blume-update-docs 技能。审阅过去 7 天内合并的 PR，把它们与文档内容对比。忽略 feature flag 后面的工作。如果文档需要更新，就更新它、验证文档能构建，并开一个 blume/* 的 PR。如果不需要，就报告你检查了哪些内容，不要开 PR。
+```
+
+## 为你自己的站点编写技能 [#writing-your-sites-skill]
+
+`blume-write-skill` 会为你自己的文档编写 [agent 技能](/docs/discoverability/agent-discovery#your-sites-skill)：一份以文档为依据的 `SKILL.md`，教编码 agent 使用你的产品 —— 安装配置、核心概念、常见任务和坑 —— 并把每个主题链接到它所在的页面。它取代了 Blume 在 `/skill.md` 处生成的页面地图。运行它最省事的方式是 `blume skill`，它会算出这个技能该放在哪里，并针对随包分发的那份打开 Codex 或 Claude Code：
+
+```bash
+blume skill --claude   # 或 --codex
+```
+
+想在别的 agent 里使用它，请安装：
+
+```bash
+npx skills add haydenbleasel/blume --skill blume-write-skill
+```

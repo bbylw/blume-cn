@@ -1,0 +1,55 @@
+---
+interface Props {
+  title?: string;
+  method?: string;
+  path?: string;
+  class?: string;
+}
+
+const { title = "请求示例", method, path, class: className = "" } = Astro.props;
+---
+
+<div class:list={["req-example", className]}>
+  <div class="req-example__head">
+    <span class="req-example__title">{title}</span>
+    {method && path && (
+      <code class="req-example__route">
+        <b>{method}</b> {path}
+      </code>
+    )}
+  </div>
+  <slot />
+</div>
+
+<style>
+  .req-example {
+    margin-block: 1.25rem;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
+  .req-example__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    padding: 0.45rem 0.875rem;
+    border-bottom: 1px solid var(--border);
+    background-color: var(--bg-muted);
+  }
+  .req-example__title {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--fg-subtle);
+  }
+  .req-example__route {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--fg-muted);
+  }
+  .req-example__route b {
+    color: var(--accent);
+  }
+</style>

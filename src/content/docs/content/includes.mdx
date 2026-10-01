@@ -1,0 +1,85 @@
+---
+title: 包含片段
+description: "用 <include> 语句在构建时把另一个文件的内容嵌入任意页面，并给片段传入属性。"
+source: https://useblume.dev/docs/content/includes
+---
+
+只需写一次代码片段，就能把它嵌入任意页面。单独占一行的 `<include>` 语句会在构建时嵌入另一个文件，就如同它的内容直接写在那里一样——其中的标题会并入页面的目录，文字会被搜索索引，这些内容也会出现在页面的 `.md` 镜像和 llms-full.txt 中。即使格式化工具把语句折成多行，它依然会被嵌入；而 Blume 无法解析的语句会在其所在行报出 `BLUME_INCLUDE_MALFORMED` 警告，而不是渲染成一个原始标签。
+
+```mdx
+<include>./_snippets/prerequisites.mdx</include>
+```
+
+路径相对于包含它的文件来解析。以 `/` 开头的路径从内容根目录解析，因此层级很深的页面无需 `../../..` 就能引用共享片段：
+
+```mdx
+<include>/_snippets/prerequisites.mdx</include>
+```
+
+该语法与 Fumadocs 的 include 语法一致，因此迁移过来的内容无需改动即可使用。
+
+下面就是实际效果——紧接着的这个提示框是从一个共享片段嵌入进来的：
+
+:::tip
+这个提示框位于 `_snippets/include-demo.mdx`——它能在这里渲染，是因为本页通过一条 `<include>` 语句把它嵌入了进来。
+:::
+
+## 局部片段
+
+默认情况下，文件名（或文件夹名）以下划线开头的文件不会进入路由、导航、搜索和站点地图——这个约定天然适合用来放共享片段：
+
+```text
+docs/
+  _snippets/
+    prerequisites.mdx
+    cli-flags.md
+  guides/
+    quickstart.mdx   ← <include>../_snippets/prerequisites.mdx</include>
+  index.mdx
+```
+
+局部片段就是普通的 Markdown 或 MDX 文件。被嵌入时它的 frontmatter 会被剥离（以包含它的页面的 frontmatter 为准），其余内容——提示框、代码围栏、组件、公式——都和直接内联书写时渲染得完全一样。局部片段还可以再包含其他局部片段；循环包含会报错。
+
+局部片段内部的相对图片引用依然有效：它们会以包含它的页面为基准重新解析，因此与片段放在一起编写的 `![diagram](./diagram.png)`，无论片段被嵌入到哪里都能正确解析。
+
+在 `blume dev` 运行期间修改局部片段，会让所有包含它的页面重新加载。
+
+## 属性
+
+以属性的形式把值传进局部片段，再在片段里用 `{{name}}` 读取，语法和[变量](/docs/content/variables)完全一样。这样一个片段就能服务所有需要不同变体的页面：
+
+```mdx docs/_snippets/upgrade.mdx
+Upgrade to the **{{plan}}** plan to use {{feature}}.
+```
+
+```mdx docs/sso.mdx
+<include plan="Enterprise" feature="SSO">
+  ./_snippets/upgrade.mdx
+</include>
+```
+
+属性既作用于被包含的文件，也作用于它继续包含的内容，并且优先于同名的站点级变量。除 `lang` 和 `meta` 之外，其他每个属性都是一个 prop；属性值是纯文本。
+
+## 包含代码文件
+
+如果目标文件不是 `.md`/`.mdx`，它会以围栏代码块的形式嵌入，并从扩展名推断语言。用 `lang` 可以覆盖语言（也可以把 Markdown 文件按源码展示而不嵌入内容），用 `meta` 可以传入围栏的 meta 字符串，例如标题：
+
+```mdx
+<include>./examples/config.ts</include>
+
+<include meta='title="config.ts"'>./examples/config.ts</include>
+
+<include lang="mdx">./_snippets/prerequisites.mdx</include>
+```
+
+## 规则与诊断
+
+包含语句必须独占一行——它们是块级的，不是行内的。围栏代码块内部的语句不会被处理，所以你可以照常讲解这套语法（就像本页所做的）。
+
+目标文件必须位于内容根目录之内：根目录之外的文件会在版本快照和 eject 出来的项目中被悄悄漏掉，因此 `blume` 会报 `BLUME_INCLUDE_OUTSIDE_ROOT` 而不嵌入它。目标不存在是 `BLUME_INCLUDE_NOT_FOUND`，包含成环则是 `BLUME_INCLUDE_CYCLE`——这三者都会让 `blume build` 失败（可以加 `--no-strict` 强行构建），并且会出现在 `blume validate` 中。
+
+局部片段内部的失效链接会记在片段文件上，而不是记在嵌入它的那些页面上，所以你在片段所在的位置修正它们即可。
+
+:::note
+局部片段在各语言环境之间共用，`blume translate` 不会翻译它们——请让局部片段保持语言中立（代码、表格、图示），或者为每个语言环境分别创建片段，再由各语言环境的页面分别包含。
+:::

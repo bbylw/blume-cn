@@ -1,0 +1,82 @@
+---
+title: translate
+description: 用本地 agent CLI 把文档翻译到已配置的语言，并通过一份随代码提交的台账跟踪哪些译文已经过期
+source: https://useblume.dev/docs/cli/translate
+---
+
+一旦[国际化](/docs/content/i18n)开启，对源页面的每一次编辑都会悄悄地让它已有的翻译过时。`blume translate` 补上了这个闭环：它精确算出每种语言下哪些页面缺失或过时，用本地 agent CLI 以无头方式翻译它们，并把做过的事记录进一份随代码提交的台账，好让下一次运行——以及 CI——知道哪些是最新的。
+
+```bash
+blume translate --codex
+```
+
+```
+blume translate  3 item(s) · 2 locale(s) · Codex
+
+  ✔ docs/guides/install.mdx → fr 24.2s
+  ✔ docs/guides/install.mdx → de 22.8s
+  ✔ meta titles (2) → de 4.1s
+
+  Translated 3 files into 2 locales · 1 adopted · 14 already up to date · 51.1s
+```
+
+## 工作方式
+
+整条流水线由 Blume 掌控，agent 只负责翻译文本。对每个需要处理的文件，Blume 会构建一段翻译提示，在禁用文件、shell 和网络工具的情况下无头运行 agent CLI，校验回复的结构，然后自己写出目标文件——`--codex` 用 [Codex](https://developers.openai.com/codex/cli)，`--claude` 用 [Claude Code](https://claude.com/claude-code)。Blume 不保存任何 API 密钥，也不自己调用任何模型。
+
+每一次通过校验的写入都会记录在项目根目录的 `blume.translations.json` 中：按源文件与语言，记录下翻译那一刻源文件的哈希。**请提交这个文件。** 重跑时正是靠它区分"已经翻译过"和"翻译过，但源文件此后又变了"——也是它让 CI 关卡得以成立。
+
+每处理完一个文件台账就会落盘，因此中途停下一次长时间运行（Ctrl+C）最多只会丢掉正在处理中的那几个翻译——下一次运行会从你停下的地方接着来。文件默认每次并行处理 4 个；如果你的机器和 agent 的速率限制吃得消，可以用 `--concurrency` 调高。
+
+重跑是增量的：自上次翻译以来没有变化的源文件会被跳过，因此改完一个页面再运行 `blume translate`，每种语言只会翻译这一个页面。过时的页面被重新翻译时，agent 会看到已有的译文，并被要求对齐它的语体、方言和术语——源文件改了一段，译文 diff 就只该是一段，而不是从头重写。
+
+首次翻译没有先例可循，所以要提前用[语言上的 `style`](/docs/content/i18n)（`{ code: "pt", label: "Português", style: "Brazilian Portuguese, informal você" }`）把选择钉死。这条指引会随每一段翻译提示一起送过去；已有译文若与之不一致，以 `style` 为准——因此一次重新翻译也会把较早的页面往所配置的语体上带一带。
+
+## 会被翻译的内容
+
+- **页面**——默认语言下的 `.md`/`.mdx` 文件。agent 会翻译正文，只翻译人眼可见的 frontmatter 值（`title`、`description`、`sidebar.label`、`sidebar.badge`、`seo.title`、`seo.description`）。目标路径遵循你的解析器：在 `dir` 下是 `fr/guides/install.mdx`，在 `dot` 下是 `guides/install.fr.mdx`。已经存在的译文会在它所在的位置被重写，即便用的是另一个名字（手写的 `fr/guides/install.md`），因此重新翻译绝不会给同一个页面添上第二份副本。
+- **文件夹导航标题**——在 `dir` 解析器下，每种语言所需的 [`meta.ts`](/docs/content/meta)标题会在一次批量调用中翻译完成，而生成的各语言 `meta.ts` 会逐字复制其余每个键（`order`、`pages`、`icon`、`collapsed`），使该语言的侧边栏保持原有排序。它会写进磁盘上该语言已存在的目录里（配置为 `pt-BR` 时就是 `pt-br/`），如果那里已经有一个 `meta.js` 或 `meta.mjs`，它会被重写，而不是在旁边多出一个 `meta.ts`。
+
+你手写的翻译会被**采纳，绝不覆盖**：已存在却没有台账条目的译文会被标记为最新并原样保留，只有 `--force` 才会重新翻译它。
+
+## 校验
+
+结构从来不会被托付给 agent。写入之前，Blume 会检查每一份回复，并根据源文件重建目标文件：
+
+- frontmatter 由源文件的数据重建，只把六个可翻译的值覆盖上去——agent 凭空发明的键会被丢掉，它删掉的键会被恢复，而 `slug`、`icon`、`order` 和日期从构造上就与源文件逐字一致。
+- 代码围栏的数量必须与源文件一致，正文不能为空，frontmatter 必须能解析。
+- 除非译文里已经固定了自己的锚点，否则每个标题都会用一个结尾的 [`[#id]` 标记](/docs/content/syntax#custom-anchors)钉在源标题的锚点 id 上，这样 `#fragment` 链接在任何语言里都解析到同一处。标题按位置一一配对，因此标题结构与源文件不匹配的译文不会得到任何锚点。
+
+校验未通过的回复不会写入任何内容——该项会被报为失败，本次运行继续往下走。所有成功的条目仍留在台账里，因此重跑时只会重试那些失败项。
+
+## 让 CI 失败
+
+`blume translate --check` 是只读的关卡：它报告每一对缺失或过时的内容，一旦存在偏差就以非零码退出，全程不运行 agent、不写任何东西。
+
+```bash
+blume translate --check           # 翻译缺失或过时则以 1 退出
+blume translate --check --json    # 在 stdout 上输出机器可读的偏差报告
+```
+
+```yaml .github/workflows/translations.yml
+- run: npx blume translate --check
+```
+
+JSON 报告的结构与 `blume validate --json`、`blume audit --json` 和 `blume eval --json` 相同，都是 `diagnostics` + `summary`，偏差按语言分组。每一个缺失或过时的翻译都是一条 error 级诊断（`BLUME_TRANSLATE_MISSING`、`BLUME_TRANSLATE_STALE`），因此 `summary.error` 与退出码一致。手工撰写（未登记）的翻译永远不会让这道关卡失败。
+
+## 限制
+
+- 元数据标题的翻译只支持 `dir` 解析器——`dot` 解析器没有按语言生成 `meta.ts` 的机制。默认导出函数的 `meta.ts` 会被跳过并给出警告；该语言的那份请手写。
+- 远程源和由 CMS 支撑的源会被跳过：没有本地文件可以把译文写进去。
+- 头部标签页的文字位于 `blume.config.ts` 而非内容里——用[按语言的标签映射](/docs/content/navigation#tabs)在那里做本地化。
+- 译文质量取决于 agent。要像审阅其它任何贡献那样审阅它的输出——台账只保证新鲜度，不保证地道。
+
+## 选项
+
+- `--codex` / `--claude` — 用哪个 agent CLI 来翻译。必须恰好指定一个；`--check` 例外，它不运行 agent，两者都不需要。
+- `--check` — 报告偏差并以非零码退出，不写入任何内容。
+- `--concurrency <n>` — 并行的 agent 会话数。默认为 `4`，最大 `16`。
+- `--locale <codes>` — 目标语言，逗号分隔（默认为每一个非默认语言）。
+- `--force` — 重新翻译所有内容，包括已经最新和手写的文件。
+- `--timeout <seconds>` — 每个文件的 agent 时间上限。默认为 `600`；设这个上限是为了抓住卡死的 agent，好让大页面有足够的时间跑完。最大为 `2147483`（约 24 天），这已是定时器所能等待的最长时间。
+- `--json` — 在两种模式下都把报告以 JSON 输出到 stdout。

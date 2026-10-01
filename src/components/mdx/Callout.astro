@@ -1,0 +1,94 @@
+---
+interface Props {
+  type?: "note" | "tip" | "warning" | "danger" | "info" | "success" | string;
+  title?: string;
+  class?: string;
+}
+
+const { type = "note", title, class: className = "" } = Astro.props;
+
+const styles: Record<string, { wrap: string; icon: string; label: string }> = {
+  note: {
+    wrap: "border-line bg-bg-subtle",
+    icon: "text-fg-subtle",
+    label: "说明",
+  },
+  info: {
+    wrap: "border-sky-300/60 bg-sky-50/60 dark:border-sky-500/25 dark:bg-sky-500/8",
+    icon: "text-sky-600 dark:text-sky-400",
+    label: "信息",
+  },
+  tip: {
+    wrap: "border-emerald-300/60 bg-emerald-50/60 dark:border-emerald-500/25 dark:bg-emerald-500/8",
+    icon: "text-emerald-600 dark:text-emerald-400",
+    label: "提示",
+  },
+  success: {
+    wrap: "border-emerald-300/60 bg-emerald-50/60 dark:border-emerald-500/25 dark:bg-emerald-500/8",
+    icon: "text-emerald-600 dark:text-emerald-400",
+    label: "成功",
+  },
+  warning: {
+    wrap: "border-amber-300/70 bg-amber-50/60 dark:border-amber-500/25 dark:bg-amber-500/8",
+    icon: "text-amber-600 dark:text-amber-400",
+    label: "注意",
+  },
+  danger: {
+    wrap: "border-rose-300/70 bg-rose-50/60 dark:border-rose-500/25 dark:bg-rose-500/8",
+    icon: "text-rose-600 dark:text-rose-400",
+    label: "危险",
+  },
+};
+
+const s = styles[type] ?? styles["note"]!;
+---
+
+<aside class:list={["callout", s.wrap, className]}>
+  <div class="callout__rail">
+    <span class="callout__dot" aria-hidden="true"></span>
+    <span class:list={["callout__label", s.icon]}>{title ?? s.label}</span>
+  </div>
+  <div class="callout__body">
+    <slot />
+  </div>
+</aside>
+
+<style>
+  .callout {
+    margin-block: 1.5rem;
+    border: 1px solid var(--border);
+    border-left-width: 3px;
+    border-radius: 0.75rem;
+    padding: 1rem 1.125rem;
+    font-size: 0.9375rem;
+  }
+  .callout__rail {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+  }
+  .callout__dot {
+    width: 0.4rem;
+    height: 0.4rem;
+    border-radius: 9999px;
+    background-color: currentColor;
+    opacity: 0.85;
+  }
+  .callout__label {
+    font-size: 0.75rem;
+    font-weight: 650;
+    letter-spacing: 0.06em;
+  }
+  .callout__body :global(> :first-child) {
+    margin-top: 0;
+  }
+  .callout__body :global(> :last-child) {
+    margin-bottom: 0;
+  }
+  .callout__body :global(p),
+  .callout__body :global(li) {
+    color: var(--fg-muted);
+    line-height: 1.8;
+  }
+</style>

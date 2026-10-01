@@ -1,0 +1,79 @@
+---
+title: 面向智能体的 Markdown
+description: 每个页面都提供 .md 与 .mdx 原文、内容协商，以及自定义组件的 Markdown 序列化器
+source: https://useblume.dev/docs/discoverability/markdown
+---
+
+HTML 是给浏览器用的。智能体和 LLM 用你的页面所写的 Markdown 表现更好 —— token 更少、没有界面装饰，组件也以模型能读懂的形式渲染。Blume 在开发和生产环境下都为每个页面提供这份 Markdown，无需任何配置。
+
+## 原始 Markdown [#raw-markdown]
+
+在任何页面 URL 后加上 `.md` 或 `.mdx`，即可取到它的 Markdown 源码 —— 非常适合 LLM、编码智能体和“复制为 Markdown”这类工作流。
+
+| URL | 返回 |
+| - | - |
+| `/quickstart` | 渲染后的页面 |
+| `/quickstart.md` | 纯 Markdown，组件已转换 |
+| `/quickstart.mdx` | MDX 源码，组件保持原样 |
+
+嵌套路由同理（`/content/syntax.md`），首页则在 `/index.md` 提供。
+
+`.md` 变体会把组件_降级_为纯 Markdown，以适配无法解释 JSX 的消费方：`<TypeTable>` 变成 Markdown 表格，`<Callout>` 变成带标签的引用块，`<Steps>` 变成有序列表，`<Tabs>` 变成加粗标题的小节，`<Card>` 变成“标题作为链接、正文在下方”（`<CardGroup>` 则变成其中的卡片），`<Accordion>` 变成加粗的问题加对应答案，`<FileTree>` 变成它的列表，`<CodeGroup>` 变成带标题的代码块，`<YouTube>` 变成一个链接，其它每个内置组件 —— Columns、Frame、Expandable、Badge、Tooltip 等 —— 都变成它可读的内容。需要类型检查器的 `<AutoTypeTable>` 保持原样，从文件读取两侧内容的 `<Diff>`（`src`，或 `before` 与 `after`）和缺少 `owner`、`repo` 的 `<GithubInfo>` 也是如此。生成的 [API 参考](/docs/references/openapi)页面由哪些组件构成，也一样会被降级：`<Operation>` 变成用其规范自身写法表示的接口（`GET /pets/{id}`、`SEND user/signup`、`query pets`）并带上弃用标记，`<ApiTagOperations>` 变成这些接口的列表，连到各自页面并附摘要，`<ApiOverview>` 变成 API 的版本和基础 URL —— 于是阅读参考页的智能体知道该调用什么，站内搜索也能匹配到接口路径。属性按字面数据读取，绝不执行 —— 字符串、数字、布尔值、数组、对象和模板字符串，还有对页面 `frontmatter` 的引用，因此像 `title={frontmatter.status}` 这样的属性会解析成渲染页面所显示的同一个值。任何无法忠实转换的东西 —— 自定义组件，或由函数调用、import 计算出来的属性 —— 都原样保留；代码里的组件标记，无论是围栏代码块还是行内代码，都不会被改动。同样的转换也适用于 [`llms-full.txt`](/docs/discoverability/llms-txt) 和 [MCP 服务器](/docs/discoverability/mcp)的 `get_page` 工具，因此每个面向智能体的入口读到的都是干净的 Markdown。
+
+如果你要的就是 MDX 本身，用 `.mdx` 变体：它的组件保持原样，其余部分像 `.md` 变体一样，为按 URL 阅读它的智能体做好准备。[Includes](/docs/content/includes) 会被拼接进来，[`<Visibility>`](/docs/content/components#visibility) 会按对智能体的方式解析（`for="web"` 的内容被移除，保留 `for="agents"` 的内容），相对图片指向它们实际提供的位置，相对页面链接指向它所指的路由，而根相对链接（`/guides/install`）会带上站点的 `deployment.base` 和 `basePath`，在翻译过的页面上还会移入该页面的 locale，就像渲染页面的链接那样。根相对图片以及指向 `public/` 中文件的链接（`/spec.pdf`）只加上 `deployment.base`，因为那些文件正是在那里提供的。
+
+### 内容协商 [#content-negotiation]
+
+智能体不需要知道 `.md` 这个约定：请求页面本身的 URL 并带上 [`Accept: text/markdown`](https://acceptmarkdown.com) 头，就会在同一地址拿到 Markdown 变体，同时带 `Vary: Accept`，让缓存把两者分开。开发服务器开箱即用地遵守这个头，而 [Vercel 或 Cloudflare 的服务端构建](/docs/deployment#server-rendering)会自动把同样的协商接进部署 —— Vercel 上是路由规则，Cloudflare 上是生成的 Worker —— 无需任何配置。首页始终参与协商，即便它是自定义落地页而非内容页面：它的 Markdown 镜像会回退到 [`llms.txt`](/docs/discoverability/llms-txt) 索引，因此向站点根请求 Markdown 的智能体拿到的是整个站点的机器可读地图。Markdown 响应还会带上 `x-markdown-tokens` 头 —— 一个估算的 token 数（每个 token 约 4 个字符），遵循 [Cloudflare 的 Markdown for Agents](https://developers.cloudflare.com/fundamentals/reference/markdown-for-agents/) 的约定 —— 在 Blume 能控制响应头的每个入口上：开发服务器、服务端渲染的响应，以及 Vercel 和 Cloudflare 上参与协商的首页。其它部署目标从静态层提供预渲染页面，没有请求时钩子，因此那里的智能体要直接抓取 `.md` URL；[智能体可读性清单](/docs/discoverability/agent-discovery#agent-readability)只在真正遵守该头的部署上才声明 `contentNegotiation`。
+
+缺失的页面同样参与协商。默认的 [404 页面](/docs/advanced/custom-pages#404-page)在 `/404.md` 有一个 Markdown 双胞胎 —— 先是未找到提示，然后是指向每个顶层分区、sitemap 和 `llms.txt` 的补救链接 —— 并且在 Vercel 或 Cloudflare 的服务端构建上，请求一个不存在的 URL 且偏好 Markdown 时，返回的是这段正文加上真实的 `404` 状态，而不是 HTML 外壳。在 Vercel 上，任何背后没有页面的 `.md` URL 同理。你自己的 404 页面（`pages/404.astro`，或 `/404` 处的一个内容页面）会连同它的 `/404.md` 双胞胎一起替换掉默认页面，此后缺失的页面就用你的 HTML 页面作答。
+
+### 自定义组件序列化器
+
+用 `agents.markdownComponents` 给你自己的组件一个 Markdown 形态 —— 一张从 JSX 名字到序列化器的映射。每个序列化器会收到该组件的 `props`（按字面数据从 MDX 属性中读取，其中 `frontmatter` 引用已被解析）、它的 `children`（已降级为 Markdown）以及页面的 `frontmatter` 数据，并返回替换后的内容 —— 或返回 `null` 让 JSX 保持原样：
+
+```ts blume.config.ts lineNumbers
+import { defineConfig } from "blume";
+import type { ComponentMarkdown } from "blume";
+
+const chart: ComponentMarkdown = ({ props }) =>
+  `![${props.title}](/charts/${props.slug}.png)`;
+
+export default defineConfig({
+  agents: {
+    markdownComponents: {
+      Chart: chart,
+    },
+  },
+});
+```
+
+对容器组件，`childComponents("Name")` 按标签取出直接子元素 —— 内置 `<Steps>` 序列化器正是这样收集它的 `<Step>` 条目的 —— 而 `childBlocks()` 按顺序返回每一个直接子元素，组件和普通段落都算，每个都已降级为一块 Markdown（内置的 `<CardGroup>` 序列化器不过就是把这些块用空行连起来）。同名条目会替换内置序列化器，因此你可以改变 `<Callout>` 的降级方式 —— 或返回 `null` 把它整个排除掉。
+
+序列化器写在 `blume.config.ts` 里，而不是 `components.tsx`：配置文件会在构建时执行，而组件文件只做静态分析（它可能 import `.astro` 文件，那些文件无法在站点构建之外运行）。你的组件本身仍照旧在 `components.tsx` 中注册 —— `markdownComponents` 只是额外提供了它们面向智能体的 Markdown 形态。
+
+## 复制为 Markdown [#copy-as-markdown]
+
+每个页面都有一个**复制为 Markdown** 操作 —— 位于目录下方的[页面操作](/docs/content/navigation#page-actions)里 —— 它会把页面的 Markdown 源码复制到剪贴板。它就是上面[`.md` URL](#raw-markdown)所提供的那份源码，可以直接粘贴给 LLM、贴进 issue，或存进你的笔记。它在每个页面、在开发和生产环境下都可用，无需任何配置。
+
+在剪贴板 API 不可用或浏览器拒绝授权时 —— 应用内浏览器、WebView、不安全的来源 —— 该操作会回退到传统的复制命令；如果剪贴板里仍然什么都没进去，按钮会提示**复制失败**（通过 `actions.copyFailed` 本地化），而不是默默无反应。Blume 渲染的每个复制按钮都共用这层回退。
+
+## 在对话中打开
+
+**在对话中打开**操作会在 AI 助手中打开当前页面 —— v0、ChatGPT、Claude、T3 Chat、Scira 或 Cursor —— 并预填一段提示词，指向该页面的 Markdown 源码，让它能回答你正在读的内容的问题：
+
+> Read `https://your-site/this-page.md` so I can ask you questions about this page.
+
+和复制为 Markdown 一样，它无需任何设置。助手通过页面的公开 URL 抓取内容，因此页面一部署就能用。
+
+这段提示词属于[界面文案字典](/docs/content/i18n#translated-ui)（`actions.openInChatPrompt`），因此本地化站点会以自己的语言发送它，`i18n.ui` 也可以覆盖其措辞 —— 请保留 `{url}` 占位符，它会被替换成该页面的 Markdown 源码 URL。
+
+想定制这个操作，设置 `ai.openInChat`。`false` 会完全隐藏它；一个提供方键的数组 —— `"v0"`、`"chatgpt"`、`"claude"`、`"t3"`、`"scira"`、`"cursor"` —— 则只显示你列出的这些提供方，并按你列出的顺序排列：
+
+```ts blume.config.ts lineNumbers
+ai: {
+  openInChat: ["claude", "chatgpt", "cursor"],
+}
+```
+
+如果想在内容中内嵌一段现成可复制的提示词 —— 而不是整页操作 —— 请使用 [Prompt 组件](/docs/content/components#prompt)，它会渲染一行带标签的内容，含一个**复制提示词**按钮和一个可选的“在 Cursor 中打开”链接。

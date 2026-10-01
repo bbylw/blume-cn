@@ -1,0 +1,106 @@
+---
+import { getCollection, render } from "astro:content";
+import DocsLayout from "../../layouts/DocsLayout.astro";
+import { mdxComponents } from "../../mdx-components";
+import { navItems, getNavItem, slugToHref, navGroups } from "../../lib/nav";
+
+export async function getStaticPaths() {
+  const entries = await getCollection("docs");
+  // 首页由 docs/index.astro 渲染为 /docs，这里排除，避免出现 /docs/index 重复页
+  return entries
+    .filter((entry) => entry.id !== "index")
+    .map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+
+const href = slugToHref(entry.id);
+const item = getNavItem(href);
+const flat = navItems.map((i) => i.href);
+const idx = flat.indexOf(href);
+const prev = idx > 0 ? navItems[idx - 1] : undefined;
+const next = idx >= 0 && idx < flat.length - 1 ? navItems[idx + 1] : undefined;
+
+const groupTitle = navGroups.find((g) => g.items.some((i) => i.href === href))?.title;
+---
+
+<DocsLayout
+  title={entry.data.title}
+  description={entry.data.description ?? ""}
+  headings={headings}
+  group={groupTitle ?? item?.title}
+  prev={prev ? { title: prev.title, href: prev.href } : undefined}
+  next={next ? { title: next.title, href: next.href } : undefined}
+  updated={entry.data.updated}
+  noindex={entry.data.noindex}
+>
+  <Content components={mdxComponents} />
+</DocsLayout>
+
+<style is:global>
+  .prose-docs pre {
+    border: 1px solid var(--border) !important;
+    background-color: var(--bg-subtle) !important;
+    font-size: 0.8125rem;
+    line-height: 1.75;
+    padding: 0.875rem 1rem;
+  }
+  .prose-docs pre code {
+    background: transparent !important;
+    border: 0 !important;
+    padding: 0 !important;
+    font-size: inherit;
+    white-space: pre;
+  }
+  .prose-docs pre .title {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    letter-spacing: 0.06em;
+    color: var(--fg-subtle);
+    background-color: var(--bg-muted);
+    padding: 0.35rem 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  /* 标题锚点 */
+  .prose-docs :is(h2, h3, h4) > a.anchor-hash,
+  .prose-docs :is(h2, h3, h4) .anchor-hash {
+    display: inline-block;
+    margin-left: 0.4rem;
+    color: var(--fg-subtle);
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    font-weight: 400;
+  }
+  /* KaTeX */
+  .prose-docs .katex {
+    font-size: 1.02em;
+  }
+  .prose-docs .katex-display {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 0.25rem 0;
+  }
+  /* Mermaid */
+  .mermaid {
+    margin-block: 1.75rem;
+    border: 1px solid var(--border);
+    border-radius: 0.875rem;
+    background-color: var(--bg-subtle);
+    padding: 1.25rem;
+    overflow-x: auto;
+    text-align: center;
+  }
+  .mermaid svg {
+    max-width: 100%;
+    height: auto;
+  }
+  .mermaid-error {
+    margin-block: 1.75rem;
+  }
+  /* 表格内代码不换行挤压 */
+  .prose-docs td code {
+    white-space: nowrap;
+  }
+</style>

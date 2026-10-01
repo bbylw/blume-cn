@@ -1,0 +1,40 @@
+---
+title: 自定义内容源
+description: 用 custom() 接入带自定义序列化器或非内置后端的内容源
+source: https://useblume.dev/docs/content/sources/custom
+---
+
+任何实现了 `ContentSource` 接口的对象都可以传给 `custom()`，借助它，带自定义序列化器的适配器——或任何非内置的后端——都能接入进来，而无需其 SDK 触碰核心安装。
+
+```ts blume.config.ts
+import { defineConfig } from "blume";
+import { custom, filesystem } from "blume/sources";
+import { sanitySource } from "blume/sources/sanity.ts";
+
+export default defineConfig({
+  content: {
+    sources: [
+      filesystem({ root: "docs" }),
+      custom(
+        sanitySource({
+          name: "guides",
+          prefix: "guides",
+          projectId: "abc123",
+          dataset: "production",
+          query: `*[_type == "guide"]`,
+          // 将自定义 Portable Text 块映射为 Blume 组件
+          serializers: {
+            callout: (block) => `<Callout>${block.text}</Callout>`,
+          },
+        })
+      ),
+    ],
+  },
+});
+```
+
+像上面 `sanitySource` 这样用 Blume 某个引擎工厂构建出来的内容源，会在当前运行的命令上下文中重建，因此它在 `--preview` 下读取草稿，并像内置适配器那样把自己的快照保存在 `.blume/cache` 中。你自己的内容源可以实现 `withContext(ctx)`，并返回在该上下文上重建后的自身，从而获得同样的行为。
+
+`custom()` 接收的是一个 `ContentSource` 实例而不是选项对象，因此[共用选项](/docs/content/sources#adapters)里的 `prefix` 和 `pollInterval` 无处可传。内容源自行设置自己的 `prefix` 属性，而重新拉取的行为则由它的 `watch` 方法实现。它携带的是一个活的实例而非纯数据，因此本身不声明任何运行时依赖或密钥——这些由该实例自行管理。
+
+读取本地文件的自定义内容源，应当在每个条目上设置 `sourcePath`，并在内容源自身上设置 `contentRoot`。`sourcePath` 用于在诊断信息中指明文件，并解析它旁边的相对图片；`contentRoot` 限定了为页面标注日期时所用 git `log` 的范围，因此缺少它时，该内容源的页面就拿不到基于 git 推导出的[“最后更新日期”](/docs/configuration#last-modified)。
