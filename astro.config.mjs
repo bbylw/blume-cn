@@ -39,8 +39,6 @@ export default defineConfig({
     defaultStrategy: "hover",
   },
   redirects: {
-    // 「内容源」是一个分组，没有独立页面；指向自定义来源作为总览入口
-    "/docs/content/sources": "/docs/content/sources/custom",
     "/compare": "/docs/faq",
     "/changelog": "/docs/advanced/changelog",
   },
